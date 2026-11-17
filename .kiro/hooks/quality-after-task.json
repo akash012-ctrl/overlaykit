@@ -1,0 +1,16 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Quality gate after spec task",
+      "trigger": "PostTaskExec",
+      "description": "After a spec task completes, run typecheck, lint and unit tests through scripts/quality-gate.mjs. Exit 1 sends the failing output (stderr) to the agent. Device and e2e tests are not included.",
+      "action": {
+        "type": "command",
+        "command": "node scripts/quality-gate.mjs"
+      },
+      "timeout": 180,
+      "enabled": true
+    }
+  ]
+}
