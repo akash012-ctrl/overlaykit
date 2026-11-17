@@ -25,7 +25,7 @@ Local Android builds (Gradle via `npx expo prebuild` / `npx expo run:android`). 
 expo 58.0.26, expo-router 58.0.32, react-native 0.88.1, react 19.3.0, typescript 6.0.3
 
 ## Initial commit
-See git log (hash recorded below after commit).
+acdecdf (create-expo-app template commit); 238b208 (scaffold commit, this log amended in the following commit).
 
 ## Unresolved
 - Android device validation pending: no phone attached to adb; app never run on a device.
@@ -34,3 +34,4 @@ See git log (hash recorded below after commit).
 - `npm install` reported 3 moderate audit vulnerabilities (not addressed).
 - Template dependencies retained but unused: react-native-web, react-dom, @expo/ui, expo-glass-effect, expo-symbols, expo-image, expo-device, expo-web-browser, reanimated/worklets/gesture-handler. Pruning deferred.
 - Template's pre-existing commit acdecdf was created by create-expo-app, not by us.
+
