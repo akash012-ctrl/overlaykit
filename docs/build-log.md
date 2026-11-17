@@ -35,3 +35,19 @@ acdecdf (create-expo-app template commit); 238b208 (scaffold commit, this log am
 - Template dependencies retained but unused: react-native-web, react-dom, @expo/ui, expo-glass-effect, expo-symbols, expo-image, expo-device, expo-web-browser, reanimated/worklets/gesture-handler. Pruning deferred.
 - Template's pre-existing commit acdecdf was created by create-expo-app, not by us.
 
+
+## 2026-11-17: quality gate, e2e tooling, first native build attempt
+
+Commands run (Windows, PowerShell, repo root):
+
+1. `npx expo install jest-expo jest @types/jest eslint eslint-config-expo "--" --dev` and then `... "--" --save-dev`. Both times only `eslint` landed in `devDependencies`, so the rest were moved with `npm install --save-dev "jest-expo@~58.0.15" "jest@~30.5.2" "@types/jest@30.0.0" "eslint-config-expo@~58.0.4"`, keeping the versions `expo install` picked.
+2. `npm install --save-dev e2e @e2e-dev/mobile` → e2e 0.23.1, @e2e-dev/mobile 0.12.7, agent-device 0.21.37. `npm audit` now reports 22 moderate findings (was 3), not yet reviewed.
+3. `npx expo prebuild --platform android --no-install` → created `android/` (gitignored) and changed the `android`/`ios` scripts to `expo run:android`/`expo run:ios`. Gradle wrapper: 9.4.1.
+4. Background: `$env:JAVA_HOME='C:\Program Files\Android\Android Studio\jbr'; .\android\gradlew.bat -p android assembleRelease --console=plain`. Gradle downloaded, configured, and compiled native code for 4 ABIs. The process then **exited without printing an exit code and without producing an APK** (no `*.apk` under `android/app/build/outputs`). Cause unknown: the session was interrupted while it ran. Not retried.
+5. `npm run typecheck`, `npm run lint`, `npm test` (40 tests), `npm run verify` → all exit 0. Deliberate break and restore recorded in `docs/kiro-evidence.md`.
+6. `npx e2e mcp --help` (telemetry off) → flags `--target`, `--max-sessions` confirmed on 0.23.1.
+
+Unresolved from this round:
+- Release APK not built; e2e smoke test (`e2e/smoke.e2e.ts`) never run. `npx e2e doctor --target android` not run.
+- `adb devices` lists no phone. One AVD exists: `Resizable_Experimental` (Android 37.2, x86_64, 16 KB pages).
+- `.kiro/settings/mcp.json` not created: Kiro's permission rules block agent writes there (D-025).
