@@ -1,6 +1,6 @@
 # OverlayKit: real-device tests
 
-Status: **no device tests run yet.** No phone has been connected (`adb devices` listed none on 2026-11-17).
+Status: **no device tests run yet.** The reference phone (Q4) will be connected later (D-031). No phone has been connected (`adb devices` listed none on 2026-11-17).
 
 Acceptance test IDs (AT-xx) are defined in [QUALITY-GATES.md](QUALITY-GATES.md). This file defines how to run them on a phone and where to record results. The cross-cutting phone protocol (PD-01 to PD-09) and the result rules live in the Kiro skill `.kiro/skills/physical-device-qa/SKILL.md`.
 
@@ -51,12 +51,12 @@ Record the commit (`git rev-parse --short HEAD`) and build variant for every ses
 
 | ID | Item | Notes |
 | --- | --- | --- |
-| TM-01 | The verified ticket machine, or its printed panel replica | Choice pending (Q2). The replica must be printed at real size. |
-| CARD-EN | Printed card with 10 English sign/label lines | Ground-truth text kept in `test-fixtures/` |
-| CARD-HI | Printed card with 10 Hindi lines (Devanagari) | Same |
-| CARD-KN | Printed card with 10 Kannada lines | Expected result: unsupported script |
-| BLANK | Plain wall or paper | Expected result: no text |
-| NEG-01 … NEG-10 | Other machines, panels, or photos, including at least 3 other ticket machines | For false-match tests |
+| TM-01 | First-party simulated ticket machine: images of a base panel and screens S01 to S06, shown on an iPad as a passive display (D-029, D-032). Ground truth: `test-fixtures/tm-01/FIXTURE.md`. | iPad at full brightness, auto-lock off. Printed paper is the fallback if glare or screen pattern gives recall under 70%. |
+| CARD-EN | Image (or printed card) with 10 English sign/label lines | Ground-truth text kept in `test-fixtures/` |
+| CARD-HI | Image (or printed card) with 10 Hindi lines (Devanagari) | Same |
+| CARD-KN | Image (or printed card) with 10 Kannada lines | Expected result: unsupported script |
+| BLANK | Plain wall, paper, or a plain grey image on the iPad | Expected result: no text |
+| NEG-01 … NEG-10 | Images listed in `test-fixtures/tm-01/FIXTURE.md` section 8: other generated panels, reworded or cropped TM-01 art, and similar machines | For false-match tests. Self-generated art only. |
 
 ## Test cases
 
@@ -75,7 +75,7 @@ Record the commit (`git rev-parse --short HEAD`) and build variant for every ses
 | DT-G1-09 | AT-G1-10 | NET-OFF, fresh install | Repeat DT-G1-02 | Same pass rate as online |
 | DT-G1-10 | AT-G1-11 | Debug build | Capture 5 times, then list the app's cache directory with `adb shell run-as com.overlaykit.app ls cache` | No leftover still images |
 | DT-G2-01 | AT-G2-03 | Target hi, then kn | Translate TM-01 | Correct script, no missing-glyph boxes |
-| DT-G2-02 | AT-G2-04 | NET-OFF (cloud provider) | Translate TM-01 | Original text with "Offline" markers |
+| DT-G2-02 | AT-G2-04 | NET-OFF (pair model not yet downloaded) | Translate TM-01 | With ML Kit on-device, a language pair whose model is not downloaded shows the offline or failed state, never a translation (D-030) |
 | DT-G2-03 | AT-G2-04 | Debug build with test hooks forcing timeout, 429, 5xx | Translate | Matching `TR_*` state for each |
 | DT-G2-04 | AT-G2-05 | Target en | Translate CARD-EN | No translation request; text shown as-is |
 | DT-G2-05 | AT-G2-07 | Debug build, network inspector | Translate TM-01 | Request bodies contain text only, no image data |

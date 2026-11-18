@@ -1,12 +1,21 @@
 # OverlayKit: capability map
 
-Status: **draft, awaiting owner approval** (2026-11-17). The `camera-ocr-geometry` requirements are drafted and await owner review. The other three specs have not started.
+Status: **draft, updated 2026-11-18.** All four specs now have requirements, design and tasks under `.kiro/specs/01-` to `04-`. Run them in numeric order.
 Sources: [PRODUCT.md](PRODUCT.md), [ARCHITECTURE.md](ARCHITECTURE.md), [DECISIONS.md](DECISIONS.md), [QUALITY-GATES.md](QUALITY-GATES.md), [DEVICE-TESTS.md](DEVICE-TESTS.md), [../tasks/plan.md](../tasks/plan.md). If this map disagrees with them, they win. Flag the conflict instead of picking one.
 
 This map splits the product into four capabilities. Each capability is one Kiro Feature Spec with its own `requirements.md`, `design.md` and `tasks.md`. For each spec it lists the modules it owns, what it hands to later specs, the error codes it produces, its gates, and what must be decided before it starts.
 
 These four spec names replace the starter names in the master playbook (`camera-and-geometry`, `translate-and-explain`, and so on), in line with D-022.
 
+## Updates since 2026-11-17
+
+These decisions in [DECISIONS.md](DECISIONS.md) change the text below. Where they conflict, the decisions win.
+
+- **D-029, D-032:** TM-01 is a printed panel plus screen images, shown on an iPad as a passive display. Art may be AI-generated, with our own text added. Ground truth: `test-fixtures/tm-01/FIXTURE.md`. Wherever this map says "printed screen cards", read "screen images".
+- **D-030:** translation is ML Kit on-device only for now. The `backend/` proxy, the OpenRouter route and the user-key Settings section in spec B are deferred. A pair that fails G2 shows `TR_NOT_CONFIGURED`.
+- **D-031:** no Hindi or Kannada reviewers. Content is marked `unreviewed` and disclosed. Wherever this map says "reviewers", "reviewed" or owner Q5, read "unreviewed (D-031)".
+- **Q4:** the reference phone is connected later. Every device result stays "device validation pending" until then.
+- **Spec folders:** the specs are `01-camera-ocr-geometry`, `02-translation-explore`, `03-guided-ticket-workflow` and `04-native-experience-and-release`.
 ## 1. Spec rules
 
 1. Specs are written in dependency order: A, B, C, D. A spec's requirements are approved before its design is written, and its design before its tasks. No code is written for a spec before its tasks are approved.
@@ -180,11 +189,10 @@ The owning spec gives each code a unit test (QE-1) and reaches it once on the ph
 
 | Spec | Requirements | Design | Tasks | Implementation |
 | --- | --- | --- | --- | --- |
-| A `camera-ocr-geometry` | Drafted 2026-11-17, awaiting owner review. Open questions OQ-1 to OQ-7 pending. | Not started | Not started | Not started. `geometry/cover-transform.ts` and its tests already exist from the tooling round; A's design should reuse them. |
-| B `translation-explore` | Not started | Not started | Not started | Not started |
-| C `guided-ticket-workflow` | Not started | Not started | Not started | Not started |
-| D `native-experience-and-release` | Not started | Not started | Not started | Not started |
-
+| A `01-camera-ocr-geometry` | Written 2026-11-17, updated 2026-11-18. Not approved. | Written | Written | Not started. `geometry/cover-transform.ts` and its tests exist from the tooling round. |
+| B `02-translation-explore` | Written 2026-11-18. Not approved. | Written | Written | Not started |
+| C `03-guided-ticket-workflow` | Written 2026-11-18. Not approved. | Written | Written | Not started |
+| D `04-native-experience-and-release` | Written 2026-11-18. Not approved. | Written | Written | Not started |
 Update this table when the owner approves a phase, with the date. Generating a document doesn't count as approval.
 
 **Pending allocation change.** If the owner accepts OQ-1 and OQ-2 in A's requirements, two items move from B to A: the not-configured `TranslationProvider` adapter (`TR_NOT_CONFIGURED`), and `t(key)` with the string keys for A's own screens. Sections 4.A, 4.B and 5 get updated after that decision, not before.
