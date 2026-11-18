@@ -78,19 +78,21 @@ Fixtures: TM-01 panel (or its replica), an English text card, a Hindi text card,
 | ID | Acceptance test | Pass *(proposed)* |
 | --- | --- | --- |
 | AT-G2-01 | Provider evaluation recorded | DECISIONS.md entry with results for each D-007 criterion. Test set: all TM-01 strings plus 30 general sign and label strings. Pairs: en→hi, en→kn, hi→en, hi→kn. |
-| AT-G2-02 | Quality | Fluent reviewers rate ≥ 80% of strings in each pair "correct and understandable" |
+| AT-G2-02 | Quality | D-031: no fluent reviewers. The owner checks the test set for each pair and records the result and its limits. No quality percentage is claimed. If reviewers are added, the original rule applies: ≥ 80% of strings rated "correct and understandable". |
 | AT-G2-03 | Rendering | Hindi and Kannada render in the correct script with no missing-glyph boxes, on the reference phone |
 | AT-G2-04 | Fallbacks | Each `TR_*` state from ARCHITECTURE.md §8 shown on the device (offline, timeout, rate limit, provider error, unsupported pair) |
 | AT-G2-05 | Same language | Text already in the target language isn't sent and is shown as-is |
 | AT-G2-06 | No glossary | Code review plus test: a random string that appears in no fixture is either translated by the provider or shows a `TR_*` failure, never a canned result. No hard-coded translation tables outside UI strings and fixture content. |
-| AT-G2-07 | Text only | Debug network inspection shows request bodies contain only the JSON in ARCHITECTURE.md §9, with no image data. Size caps are enforced. |
+| AT-G2-07 | Text only | Debug network inspection shows that proxy requests contain only the JSON in ARCHITECTURE.md §9, and that user-route requests to OpenRouter contain only the fixed prompt, the strings, the pinned model and the routing settings. No image data on either route. Size caps are enforced on both. |
 | AT-G2-08 | Key not in app | Q7 passes against the release bundle |
 | AT-G2-09 | Latency | Translating one frame's labels: p50 ≤ 2 s on Wi-Fi (cloud) or on the phone (on-device) |
+| AT-G2-10 | Instruction injection (D-027, D-028) | A fixed set of injection strings, kept in `test-fixtures/`, is sent on both routes. Each comes back as a translation of that string or as a `TR_*` failure. None is obeyed, and the owner's check finds no output that adds text beyond a translation of its input. |
+| AT-G2-11 | User OpenRouter key (D-028) | The key is saved only after `GET /api/v1/key` accepts it, is stored only in secure storage, is masked in Settings and can be removed. It appears in no log, crash output or export, and is sent only to `openrouter.ai`. On the phone, an invalid key shows `TR_KEY_INVALID` and a key with no credit shows `TR_NO_CREDITS`. |
 
 **Stop and pivot conditions**
 
 - **Kannada quality fails.** If no provider passes AT-G2-02 for Kannada pairs, stop and ask the user. Dropping or downgrading a contract language needs owner approval. It must not be hidden.
-- **Backend can't be deployed in time.** Use an on-device provider if it passes AT-G2-02. If none passes, Translate ships showing its fallback states. No fake output.
+- **Backend can't be deployed in time.** Use an on-device provider if it passes AT-G2-02. If none passes, Translate ships showing its fallback states. No fake output. Users who save their own OpenRouter key still get the user route (D-028). Everyone else sees `TR_NOT_CONFIGURED`, and the README must say so.
 
 ## G3: component understanding (Explore)
 
@@ -100,13 +102,13 @@ Fixtures: TM-01 panel (or its replica), an English text card, a Hindi text card,
 | AT-G3-02 | No false matches | 0 matches to TM-01 across the negative set (≥ 10 other machines, panels, or photos, including similar ticket machines). **Hard requirement.** |
 | AT-G3-03 | Ambiguity | Partial views with fewer than `minAnchors` anchors return `ambiguous` and behave as unverified |
 | AT-G3-04 | Component location | ≥ 90% of TM-01 components located when in frame. Taps hit the right component in ≥ 95% of attempts. |
-| AT-G3-05 | Explanations | Shown in the selected language from fixture content. Fixture validation test confirms all three locales and recorded reviewers. |
+| AT-G3-05 | Explanations | Shown in the selected language from fixture content. Fixture validation test confirms all three locales and a review status for each (`unreviewed` allowed, D-031). |
 | AT-G3-06 | Unverified machine | Tap shows translation plus "Not a verified machine". No component claims (D-010). |
 
 **Stop and pivot conditions**
 
 - **False matches.** If AT-G3-02 fails, raise the match thresholds. If true matches then drop below 80%, stop and choose with the user. One option is a printed marker on the TM-01 fixture to help identification.
-- **No reviewers.** If Hindi and Kannada reviewers aren't available, G3 can't pass. Unreviewed content must not ship.
+- **No reviewers (D-031).** G3 can pass without reviewers. Hindi and Kannada content ships marked `unreviewed` and is disclosed as such. Nothing is described as reviewed.
 
 ## G4: guided workflow (Guide)
 
@@ -117,7 +119,7 @@ Fixtures: TM-01 panel (or its replica), an English text card, a Hindi text card,
 | AT-G4-03 | Checkpoints | `text-visible` steps advance exactly once, after two consecutive distinct matching observations. Duplicate or out-of-order observations never advance or rewind (property-based unit tests plus device test). `manual` steps advance only on Done. No step advances on a timer. |
 | AT-G4-04 | Machine lost | Pointing away for longer than the timeout pauses the workflow. It resumes only after TM-01 is re-identified. |
 | AT-G4-05 | Machine changed | Identifying a different machine cancels the workflow |
-| AT-G4-06 | Content integrity | Workflow loader rejects fixtures missing a locale, a reviewer, or a valid component reference (unit test). No step text is generated or translated at runtime (code review). |
+| AT-G4-06 | Content integrity | Workflow loader rejects fixtures missing a locale, a review status, or a valid component reference (unit test). No step text is generated or translated at runtime (code review). |
 | AT-G4-07 | Voice | With a voice installed for the locale, Speak reads the step. Without one, the control is hidden. No crash either way. |
 | AT-G4-08 | Interruption | Backgrounding and returning resumes at the same step or resets safely, without skipping a step |
 

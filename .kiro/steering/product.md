@@ -18,7 +18,7 @@ The user stands at a machine (first case: a ticket machine) or a sign whose text
 
 ## Truthful capabilities
 
-- Translations come from a real provider (chosen in G2). Never translate arbitrary text with a glossary, canned strings, or fixture content. Until a provider exists, show `TR_NOT_CONFIGURED`.
+- Translations come from a real provider: on-device ML Kit where it passes G2, otherwise OpenRouter (D-027, D-028). Never translate arbitrary text with a glossary, canned strings, or fixture content. Until a provider route exists, show `TR_NOT_CONFIGURED`.
 - The camera reads English and Hindi only. Kannada is a target, UI, content, and voice language (D-005).
 - Overlays are 2D and anchored to text in the image. Never call them world tracking, SLAM, or ARCore/ARKit.
 - Voice is offered only when the device has a voice for that language.
@@ -33,5 +33,5 @@ The app learns the fixture's state only through the camera. Nothing carries fixt
 
 - Mobile only. No web UI, web routes, dashboards, desktop app, admin pages, or generic agent platform. The optional backend has no UI.
 - No login, accounts, analytics, ads, or tracking.
-- No image leaves the phone. Only text goes to the translation proxy.
+- No image leaves the phone. Only text goes to the translation proxy, or straight to OpenRouter when the user has saved their own OpenRouter key (D-028).
 - Anything outside `docs/PRODUCT.md` needs the owner's approval before work starts.

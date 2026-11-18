@@ -22,7 +22,7 @@ shared     → nothing
 - No cycles, no imports between same-level modules, no deep imports. `ui` is the only place where modules get wired together.
 - Routes in `src/app` stay thin: they render a `ui` screen and hold no logic.
 - `components` means machine components (card reader, buttons). Reusable React views belong in `ui`.
-- `backend/` is never imported by app code. `locale` calls it over HTTPS, with text only.
+- `backend/` is never imported by app code. `locale` calls it over HTTPS, with text only. With a user-saved OpenRouter key, `locale` calls OpenRouter directly instead, also with text only (D-028).
 
 ## Typed observations
 

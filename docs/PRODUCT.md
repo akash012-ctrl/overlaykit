@@ -20,10 +20,10 @@ OverlayKit is a camera-first mobile app for someone standing at a machine (first
 | P1 | Expo-only mobile app with exactly three modes: Translate, Explore, Guide. |
 | P2 | Camera-first. The app opens to the camera view. |
 | P3 | Languages are English (`en`), Hindi (`hi`) and Kannada (`kn`). Voice is offered only when the device has a voice for that language. |
-| P4 | General OCR translation uses a real translation provider. No demo-only glossary or canned translations for arbitrary text. The provider is chosen after the G1 camera spike. Errors and unsupported inputs show a visible fallback. |
-| P5 | OCR runs on the device where possible. Cloud translation may receive **text only**, through a secure backend proxy. No image leaves the device by default. |
+| P4 | General OCR translation uses a real translation provider. No demo-only glossary or canned translations for arbitrary text. Each language pair uses on-device ML Kit if it passes G2, otherwise OpenRouter (D-027, D-028). Errors and unsupported inputs show a visible fallback. |
+| P5 | OCR runs on the device where possible. Cloud translation may receive **text only**, over HTTPS: through our backend proxy, or directly to OpenRouter when the user has saved their own OpenRouter key (D-028). No image leaves the device by default. |
 | P6 | Step-by-step instructions exist only for verified known machines. Unsupported machines can be translated and explored, but the app never invents operating steps. |
-| P7 | No login and no accounts. |
+| P7 | No login and no accounts. An optional OpenRouter API key in Settings is not an OverlayKit account (D-028). |
 | P8 | No UI for browsers or the web. |
 
 ## Modes
@@ -38,10 +38,10 @@ OverlayKit is a camera-first mobile app for someone standing at a machine (first
 
 | Capability | English | Hindi | Kannada |
 | --- | --- | --- | --- |
-| App UI text | Yes | Yes, reviewed by a fluent speaker | Yes, reviewed by a fluent speaker |
+| App UI text | Yes | Yes, unreviewed (D-031) | Yes, unreviewed (D-031) |
 | Translation target | Yes | Yes | Yes |
 | Source text read by on-device OCR | Yes (Latin script) | Yes (Devanagari) | **No, see note** |
-| Verified-machine content (explanations, steps) | Yes | Yes, reviewed | Yes, reviewed |
+| Verified-machine content (explanations, steps) | Yes | Yes, unreviewed (D-031) | Yes, unreviewed (D-031) |
 | Voice (text-to-speech) | If the device has a voice | If the device has a voice | If the device has a voice |
 
 **Kannada OCR note.** The leading on-device OCR candidate, Google ML Kit Text Recognition v2, lists Latin and Devanagari among its supported scripts. Kannada is absent from its supported, experimental, and mapped language lists (checked 2026-11-17 at developers.google.com/ml-kit/vision/text-recognition/v2/languages). Unless the G1 spike finds a workable on-device alternative, Kannada text in the camera image shows the "unsupported script" fallback. Kannada stays a full target, UI, and content language. See D-005, which needs approval.
@@ -62,7 +62,7 @@ A machine counts as **verified** only when all of the following are true and rec
 
 1. The team listed the panel's components with their positions relative to fixed panel text (anchors), and each screen's identifying text.
 2. Each workflow was performed on the fixture and each step's expected visible result was written down.
-3. Every explanation and step exists in `en`, `hi` and `kn`, and a fluent speaker reviewed the `hi` and `kn` text. Reviewer and date are recorded.
+3. Every explanation and step exists in `en`, `hi` and `kn`, and the `hi` and `kn` text carries a review status. With no fluent reviewer (D-031) the status is `unreviewed`, and the README, demo and Devpost text say so. If a reviewer is added later, the reviewer and date are recorded.
 4. The fixture passes the identification gates in QUALITY-GATES.md, including zero false matches on the negative set.
 
 ## Hackathon constraints
@@ -98,7 +98,7 @@ From the Kiroween 2026 rules (kiroween.devpost.com/rules, checked 2026-11-17):
 - Cloud image upload or cloud OCR.
 - Reading Kannada-script text from the camera (unless D-005 changes).
 - Steps for any machine other than TM-01. No fixture editor, remote catalogue, or user-submitted machines.
-- AI- or LLM-generated explanations or instructions.
+- AI- or LLM-generated explanations or instructions. The only LLM use is translating recognized text through OpenRouter (D-028).
 - ARCore/ARKit world tracking, 3D anchors, or plane detection. Overlays are 2D and anchored to text in the image.
 - Speech recognition or voice commands. Voice is text-to-speech output only.
 - Payment, ticket purchase, or any connection to the machine itself.
