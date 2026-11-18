@@ -1,6 +1,6 @@
 # Implementation Plan: native-experience-and-release
 
-Status: **draft.** Written from `requirements.md` and `design.md` (both draft). No task is started or complete. A task is checked off only after its done check ran and its output was recorded.
+Status: **draft, updated 2026-11-18 for D-029 to D-032** (iPad image fixture, ML Kit only, no reviewers, phone deferred). Written from `requirements.md` and `design.md`. No task is started or complete. A task is checked off only after its done check ran and its output was recorded.
 
 ## Overview
 
@@ -17,9 +17,9 @@ Blockers:
 - **OQ-1 (`expo-speech` approval):** blocks tasks 2.2 onward that need the adapter and install.
 - **OQ-4 / Q9 (LICENSE):** blocks task 1.2 and RC-6.
 - **OQ-5 (keystore):** blocks tasks 8 and 16.
-- **Spec B (Settings route, `t(key)`, G2 routing result):** blocks tasks 4, 5 and 10 (README Translate wording, OQ-8).
+- **Spec B (Settings route, `t(key)`, G2 routing result):** blocks tasks 4, 5 and 10 (README Translate wording, OQ-8). The OpenRouter route, proxy and key section are deferred (D-030), so the Settings key section and the `TR_KEY_INVALID` and `TR_NO_CREDITS` states are not part of this spec's device checks until they return.
 - **Spec C (Guide, Step_Card, Speak_Slot):** blocks task 3 and the S1 runs.
-- **Owner Q2 (TM-01 form, answered by D-029), Q5 (reviewers, removed by D-031), Q6 (submission target):** see the tasks below. No task waits for a reviewer.
+- **Owner Q2 (answered: iPad image fixture, D-029, D-032), Q5 (reviewers removed, D-031), Q6 (submission target):** only Q6 is still open. No task waits for a reviewer. The TM-01 images themselves are produced in spec 01 task 1.3.
 
 Done check for every code task, unless the task says more: `npm run verify` exits 0 and `npx expo-doctor` passes. The PostTaskExec hook also runs `npm run verify`. Device and release tasks end with a `docs/DEVICE-TESTS.md` record (commit, variant, device, date, PASSED, FAILED or NOT TESTED) or the words "device validation pending". Report the commands, exit codes, files changed, test counts and device status, as the quality steering requires.
 
@@ -238,7 +238,7 @@ Never skip, weaken or re-snapshot a test to make it pass. Never claim a gate pas
   - _Requirements: 12.8, 12.9, 12.10, 14.4, 13.10_
 
 - [ ] 18. Run the release candidate checks RC-1 to RC-5 on the phone
-  - Blocked on: owner Q4, owner Q2 (TM-01 form), tasks 16 and 17. Any code change after RC-1 repeats the affected checks on the new commit.
+  - Blocked on: owner Q4 (phone), the TM-01 images from spec 01 task 1.3 (D-029, D-032), tasks 16 and 17. Any code change after RC-1 repeats the affected checks on the new commit.
   - [ ] 18.1 RC-1 and RC-2
     - Fresh install of the Release build, S1 three times in a row (DT-RC-01), S1-N on at least 3 negative-set machines (DT-RC-02). Any Guide step shown for a non-`verified` machine blocks the release.
     - _Requirements: 17.1, 17.2, 17.9, 17.10_

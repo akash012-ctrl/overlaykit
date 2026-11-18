@@ -107,7 +107,7 @@ G0 items still open on 2026-11-17 (`tasks/todo.md`, `docs/build-log.md`): no pho
 - Target-language switching between `en`, `hi` and `kn`, remembered on the phone. UI strings through `t(key)` in all three locales, reviewed by fluent speakers.
 - The first-run privacy note, shown before any text is sent (S1 step 1, threat T2).
 - The Settings route, with its language section and the OpenRouter key section.
-- The TM-01 panel fixture: anchors, components with machine-space regions, explanations in `en`, `hi` and `kn` with reviewers recorded (D-008, D-017).
+- The TM-01 panel fixture: anchors, components with machine-space regions, explanations in `en`, `hi` and `kn` with a review status (`unreviewed` for hi and kn, D-031) (D-008, D-017).
 - `components`: `identifyMachine` (`verified`, `ambiguous` or `none`), `locateComponents`, `explain`. `geometry`: `matchLayout` and `hitTest`.
 - Explore: tapping a located TM-01 component shows its authored explanation. Any other tap shows the label's translation and "Not a verified machine" (D-010).
 
@@ -117,7 +117,7 @@ G0 items still open on 2026-11-17 (`tasks/todo.md`, `docs/build-log.md`): no pho
 
 **Provides:** `MachineMatch` (with `frameId`), `locateComponents(match, ocr)`, the identification and component sections of `MachineFixture` with their validator, `t()`, `useLocaleSettings()`.
 
-**Needs before start:** A's contracts merged and AT-G1-02 passing (translation on bad OCR proves nothing); owner Q5 reviewers; owner Q2 answered and the TM-01 panel built; an OpenRouter account and a team key with a credit limit, held only in the backend's environment; proxy hosting chosen (D-013); approval of a secure-storage dependency for the user's key (candidate `expo-secure-store`).
+**Needs before start:** A's contracts merged and AT-G1-02 passing (translation on bad OCR proves nothing); the TM-01 images built (D-029, D-032); Hindi and Kannada text may stay unreviewed (D-031); DEFERRED by D-030 until the cloud route returns: an OpenRouter account and a team key with a credit limit, held only in the backend's environment; proxy hosting chosen (D-013); approval of a secure-storage dependency for the user's key (candidate `expo-secure-store`).
 
 **Open inside B:** is the UI language the same as the target language, or set separately? PRODUCT.md doesn't say.
 
@@ -126,7 +126,7 @@ G0 items still open on 2026-11-17 (`tasks/todo.md`, `docs/build-log.md`): no pho
 **In scope**
 
 - TM-01 fixture extension: each screen's identifying text, and the workflow (steps, target component, checkpoint `text-visible` or `manual`) in `en`, `hi` and `kn`, reviewed and performed on the fixture (PRODUCT.md "verified" items 2 and 3).
-- Printed screen cards, if owner Q2 picks option (b). Self-authored, no third-party branding.
+- Screen images S01 to S06 shown on an iPad as a passive display (D-029, D-032), authored from `test-fixtures/tm-01/FIXTURE.md`. Our own text, no third-party branding.
 - A camera screen matcher in `components`: which TM-01 screen card an observation shows, or that it can't tell. "Can't tell" never counts as a match.
 - The `guide` reducer, pure, with no React or camera imports (D-019):
   - Starts only on a `verified` match.
@@ -137,7 +137,7 @@ G0 items still open on 2026-11-17 (`tasks/todo.md`, `docs/build-log.md`): no pho
 - Transition proof, as defined in section 2.
 - The active-target highlight, placed from `locateComponents` through `geometry`. Hidden when the target isn't located (`CMP_NOT_VISIBLE`) or the machine is lost.
 - Guide UI: task picker, step card, Done for manual steps, a checkpoint-not-seen prompt with retry and step back, the refusal state offering Translate and Explore, and safe handling of backgrounding (AT-G4-08).
-- The fixture loader rejects a workflow missing a locale, a reviewer, or a valid component reference (`GD_FIXTURE_INVALID`).
+- The fixture loader rejects a workflow missing a locale, a review status, or a valid component reference (`GD_FIXTURE_INVALID`).
 - A Speak slot in the step card that stays hidden until D supplies speech.
 
 **Out of scope:** speech playback, any machine other than TM-01, generating or translating steps at runtime.
@@ -146,7 +146,7 @@ G0 items still open on 2026-11-17 (`tasks/todo.md`, `docs/build-log.md`): no pho
 
 **Provides:** `GuideState` (current step, its text in the current locale, status), used by D for the Speak control and accessibility announcements.
 
-**Needs before start:** B's identification passing AT-G3-01 and AT-G3-02 on the phone, because a false match makes Guide unsafe; the workflow performed on TM-01; owner Q5 reviewers.
+**Needs before start:** B's identification passing AT-G3-01 and AT-G3-02 on the phone, because a false match makes Guide unsafe; the workflow performed on TM-01 (Hindi and Kannada text unreviewed, D-031).
 
 ### D. native-experience-and-release
 
@@ -189,10 +189,10 @@ The owning spec gives each code a unit test (QE-1) and reaches it once on the ph
 
 | Spec | Requirements | Design | Tasks | Implementation |
 | --- | --- | --- | --- | --- |
-| A `01-camera-ocr-geometry` | Written 2026-11-17, updated 2026-11-18. Not approved. | Written | Written | Not started. `geometry/cover-transform.ts` and its tests exist from the tooling round. |
-| B `02-translation-explore` | Written 2026-11-18. Not approved. | Written | Written | Not started |
-| C `03-guided-ticket-workflow` | Written 2026-11-18. Not approved. | Written | Written | Not started |
-| D `04-native-experience-and-release` | Written 2026-11-18. Not approved. | Written | Written | Not started |
+| A `01-camera-ocr-geometry` | Drafted, awaiting owner review | Drafted | Drafted | Not started. `geometry/cover-transform.ts` and its tests exist from the tooling round. |
+| B `02-translation-explore` | Drafted 2026-11-18 | Drafted | Drafted | Not started |
+| C `03-guided-ticket-workflow` | Drafted 2026-11-18 | Drafted | Drafted | Not started |
+| D `04-native-experience-and-release` | Drafted 2026-11-18 | Drafted | Drafted | Not started |
 Update this table when the owner approves a phase, with the date. Generating a document doesn't count as approval.
 
 **Pending allocation change.** If the owner accepts OQ-1 and OQ-2 in A's requirements, two items move from B to A: the not-configured `TranslationProvider` adapter (`TR_NOT_CONFIGURED`), and `t(key)` with the string keys for A's own screens. Sections 4.A, 4.B and 5 get updated after that decision, not before.
