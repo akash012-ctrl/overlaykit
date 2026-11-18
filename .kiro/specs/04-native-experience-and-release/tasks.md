@@ -246,7 +246,7 @@ Never skip, weaken or re-snapshot a test to make it pass. Never claim a gate pas
     - Record `npm run typecheck`, `npm run lint`, `npm test`, `npx expo-doctor`, `npx expo install --check`, Q7 to Q9 and the QE-1 to QE-3 results with exit codes against the RC commit hash in `docs/build-log.md`. List any code without a device record as not device-verified.
     - _Requirements: 10.8, 16.1, 16.2, 16.3, 16.4, 16.5, 17.4_
   - [ ] 18.3 RC-4
-    - Airplane mode on the Release build: the G1, G3 and G4 behaviours pass, and Translate shows `TR_OFFLINE` for cloud pairs.
+    - Airplane mode on the Release build: the G1, G3 and G4 behaviours pass, and Translate shows the offline or failed state for a language pair whose ML Kit model is not yet downloaded (D-030).
     - _Requirements: 17.3_
   - [ ] 18.4 RC-5
     - An outside tester installs the APK from the GitHub Release on their own Android phone, follows the README and completes S1. Record their phone model, Android version and result.

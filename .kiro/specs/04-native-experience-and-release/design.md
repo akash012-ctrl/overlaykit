@@ -502,7 +502,7 @@ The README contains no secret, no key and no token. It states no accuracy, laten
 | RC-1 | Release, fresh install, Reference phone | Device_Tester | DT-RC-01 row | S1 passes three times in a row |
 | RC-2 | Release, Reference phone | Device_Tester | DT-RC-02 row | S1-N passes on at least 3 negative machines |
 | RC-3 | RC commit, host | `release-preflight.ps1` plus QA_Agent | `docs/build-log.md` (commit hash, each command, exit code) | Q1 to Q9, B1, B2, QE-1, QE-3 pass, QE-2 table complete or its gaps listed |
-| RC-4 | Release, airplane mode | Device_Tester | DT-RC-02 row (airplane part) | G1, G3 and G4 behaviour passes. Translate shows `TR_OFFLINE` for cloud pairs |
+| RC-4 | Release, airplane mode | Device_Tester | DT-RC-02 row (airplane part) | G1, G3 and G4 behaviour passes. Translate shows the offline or failed state for a pair whose ML Kit model is not yet downloaded (D-030) |
 | RC-5 | GitHub Release APK, outside tester's phone | Outside tester | row with their phone model and Android version | They complete S1 from the README alone |
 | RC-6 | Logged-out browser | Owner | build-log checklist | Public repo, license in About, `.kiro` at root, no secrets, video under 3 minutes and shows a real phone |
 
@@ -571,7 +571,7 @@ This spec owns `SP_NO_VOICE` and `SP_FAILED`. The other codes belong to specs A,
 | `TR_OFFLINE` | locale | Original text, "Offline" | spec B | DT-G2-02, RC-4 |
 | `TR_TIMEOUT`, `TR_RATE_LIMITED`, `TR_PROVIDER_ERROR` | locale | "Timed out", "Busy", "Translation failed" | spec B | DT-G2-03 (debug hook) |
 | `TR_UNSUPPORTED_PAIR` | locale | "Can't translate this language" | spec B | DT-ERR-02 (debug hook) |
-| `TR_KEY_INVALID`, `TR_NO_CREDITS` | locale | Key message, check Settings | spec B | **none yet** (gap G-2) |
+| `TR_KEY_INVALID`, `TR_NO_CREDITS` | locale | Key message, check Settings | spec B | DEFERRED with the OpenRouter key section (D-030); no device record needed until it ships |
 | `MCH_NOT_VERIFIED` | components | Translation plus "Not a verified machine" | spec B | DT-G3-05, DT-G4-01 |
 | `MCH_AMBIGUOUS` | components | Same | spec B | DT-G3-03 |
 | `CMP_NOT_VISIBLE` | components | "Point the camera at the [component]" | spec B, C | DT-ERR-04 |

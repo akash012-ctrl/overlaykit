@@ -423,7 +423,7 @@ Source: QUALITY-GATES.md (RC-1 to RC-6), DT-RC-01, DT-RC-02, hackathon steering 
 
 1. WHEN the Release build is installed fresh on the Reference phone, THE Device_Tester SHALL run S1 three times in a row, and each run SHALL pass (RC-1, DT-RC-01).
 2. WHEN the Release build runs S1-N on at least 3 negative-set machines, THE OverlayKit_App SHALL pass each run (RC-2, DT-RC-02).
-3. WHEN the Release build runs in airplane mode, THE OverlayKit_App SHALL pass the G1, G3 and G4 behaviours (RC-4), and Translate SHALL show `TR_OFFLINE` for cloud pairs.
+3. WHEN the Release build runs in airplane mode, THE OverlayKit_App SHALL pass the G1, G3 and G4 behaviours (RC-4), and Translate SHALL show the offline or failed state, never a translation, for a language pair whose ML Kit model is not yet downloaded (D-030).
 4. THE project SHALL record the RC-3 static, build and error-state results against the RC_Commit.
 5. WHEN an Outside tester follows the README on their own Android phone with the Release_APK from the GitHub_Release, THE Outside tester SHALL complete S1 (RC-5).
 6. THE project SHALL record the Outside tester's phone model, Android version and result in `docs/DEVICE-TESTS.md`.
