@@ -5,10 +5,10 @@ Status: **blocked on P0 approval.** Items are listed in order. Gate IDs refer to
 ## Decisions needed from the owner (blocking)
 
 - [ ] Q1 Approve the architecture (module boundaries, dependency map) and scope, including the "Not built" list and the Kiro evidence track in plan.md.
-- [ ] Q2 Choose the TM-01 fixture: (a) real machine, (b) self-authored printed panel plus screen cards (recommended), or (c) a kiosk simulator as a second Expo app.
+- [x] Q2 TM-01 fixture: option (b), printed panel plus screen images, shown on an iPad as a passive display (D-029). Decided 2026-11-18.
 - [ ] Q3 Accept D-005: Kannada works as a target, UI, content, and voice language, but Kannada-script text in the camera image is unsupported for the hackathon.
-- [ ] Q4 Name the reference Android phone (model and Android version).
-- [ ] Q5 Name fluent Hindi and Kannada reviewers for UI strings, translation ratings, and TM-01 content.
+- [ ] Q4 Reference phone: owner will plug it in later. Until then every device test is "device validation pending".
+- [x] Q5 Reviewers removed from the plan (D-031). Hindi and Kannada text ships marked unreviewed. Translation: ML Kit only (D-030).
 - [ ] Q6 Confirm the 3 Dec submission target (deadline 4 Dec, 2:00 pm Pacific).
 - [ ] Q7 Accept D-003: iOS isn't built or validated during the hackathon (Windows host, no EAS).
 - [ ] Q8 Explore fixture: TM-01 only (recommended), or also a washing-machine panel as in the playbook.
@@ -17,7 +17,7 @@ Status: **blocked on P0 approval.** Items are listed in order. Gate IDs refer to
 
 ## G0: baseline
 
-- [ ] Add `LICENSE` at the repo root (D-021).
+- [x] Add `LICENSE` at the repo root (D-021). MIT, copyright holder "Akash_012" (git author name; owner to confirm the legal name). Added 2026-11-18.
 - [ ] Set `JAVA_HOME` to the Android Studio JBR and connect the reference phone (`adb devices`).
 - [ ] Confirm `npx expo run:android` flags with `--help` (`--device`, `--variant release`).
 - [ ] B1: debug build on the phone (DT-G0-01).
@@ -47,10 +47,11 @@ Status: **blocked on P0 approval.** Items are listed in order. Gate IDs refer to
 ## G2: translation
 
 - [ ] Write the G2 Kiro Feature Spec.
-- [ ] Build the evaluation set (TM-01 strings plus 30 general strings) and collect ratings for each candidate provider.
+- [ ] Build the evaluation set (TM-01 strings plus 30 general strings) and collect ratings for each candidate provider: ML Kit on-device first, then OpenRouter with the pinned model (D-028).
 - [ ] Record the provider decision in DECISIONS.md.
 - [ ] `locale`: provider adapter, timeout, cache, all `TR_*` states.
-- [ ] `backend/` proxy, only if the chosen provider is cloud-based (D-013).
+- [ ] DEFERRED (D-030) `backend/` proxy to OpenRouter with the team key, for any language pair where on-device fails G2 (D-013, D-027, D-028). Choose hosting and set the key's credit limit first.
+- [ ] DEFERRED (D-030) OpenRouter key section in Settings: check, secure storage, mask, remove (D-028, AT-G2-11).
 - [ ] UI strings in en/hi/kn, reviewed.
 - [ ] Run DT-G2-01…06.
 
