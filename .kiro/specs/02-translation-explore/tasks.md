@@ -195,11 +195,11 @@ Device tasks end with a PASSED, FAILED or NOT TESTED record in `docs/DEVICE-TEST
   - Tests: a valid fixture passes (including one with `review` set to `'unreviewed'`), and one invalid fixture per rule fails with that rule. A test runs the validator on the bundled fixture and fails while the fixture is invalid.
   - Authoring the typed content is task 12.2. Replacing DRAFT boxes with measured values is task 12.1.
   - _Requirements: 17.1, 17.2, 17.3, 17.4, 17.5, 17.6, 17.7, 17.8, 17.9, 17.11, 17.12, 26.3_
-  - [ ] 12.1 Author the real TM-01 content
+  - [ ] 12.1 Author the real TM-01 content _(dropped by owner: TM-01, D-043)_
     - Blocked on: the final TM-01 images (D-029, D-032), task 12.2, and snapshots for anchor positions.
     - Replace every DRAFT box and region from `test-fixtures/tm-01/FIXTURE.md` with values measured from the final image, in both the fixture data and FIXTURE.md, and remove the DRAFT marks. Complete the verification record. `minAnchors` and `minScore` stay placeholders until task 25.2 records them.
     - _Requirements: 17.2, 17.3, 17.4, 17.5, 17.13, 17.14, 22.2_
-  - [ ] 12.2 Author the typed TM-01 fixture data from FIXTURE.md
+  - [ ] 12.2 Author the typed TM-01 fixture data from FIXTURE.md _(dropped by owner: TM-01, D-043)_
     - Files: `src/modules/components/fixtures/tm-01.ts`, `src/modules/components/__tests__/tm-01-fixture.test.ts`.
     - Read `test-fixtures/tm-01/FIXTURE.md` sections 3 and 4. Type the anchors L01 to L09 (exact text, anchor flag, box) and the components C-SCREEN, C-CARD, C-COIN, C-NOTE, C-CANCEL, C-CONFIRM, C-HELP, C-TRAY (kind, label, region). Copy the strings exactly. Do not invent values. Every box and region keeps a DRAFT mark in the data (for example a `draft: true` field or a named constant) until task 12.1 measures it. `minAnchors` and `minScore` stay unset placeholders (G3 constants).
     - Component names and explanations, and the workflow-independent text, for `hi` and `kn` are authored from FIXTURE.md section 7 as `unreviewed` (D-031), with `review` set to `'unreviewed'` for both. Authoring them is open work; if left as TODO, the validator must fail on the missing text.

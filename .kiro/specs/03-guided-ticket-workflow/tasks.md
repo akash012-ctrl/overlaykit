@@ -67,13 +67,13 @@ Lane P note (2026-11-19): ticks on 2, 3, 5, 6, 8 cover the code only. Their unit
     - No network, clock or storage. The module imports only `components`, `geometry` and `shared` through `index.ts`.
     - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.12, 4.13, 6.7, 16.1, 16.4, 19.1_
 
-- [ ] 4. Author the TM-01 workflow content (en, hi, kn)
+- [ ] 4. Author the TM-01 workflow content (en, hi, kn) _(dropped by owner: TM-01, D-043)_
   - Blocked on: tasks 1.4 and 3.1. Source: `test-fixtures/tm-01/FIXTURE.md` sections 5 to 7.
   - Files: `src/modules/components/fixtures/tm-01.ts`, `__tests__/tm-01-workflows.test.ts`.
   - Add `screens`, `workflows` and `simulated` for TM-01. Content comes from FIXTURE.md (workflow W1 to W6, screens S01 to S06, checkpoints), plus the `performed` record the owner supplies. Nothing is generated, inferred or machine-translated. Mark `authored: true`.
   - Mark every `hi` and `kn` title, instruction and Expected result `unreviewed` (D-031). Never write `reviewed`, and never write a placeholder reviewer. FIXTURE.md §7 lists the `hi` and `kn` text as TODO: if a value isn't authored, leave the workflow out of the fixture and report it.
   - Tests: the bundled fixture passes `validateFixture`, and `loadWorkflow` returns `ok` for every workflow (R4.11). Each Step's target exists in `components`. A test checks that the fixture has Steps W1 to W6 with the targets, Screens and Checkpoints of FIXTURE.md §5, and Screens S01 to S06 with the texts of §6 (R1.12, R1.13).
-  - [ ] 4.1 Author the typed workflow fixture data from FIXTURE.md
+  - [ ] 4.1 Author the typed workflow fixture data from FIXTURE.md _(dropped by owner: TM-01, D-043)_
     - Files: `src/modules/components/fixtures/tm-01.ts`, `__tests__/tm-01-workflows.test.ts`.
     - Write the workflow "Buy a single-journey ticket" as typed data: Steps W1 to W6 (targets C-SCREEN, C-SCREEN, C-CONFIRM, C-CARD, C-SCREEN, C-TRAY), Screens S01 to S06 with their identifying texts, `text-visible` Checkpoints for W1, W2, W3, W4 and W6, and `manual` for W5. The `en` instruction of each Step is the FIXTURE.md text. The target component ids must exist in the fixture's components.
     - Add the `hi` and `kn` text with status `unreviewed`. Add no coordinates from a DRAFT box to any recognition assertion.

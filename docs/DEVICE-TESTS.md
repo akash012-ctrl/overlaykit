@@ -50,6 +50,8 @@ Record the commit (`git rev-parse --short HEAD`) and build variant for every ses
 
 ## Physical fixtures
 
+> TM-01 was dropped (D-043, spec 05 task 16). Its rows below are cancelled and kept only as history. `test-fixtures/tm-01/FIXTURE.md` was removed from the tree and is in git history.
+
 | ID | Item | Notes |
 | --- | --- | --- |
 | TM-01 | First-party simulated ticket machine: images of a base panel and screens S01 to S06, shown on an iPad as a passive display (D-029, D-032). Ground truth: `test-fixtures/tm-01/FIXTURE.md`. | iPad at full brightness, auto-lock off. Printed paper is the fallback if glare or screen pattern gives recall under 70%. |
