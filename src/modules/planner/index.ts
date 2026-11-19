@@ -41,3 +41,12 @@ export type { ModelManifest } from './model-manifest';
 export { createModelStore } from './model-store';
 export type { ModelCheck, ModelFilePort, ModelStore } from './model-store';
 export { createLitertEngine, PLAN_TIMEOUT_MS } from './adapters/litert';
+export { createLiveStepPlanner } from './adapters/gemini-live';
+export type {
+  LiveFrameSource, LiveMicSource, LiveSessionState, LiveStepPlanner, LiveStepPlannerOptions,
+} from './adapters/gemini-live';
+export { createLiveKeyStore } from './live-key-store';
+export type { LiveKeyError, LiveKeyStore } from './live-key-store';
+export {
+  LIVE_FRAME_INTERVAL_MS, LIVE_IDLE_STOP_MS, LIVE_MODEL_ID, LIVE_PLAN_TIMEOUT_MS, LIVE_STEP_MAX_AGE_MS,
+} from './live/manifest';

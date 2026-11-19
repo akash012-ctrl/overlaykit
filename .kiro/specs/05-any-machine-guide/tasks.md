@@ -230,17 +230,17 @@ Rules for every worker:
     - Done check: the files exist, and a search of the release bundle finds no `.litertlm` file. The owner reads the terms first. This is not legal advice.
 
 - [ ] 19. Lane L: Gemini Live adapter (new, D-050; needs 1.5 and task 2.2; one real call needs 1.6)
-  - [ ] 19.1 Check the API and write the protocol (pure)
+  - [x] 19.1 Check the API and write the protocol (pure)
     - Files: `planner/live/protocol.ts`, `planner/live/manifest.ts`.
     - Read Google's Live API WebSocket reference first and settle DQ-6: where `responseModalities` goes in `setup`, the exact names of `realtimeInput.video`, `.audio`, `.text`, `toolCall`, `toolResponse`, `goAway`, `sessionResumptionUpdate`. Write them in the report. Build and parse messages as pure functions: `buildSetup`, `buildFrameMsg`, `buildTextMsg`, `buildAudioMsg`, `buildToolResponse` (with the call `id` and `{ status, retryable, message }`), `parseServerMessage` (strict, unknown shapes become a typed `unknown`, never thrown). Constants: `LIVE_MODEL_ID = 'gemini-3.8-live'`, host, and the unset thresholds as `NaN`: `LIVE_FRAME_INTERVAL_MS` (not below 1000), `LIVE_PLAN_TIMEOUT_MS`, `LIVE_STEP_MAX_AGE_MS`, `LIVE_IDLE_STOP_MS`.
     - Function declarations `show_step`, `goal_finished`, `cannot_plan` and the fixed system instruction as in `design.md`.
     - Done check: typecheck and lint exit 0. With the owner's key (1.6) and not before: one real session records the server's answers to a bad key and to a good key, with the key never printed.
     - _Requirements: 16.1, 16.8, 16.13_
-  - [ ] 19.2 Session helper
+  - [x] 19.2 Session helper
     - Files: `planner/live/session.ts`.
     - Own the WebSocket (React Native `WebSocket`), the resumption handle, `GoAway` handling, context window compression, timers and cleanup. Never log, show or throw the URL. Every failure is a `PL_LIVE_*` `Result`. `close()` is idempotent, works while connecting, and drops all buffers. No file or storage import.
     - _Requirements: 16.5, 16.6, 16.10, 16.12_
-  - [ ] 19.3 Adapter and key store
+  - [x] 19.3 Adapter and key store
     - Files: `planner/adapters/gemini-live.ts`, `planner/live-key-store.ts`, append export lines to `planner/index.ts`.
     - `createLiveStepPlanner` as in `design.md`: `startSession`, `stopSession`, `sessionState`, `subscribeSession`, `setMic`, `planNext`. `planNext` sends the frame (from `LiveFrameSource`), then the text message (frame id, goal, done steps, numbered lines), waits for one tool call, checks it strictly, replies with a structured tool response, and returns a `PlannerOutput`. It refuses to send anything unless `startSession` succeeded. `live-key-store.ts` wraps `expo-secure-store` (needs 3.4): get, set, delete, masked read; it returns `Result` values.
     - The adapter reads no coordinates from the model. A source search finds no `quad`, `bbox` or `x`/`y` reads from model data.
