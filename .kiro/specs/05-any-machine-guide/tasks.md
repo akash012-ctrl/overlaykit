@@ -44,7 +44,7 @@ Rules for every worker:
   - [ ] 1.3 Confirm the model source and download tap
     - OQ-2: Hugging Face download on tap, or `adb push` for the demo build. Write the host and file name into the DECISIONS entry. Lane M needs the final URL, size and checksum for `model-manifest.ts`.
 
-- [ ] 2. Shared codes and plan types (lane S, first, small)
+- [x] 2. Shared codes and plan types (lane S, first, small)
   - Files: `src/modules/shared/index.ts` (append only).
   - Add `PL_ERROR_CODES`, `PlErrorCode`, `SP_ERROR_CODES`, `SpErrorCode`, `PlanLine`, `PlanRequest`, `PlanAction`, `ProposedStep`, `PlannerOutput` exactly as in `design.md`. Do not edit existing codes.
   - Done check: typecheck and lint exit 0. `src/modules/shared/__tests__/error-codes.test.ts` keeps all existing rows; the owner-approved row additions (new `PL_*` and `SP_*`) are added only if the owner confirms (existing rule: add rows only).

@@ -167,7 +167,10 @@ export const GD_ERROR_CODES = [
 ] as const;
 export type GdErrorCode = (typeof GD_ERROR_CODES)[number];
 
-export const SP_ERROR_CODES = ['SP_NO_VOICE', 'SP_FAILED'] as const;
+export const SP_ERROR_CODES = [
+  'SP_NO_VOICE', 'SP_FAILED',
+  'SP_NOT_AVAILABLE', 'SP_PERMISSION_DENIED', 'SP_LANGUAGE_UNSUPPORTED', 'SP_NO_SPEECH',
+] as const;
 export type SpErrorCode = (typeof SP_ERROR_CODES)[number];
 
 /** Languages the camera reads (D-005). */
@@ -230,3 +233,42 @@ export type LocatedComponent = {
 
 /** A monotonic clock in milliseconds. capture provides the app's clock. */
 export type MonotonicClock = () => number;
+
+export const PL_ERROR_CODES = [
+  'PL_NO_MODEL', 'PL_UNSUPPORTED_DEVICE', 'PL_NO_TEXT', 'PL_CANNOT_PLAN',
+  'PL_BAD_OUTPUT', 'PL_TARGET_NOT_FOUND', 'PL_TIMEOUT',
+] as const;
+export type PlErrorCode = (typeof PL_ERROR_CODES)[number];
+
+export type PlanLine = { readonly lineId: string; readonly text: string };
+
+export type PlanRequest = {
+  readonly frameId: FrameId;
+  /** Trimmed goal text. */
+  readonly goal: string;
+  /** lineId = `${frameId}#${index}` */
+  readonly lines: readonly PlanLine[];
+  /** English text of finished steps. */
+  readonly done: readonly string[];
+};
+
+export type PlanAction = 'press' | 'enter' | 'read' | 'wait';
+
+export type ProposedStep = {
+  /** English. */
+  readonly instruction: string;
+  readonly action: PlanAction;
+  /** Must match one OCR line (grounding). */
+  readonly targetText: string;
+  /** Kind of value for 'enter', never a value. */
+  readonly enterHint: string | null;
+  /** Text expected to show after the step. */
+  readonly appear: readonly string[];
+  readonly disappear: readonly string[];
+};
+
+export type PlannerOutput =
+  | { readonly kind: 'step'; readonly step: ProposedStep }
+  | { readonly kind: 'finished' }
+  /** reason: model text, shown as-is, never as a fact. */
+  | { readonly kind: 'cannot-plan'; readonly reason: string };
