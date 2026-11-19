@@ -4,6 +4,8 @@ import { AppState, Linking, StyleSheet, TextInput, View } from 'react-native';
 import { getUiLocale, t } from '../../locale';
 import type { SpErrorCode } from '../../shared';
 import { createSpeechInput } from '../../speech';
+import { StatusChip } from '../status/StatusChip';
+import { colors } from '../theme';
 import { VOICE_ERROR_UI } from './error-map';
 import { GuideButton, Message, Note, guideStyles } from './parts';
 
@@ -92,7 +94,7 @@ export function VoiceGoal({ onConfirm }: { onConfirm: (goal: string) => void }) 
   if (phase === 'listening') {
     return (
       <View style={styles.box}>
-        <Message>{t('guide.voice.listening')}</Message>
+        <StatusChip busy text={t('guide.voice.listening')} />
         <GuideButton
           label={t('guide.voice.stopListening')}
           onPress={() => {
@@ -141,5 +143,5 @@ export function VoiceGoal({ onConfirm }: { onConfirm: (goal: string) => void }) 
 
 const styles = StyleSheet.create({
   box: { gap: 8 },
-  input: { backgroundColor: '#FFFFFF', color: '#0B0F14', fontSize: 16, lineHeight: 26, padding: 8, borderRadius: 8, minHeight: 48 },
+  input: { backgroundColor: colors.inputBackground, color: colors.inputText, fontSize: 16, lineHeight: 26, padding: 8, borderRadius: 8, minHeight: 48 },
 });

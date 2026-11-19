@@ -1,7 +1,8 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { t } from '../../locale';
 import type { LiveBannerState } from './live-view-model';
+import { colors } from '../theme';
 import { GuideButton } from './parts';
 
 /**
@@ -12,6 +13,7 @@ export function LiveBanner({ session, onStop }: { session: LiveBannerState; onSt
   if (session === 'off') return null;
   return (
     <View style={styles.bar} accessibilityLiveRegion="polite">
+      {session === 'connecting' ? <ActivityIndicator color={colors.text} importantForAccessibility="no-hide-descendants" /> : null}
       <Text style={styles.text}>{t(session === 'connecting' ? 'live.banner.connecting' : 'live.banner')}</Text>
       <GuideButton primary label={t('live.stop')} onPress={onStop} />
     </View>
@@ -27,7 +29,7 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: '#7F1D1D',
+    backgroundColor: colors.danger,
   },
-  text: { flexShrink: 1, color: '#FFFFFF', fontSize: 16, fontWeight: '700', lineHeight: 26 },
+  text: { flexShrink: 1, color: colors.text, fontSize: 16, fontWeight: '700', lineHeight: 26 },
 });

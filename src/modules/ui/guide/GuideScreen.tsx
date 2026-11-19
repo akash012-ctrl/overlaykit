@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { t } from '../../locale';
@@ -37,6 +38,11 @@ export function GuideScreen({
   const stepSpeakable = g.stepText.kind === 'translated' || g.locale === 'en';
   /** With Gemini Live chosen, goals are taken only while the session is open, so nothing is planned without Start. */
   const goalReady = !liveInfo.active || liveInfo.banner === 'open';
+  /** True after a Live session was on and is now off, so Stop shows a clear 'nothing is being sent' state. */
+  const [liveStopped, setLiveStopped] = useState(false);
+  // Set during render, guarded so it settles in one extra pass.
+  if (liveInfo.banner !== 'off' && !liveStopped) setLiveStopped(true);
+  else if (liveInfo.banner === 'off' && view.kind !== 'goal' && liveStopped) setLiveStopped(false);
   const showsPlannerLine = view.kind === 'goal' || view.kind === 'planning' || view.kind === 'step';
 
   return (
@@ -71,6 +77,10 @@ export function GuideScreen({
             {liveInfo.endedCode !== null ? (
               <Panel>
                 <Message>{t(PLAN_ERROR_UI[liveInfo.endedCode].messageKey, { reason: '' })}</Message>
+              </Panel>
+            ) : liveStopped ? (
+              <Panel>
+                <Message>{t('live.stopped')}</Message>
               </Panel>
             ) : null}
             <LiveStartButton gate={liveInfo.gate} onStart={liveInfo.start} />

@@ -1,8 +1,11 @@
-import { ScrollView, View } from 'react-native';
+import { useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import type { StringKey } from '../../locale';
 import { t } from '../../locale';
 import type { DownloadFailure, ModelStatus, PlannerState } from '../../planner';
+import { StatusChip } from '../status/StatusChip';
+import { colors } from '../theme';
 import { PLAN_ERROR_UI } from './error-map';
 import { GuideButton, Message, Note, Panel, guideStyles } from './parts';
 import type { Models } from './useModels';
@@ -56,7 +59,9 @@ export function ModelGate({
   onExplore: () => void;
 }) {
   const { big, small } = models;
+  const [showSmall, setShowSmall] = useState(false);
   const downloading = big.kind === 'downloading' ? big : null;
+  const percent = downloading !== null && downloading.totalBytes > 0 ? Math.floor((downloading.receivedBytes / downloading.totalBytes) * 100) : 0;
   const bigInvalid = invalidKey(big);
   const smallInvalid = invalidKey(small);
   return (
@@ -70,13 +75,17 @@ export function ModelGate({
             <Note>{t('guide.model.size')}</Note>
             {downloading !== null ? (
               <>
-                <Message>
-                  {t('guide.model.progress', {
-                    percent: downloading.totalBytes > 0 ? Math.floor((downloading.receivedBytes / downloading.totalBytes) * 100) : 0,
+                <StatusChip
+                  busy
+                  text={t('guide.model.progress', {
+                    percent,
                     received: mb(downloading.receivedBytes),
                     total: mb(downloading.totalBytes),
                   })}
-                </Message>
+                />
+                <View style={styles.track}>
+                  <View style={[styles.fill, { width: `${percent}%` }]} />
+                </View>
                 <GuideButton label={t('guide.model.cancel')} onPress={models.cancel} />
               </>
             ) : (
@@ -88,9 +97,15 @@ export function ModelGate({
               </>
             )}
             {planner.kind === 'failed' ? <Message>{t(PLAN_ERROR_UI[planner.code].messageKey, { reason: '' })}</Message> : null}
-            <ModelSteps />
             {smallInvalid !== null ? <Message>{t(smallInvalid)}</Message> : null}
-            <GuideButton label={t('guide.model.check')} onPress={models.recheck} />
+            {showSmall ? (
+              <>
+                <ModelSteps />
+                <GuideButton label={t('guide.model.check')} onPress={models.recheck} />
+              </>
+            ) : (
+              <GuideButton label={t('guide.model.sideload.title')} onPress={() => setShowSmall(true)} />
+            )}
           </>
         )}
         <View style={guideStyles.row}>
@@ -101,3 +116,8 @@ export function ModelGate({
     </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  track: { height: 8, borderRadius: 4, backgroundColor: colors.surfaceRaised, overflow: 'hidden' },
+  fill: { height: 8, backgroundColor: colors.primary },
+});
