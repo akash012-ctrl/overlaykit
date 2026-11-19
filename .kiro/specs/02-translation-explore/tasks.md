@@ -234,15 +234,15 @@ Device tasks end with a PASSED, FAILED or NOT TESTED record in `docs/DEVICE-TEST
     - Authored text only, with no fallback to another locale and no generation. A missing id, locale or an empty string returns `EXPLANATION_MISSING`. The module does not import `locale`.
     - _Requirements: 11.3, 17.11, 22.2, 22.3, 26.3, 26.7_
 
-- [ ]* 16. Add the property tests
+- [ ] 16. Add the property tests
   - [x] 16.1 Install fast-check if not present
     - Skip if spec A installed it. Otherwise confirm owner approval (task 1.2), run `npm install -D fast-check` (dev-only), then `npx expo install --check` and `npx expo-doctor`. Record the decision in DECISIONS.md.
-  - [ ]* 16.2 Write the geometry property tests
+  - [ ] 16.2 Write the geometry property tests
     - Files: `src/modules/geometry/__tests__/layout-match.property.test.ts`, `hit-test.property.test.ts`. At least 100 runs each.
     - `matchLayout`: the score is unchanged under random uniform scale, translation and small rotation. Non-finite points never produce a non-finite score. Fewer than `minPoints` gives `no-fit`.
     - `hitTest`: a returned item contains the point or is the nearest within the margin, non-finite input returns `none`, and the same input gives the same output.
     - _Requirements: 19.3, 19.4, 19.5, 21.1, 21.3, 21.5, 21.6, 27.4_
-  - [ ]* 16.3 Write the identification and translation property tests
+  - [ ] 16.3 Write the identification and translation property tests
     - A random subset of fewer than `minAnchors` anchors never gives `verified`. For the service: output count and order equal input count and order for random texts and random adapter outcomes, and no call is made for a random cached text.
     - _Requirements: 1.3, 12.3, 18.2, 18.3, 27.4_
 
@@ -275,7 +275,7 @@ Device tasks end with a PASSED, FAILED or NOT TESTED record in `docs/DEVICE-TEST
     - Tests with fake services: verified tap, unverified tap, ambiguous tap, replaced frame, prompt text.
     - _Requirements: 20.6, 20.7, 21.8, 21.9, 22.1, 22.4, 22.5, 22.6, 22.7, 24.2, 24.3, 26.5, 26.6_
 
-- [ ]* 19. Add the error-to-UI tests
+- [ ] 19. Add the error-to-UI tests
   - Files: `src/modules/ui/translate/__tests__/error-map.test.ts`, `src/modules/ui/explore/__tests__/error-map.test.ts`, tests in `locale` and `components`.
   - For each `TR_*` code, a test that `locale` produces it (a code path exists) and a test that `ui` maps it to its ARCHITECTURE.md §8 marker and state. Same for `MCH_NOT_VERIFIED`, `MCH_AMBIGUOUS` and `CMP_NOT_VISIBLE`, with `components` as the only producer. Add `TR_KEY_INVALID` and `TR_NO_CREDITS` texts, and the `PRIVACY_NOT_ACKNOWLEDGED` marker. Tests check both sides of every Named threshold constant that has a value by now.
   - Add the debug fault wrappers for timeout, 429, 5xx and unsupported pair (`locale/debug/fault-wrappers.ts`, `ui/debug/translation-faults.ts`) behind `__DEV__` with the marker `OVERLAYKIT_DEBUG_ONLY`, with dev-menu items and tests.
