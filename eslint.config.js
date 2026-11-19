@@ -45,10 +45,13 @@ const VENDOR_OWNERS = [
 
 /**
  * Modules that make no network calls (R17.9, R22.1, visual-computer-vision
- * steering). Every module for now. locale leaves this list in spec B, when the
- * translation proxy and OpenRouter adapters arrive (D-028).
+ * steering). Every module. locale may call fetch only in the files named in
+ * NETWORK_ALLOWED_FILES (spec B, D-028).
  */
 const NETWORK_FREE = [...MODULES];
+
+/** The only files that may use the network globals: the HttpPort and the HTTPS route adapters in locale. */
+const NETWORK_ALLOWED_FILES = ['src/modules/locale/http-port.ts', 'src/modules/locale/adapters/*-route.ts'];
 
 /** Gallery and shared-media writes are banned everywhere (R4.8, R21.5). */
 const MEDIA_LIBRARY = ['expo-media-library', '@react-native-camera-roll/camera-roll'];
@@ -149,6 +152,11 @@ const moduleConfigs = MODULES.flatMap((name) => [
   },
 ]);
 
+const networkAllowedConfig = {
+  files: NETWORK_ALLOWED_FILES,
+  rules: { 'no-restricted-globals': 'off', 'no-restricted-properties': 'off' },
+};
+
 const vendorOwnerConfigs = VENDOR_OWNERS.map((owner) => ({
   files: [owner.file],
   rules: {
@@ -194,5 +202,6 @@ module.exports = defineConfig([
   expoConfig,
   ...moduleConfigs,
   ...vendorOwnerConfigs,
+  networkAllowedConfig,
   routeConfig,
 ]);

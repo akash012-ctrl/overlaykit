@@ -1,9 +1,9 @@
-import type { LocaleCode, TranslationOutcome } from '../shared';
+import type { LocaleCode, SourceLocale, TranslationOutcome } from '../shared';
 
 export type TranslationRequest = {
   readonly texts: readonly string[];
-  /** Spec B may add explicit sources. */
-  readonly source: 'auto';
+  /** 'auto' from spec A callers. The service passes the pair's source. */
+  readonly source: 'auto' | SourceLocale;
   readonly target: LocaleCode;
 };
 

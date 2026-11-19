@@ -8,3 +8,10 @@ export type { StringReview } from './strings/types';
 export { getTranslationProvider, notConfiguredProvider } from './translation';
 export type { TranslationProvider, TranslationRequest } from './translation';
 export type { Translation, TranslationOutcome } from '../shared';
+
+export { createTranslationService } from './service';
+export type { ServiceLimits, TranslationService, TranslationServiceDeps } from './service';
+export { planTranslation } from './plan';
+export type { SendPlan } from './plan';
+export { DEFAULT_ROUTE_TABLE, pairKey } from './route-table';
+export type { PairKey, Route, RouteTable } from './route-table';

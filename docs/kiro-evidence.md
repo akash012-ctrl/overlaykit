@@ -104,3 +104,9 @@ Probes deleted, `npm run lint` → exit 0.
   Left for the owner: `OCR_RECOGNITION_FAILED` "keeps the preview" in ARCHITECTURE.md §8 against DD-9; the AI-drafted hi/kn strings against D-031's "authored by the team"; a DECISIONS.md entry for the proposed layout values; and whether script ties should count as unsupported.
 - After the fixes: `npm run verify` → `quality-gate: PASS (3 checks, 8.2s)`, exit 0. `npx jest --ci` → `Tests: 283 passed, 283 total` in 20 suites.
 - **Device:** none. Device validation pending.
+
+## Spec 02 task 3.4: boundary lint rule for locale (lane A)
+
+- `eslint.config.js`: `NETWORK_ALLOWED_FILES` (`locale/http-port.ts`, `locale/adapters/*-route.ts`) switch off the network-global bans. Every other file in every module, `locale` included, still bans `fetch`. The network-package ban (axios and others) is unchanged.
+- Proof: a temporary `src/modules/locale/zz-probe.ts` with `import { x } from '../ui'` made `npx eslint src/modules/locale` report `error  Unexpected path "../ui" imported in restricted zone. locale may not import ui (ARCHITECTURE.md §5)  import/no-restricted-paths`. The probe was removed. (`components` does not exist yet, so `ui` was the forbidden target.)
+- `npm run lint` after removal: 0 errors, 4 warnings, all `no-require-imports` in spec 01 files (`ocr/index.ts`, `CameraScreen.tsx`, `ui/services.tsx`), none in files of this change.
