@@ -180,6 +180,7 @@ Every error code lives in `shared`, is produced by exactly one module, and has a
 | `CAM_UNAVAILABLE` | capture | No camera, camera in use, init failure | "Camera unavailable" | Retry |
 | `CAM_CAPTURE_FAILED` | capture | Still capture failed | Short error, keeps preview | Retry |
 | `OCR_ENGINE_UNAVAILABLE` | ocr | Native module or model missing | "Text reading isn't available on this device." All three modes disabled. | None in app |
+| `OCR_RECOGNITION_FAILED` | ocr | Engine loaded but failed on one frame (D-033) | Short error, keeps the preview, Translate stays enabled | Retry |
 | `OCR_NO_TEXT` | ocr | No text found | "No text found. Move closer or add light." | Retry |
 | `OCR_LOW_QUALITY` | ocr | Low confidence or very few characters | Same hint as above, plus any results shown dimmed | Retry |
 | `OCR_UNSUPPORTED_SCRIPT` | ocr | Text in a script the engine can't read (for example Kannada) | Per-region marker "This script can't be read yet" | None |

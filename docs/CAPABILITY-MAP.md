@@ -73,18 +73,21 @@ G0 items still open on 2026-11-17 (`tasks/todo.md`, `docs/build-log.md`): no pho
 **In scope**
 
 - Camera permission states and the back-camera preview, portrait only.
-- Freeze-frame path first (D-011): capture a still, turn it upright once, run OCR, draw overlays on the still. Delete the temporary still after OCR (AT-G1-11).
+- Freeze-frame path first (D-011): capture a still, turn it upright once, run OCR, draw overlays on the still. Delete each temporary still when it is dismissed or replaced, when the app moves to the background, and at the next app start for leftovers (AT-G1-11 as reworded in D-033).
 - An `ocr` adapter around the chosen on-device engine. Output is in upright image pixels, with a script per line. Non-finite or zero-area quads are rejected.
 - Latin and Devanagari are read. Kannada and unknown scripts give `OCR_UNSUPPORTED_SCRIPT` and never appear as garbled Latin text (D-005).
 - `geometry`: the existing cover transform, quad mapping, explicit off-screen clipping, and label placement that doesn't cover the source text.
 - Every overlay carries its `frameId`. Freeze-frame overlays live while their still is shown and are removed when it's dismissed. Live mode is optional (AT-G1-06). If attempted, it drops results older than the newest one applied and expires overlays after a time-to-live (D-020).
 - View positions are recomputed when the layout or safe-area insets change.
 - A debug-only action exports an OCR snapshot (JSON plus photo) to `test-fixtures/`. Recorded snapshots drive the unit and property tests.
-- The camera screen at the existing index route, with Translate mode showing the recognized source text in place. Translation states arrive with B.
+- The camera screen at the existing index route, with Translate mode showing the recognized source text in place.
+- The `TranslationProvider` interface and a not-configured adapter in `locale`, returning `TR_NOT_CONFIGURED` for every line (OQ-1, D-033). Labels show the original text with "Translation not available" in the failed state.
+- `t(key)` and the string keys for A's own screens in `en`, `hi` and `kn`, with `hi` and `kn` marked `unreviewed` (OQ-2, D-033). The UI language is `en` until B adds a language setting.
+- The per-frame error code `OCR_RECOGNITION_FAILED` (OQ-7, D-033). Real translation states arrive with B.
 
-**Out of scope:** translation, machine identification, Explore hit-testing, Guide, speech, the Settings route.
+**Out of scope:** real translation providers, machine identification, Explore hit-testing, Guide, speech, the Settings route.
 
-**Modules owned:** `shared` (core vision types and the `CAM_*` and `OCR_*` codes), `capture`, `ocr`, `geometry` (transform, mapping, placement), and in `ui` the camera screen and overlay layer.
+**Modules owned:** `shared` (core vision types and the `CAM_*` and `OCR_*` codes), `capture`, `ocr`, `geometry` (transform, mapping, placement), `locale` (`TranslationProvider` interface, not-configured adapter, `t(key)` and A's string tables), and in `ui` the camera screen and overlay layer.
 
 **Provides to later specs** (sketch only; A's design.md is authoritative):
 
@@ -99,12 +102,12 @@ G0 items still open on 2026-11-17 (`tasks/todo.md`, `docs/build-log.md`): no pho
 
 **In scope**
 
-- The `TranslationProvider` interface. A not-configured adapter returns `TR_NOT_CONFIGURED` until the provider is chosen. Then the provider evaluation (AT-G2-01, AT-G2-02): an on-device adapter, plus an OpenRouter adapter for any language pair where on-device fails, each with timeout, cache and size caps (D-027, D-028).
+- The provider evaluation (the `TranslationProvider` interface and the not-configured adapter come from A, D-033) (AT-G2-01, AT-G2-02): an on-device adapter, plus an OpenRouter adapter for any language pair where on-device fails, each with timeout, cache and size caps (D-027, D-028).
 - The `backend/` text-only proxy to OpenRouter, holding the team's key, for any language pair where on-device translation fails G2 (D-013, D-027, D-028). It's the default cloud route, so judges can translate without a key of their own.
 - The user route (D-028): an OpenRouter API key section in Settings. The key is checked with OpenRouter before saving, stored only in secure storage, masked, removable, and sent only to OpenRouter, never to our proxy. With a saved key, `locale` calls OpenRouter directly.
 - The same OpenRouter safeguards on both routes: a model pinned at G2, `data_collection: "deny"` and `zdr: true`, temperature 0, JSON output with one translation per string, output count and length checks, and an injection test set (AT-G2-10).
 - One state per label: translated, pending, failed, or unsupported (QE-3). Text already in the target language isn't sent (AT-G2-05). Unsupported-script lines are never sent.
-- Target-language switching between `en`, `hi` and `kn`, remembered on the phone. UI strings through `t(key)` in all three locales, reviewed by fluent speakers.
+- Target-language switching between `en`, `hi` and `kn`, remembered on the phone. B's string keys added to the `t(key)` tables from A, in all three locales, reviewed by fluent speakers.
 - The first-run privacy note, shown before any text is sent (S1 step 1, threat T2).
 - The Settings route, with its language section and the OpenRouter key section.
 - The TM-01 panel fixture: anchors, components with machine-space regions, explanations in `en`, `hi` and `kn` with a review status (`unreviewed` for hi and kn, D-031) (D-008, D-017).
@@ -168,14 +171,14 @@ G0 items still open on 2026-11-17 (`tasks/todo.md`, `docs/build-log.md`): no pho
 
 | Spec | Codes produced (ARCHITECTURE.md §8) |
 | --- | --- |
-| A | `CAM_PERMISSION_DENIED`, `CAM_PERMISSION_BLOCKED`, `CAM_UNAVAILABLE`, `CAM_CAPTURE_FAILED`, `OCR_ENGINE_UNAVAILABLE`, `OCR_NO_TEXT`, `OCR_LOW_QUALITY`, `OCR_UNSUPPORTED_SCRIPT` |
-| B | `TR_NOT_CONFIGURED`, `TR_OFFLINE`, `TR_TIMEOUT`, `TR_RATE_LIMITED`, `TR_PROVIDER_ERROR`, `TR_UNSUPPORTED_PAIR`, `TR_KEY_INVALID`, `TR_NO_CREDITS`, `MCH_NOT_VERIFIED`, `MCH_AMBIGUOUS`, `CMP_NOT_VISIBLE` |
+| A | `CAM_PERMISSION_DENIED`, `CAM_PERMISSION_BLOCKED`, `CAM_UNAVAILABLE`, `CAM_CAPTURE_FAILED`, `OCR_ENGINE_UNAVAILABLE`, `OCR_RECOGNITION_FAILED`, `OCR_NO_TEXT`, `OCR_LOW_QUALITY`, `OCR_UNSUPPORTED_SCRIPT`, `TR_NOT_CONFIGURED` (not-configured adapter only) |
+| B | `TR_NOT_CONFIGURED` (also raised at runtime for cloud pairs with no key and no proxy), `TR_OFFLINE`, `TR_TIMEOUT`, `TR_RATE_LIMITED`, `TR_PROVIDER_ERROR`, `TR_UNSUPPORTED_PAIR`, `TR_KEY_INVALID`, `TR_NO_CREDITS`, `MCH_NOT_VERIFIED`, `MCH_AMBIGUOUS`, `CMP_NOT_VISIBLE` |
 | C | `GD_UNSUPPORTED`, `GD_MACHINE_LOST`, `GD_MACHINE_CHANGED`, `GD_CHECKPOINT_NOT_SEEN`, `GD_FIXTURE_INVALID` |
 | D | `SP_NO_VOICE`, `SP_FAILED` |
 
 The owning spec gives each code a unit test (QE-1) and reaches it once on the phone, in its DT tests or the DT-ERR series (QE-2). `CMP_NOT_VISIBLE` is produced in B and also shown by C's Guide UI.
 
-## 6. Allocation choices that need your approval
+## 6. Allocation choices (approved by the owner 2026-11-18, D-033)
 
 | ID | Choice | Reason | Alternative |
 | --- | --- | --- | --- |

@@ -1,6 +1,6 @@
 # Requirements Document
 
-Status: **draft.** On 2026-11-18 the owner asked to proceed to design. Open questions OQ-1 to OQ-7 use their recommended defaults until the owner decides them.
+Status: **draft.** On 2026-11-18 the owner asked to proceed to design. Open questions OQ-1 to OQ-7 were decided by the owner on 2026-11-18: every recommended default was approved (D-033).
 
 ## Introduction
 
@@ -527,7 +527,7 @@ Verification: `npm test` output with pass and fail counts; device records in `do
 
 ## Open Questions
 
-Each item below is **pending owner decision**. The criteria use the recommended default until the owner decides.
+Each item below was **approved by the owner on 2026-11-18 with its recommended default** (D-033). The criteria use these defaults.
 
 ### OQ-1: Label state in spec A
 
