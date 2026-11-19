@@ -433,9 +433,9 @@ Sarvam limits input to 1,000 characters per request for `mayura:v1` and 2,000 fo
 **Decision:** `app.json` `android.blockedPermissions` lists those three. No gate threshold changes.
 **Consequences:** After `npx expo prebuild --clean --platform android` the release merge (`:app:processReleaseMainManifest`) lists `CAMERA`, `INTERNET`, `VIBRATE`, `ACCESS_NETWORK_STATE` and `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`. Debug-only dev-client permissions are not checked here. An install on the phone still has to confirm the app runs (device validation pending).
 
-## D-038 Guide works on any machine, with AI-planned steps shown as suggestions
+## D-039 Guide works on any machine, with AI-planned steps shown as suggestions
 
-**Status:** Accepted (user), 2026-11-19. Package and model choices still need approval (D-039 to D-041).
+**Status:** Accepted (user), 2026-11-19. Package and model choices still need approval (D-040 to D-042).
 **Context:** The owner changed the product. The app opens on the camera. The user points it at any machine, picks a goal, and is guided one step at a time.
 **Replaces in PRODUCT.md:**
 - Rule P6 ("instructions only for verified known machines").
@@ -443,15 +443,15 @@ Sarvam limits input to 1,000 characters per request for `mayura:v1` and 2,000 fo
 - The "Not built" line "AI- or LLM-generated explanations or instructions".
 - D-009 ("Guide only for verified, unambiguously identified machines") is superseded for Guide start. D-008 still holds for authored content (Explore on verified fixtures). The `verified` / `ambiguous` / `none` match is no longer a start gate.
 **Decision:**
-- Guide can start on any machine. Steps are planned at runtime from the goal and the OCR text (D-039).
+- Guide can start on any machine. Steps are planned at runtime from the goal and the OCR text (D-040).
 - Every planned step is labeled "AI suggestion" in the Step card. The app never says a plan is verified or correct.
 - When the planner cannot plan (no model, model error, bad output, no usable text, text it cannot tie to a recognized line), the app shows `PL_CANNOT_PLAN` with the reason and offers Translate and Explore. It never invents a step or a target.
 - A step may only point at text that OCR found in a frame. A step whose target does not match a recognized line is dropped, not guessed.
 - The user can stop at any time. Guide never presses anything on the machine.
-**Alternatives:** keep verified-only Guide (rejected by the owner); cloud LLM planning (rejected, D-039).
+**Alternatives:** keep verified-only Guide (rejected by the owner); cloud LLM planning (rejected, D-040).
 **Consequences:** New error family `PL_*` in `shared`. README, demo and Devpost text must say plans are AI suggestions that can be wrong.
 
-## D-039 Steps are planned by an on-device model; only text and the goal go in
+## D-040 Steps are planned by an on-device model; only text and the goal go in
 
 **Status:** Accepted (user) for the principle. Runtime and model: Proposed, see spec 05 design.md section "Candidate packages".
 **Context:** Owner decision 1. P5 and D-006 forbid image upload. D-028 allows text-only cloud calls for translation only.
@@ -463,14 +463,14 @@ Sarvam limits input to 1,000 characters per request for `mayura:v1` and 2,000 fo
 - Translation of step text into the user's language still uses the translation provider (D-027, D-028), text only. It is a separate call.
 **Consequences:** A new native dependency and a model file (hundreds of MB). Adding either needs owner approval under the stack rule and a new `docs/DECISIONS.md` entry on approval. Performance must be measured on the reference phone before any "works" claim.
 
-## D-040 Overlays stay 2D and are anchored to OCR text
+## D-041 Overlays stay 2D and are anchored to OCR text
 
 **Status:** Accepted (user), 2026-11-19.
 **Context:** Owner decision 2. Confirms the existing rule.
 **Replaces:** nothing. It extends the "Not built" ARCore/ARKit line to the new Guide: the highlight is a 2D box on a recognized text line (or on a region derived from one) in the image. No ARCore, no world tracking, no SLAM. Code, UI and docs must not use "AR", "augmented reality" or "world tracking".
 **Consequences:** A step's target is an OCR line id. A target that is a button without text can only be pointed at by "next to" or "below" text (text-relative), and the app says so. If the target line is not visible, the card says "Not in view" and shows no highlight.
 
-## D-041 Voice input uses Android built-in speech recognition
+## D-042 Voice input uses Android built-in speech recognition
 
 **Status:** Accepted (user) for the principle. Package: Proposed (`expo-speech-recognition`), needs owner approval.
 **Context:** Owner decision 3.
@@ -482,7 +482,7 @@ Sarvam limits input to 1,000 characters per request for `mayura:v1` and 2,000 fo
 - Voice sets the goal only. Tapping recognized text also sets the goal. Voice never advances a step.
 **Consequences:** A new permission (`RECORD_AUDIO`) enters the manifest check. Hindi and Kannada recognition depend on the phone's language packs; the app shows "not available for this language" when the engine reports it.
 
-## D-042 A step advances on the camera or on Done; TM-01 fixture content is dropped
+## D-043 A step advances on the camera or on Done; TM-01 fixture content is dropped
 
 **Status:** Accepted (user), 2026-11-19.
 **Context:** Owner decisions 4 and 5. D-019 stays the base rule.
