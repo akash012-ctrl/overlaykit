@@ -1,14 +1,14 @@
 # Implementation Plan: any-machine-guide
 
-Status: **draft, 2026-11-19.** Written from `requirements.md` and `design.md`. No task is started or complete. A task is checked off only after its done check ran and its output was recorded.
+Status: **draft, revised 2026-11-19 for the Gemma route (D-045 to D-047).** Written from `requirements.md` and `design.md`. No task is started or complete. A task is checked off only after its done check ran and its output was recorded.
 
 ## Overview
 
 Order:
-1. Owner approvals (task 1): packages, model, open questions.
+1. Owner approvals (task 1): model, source of the model file, open questions. `expo-speech-recognition` is already approved (D-046).
 2. Shared codes and plan types (task 2). Every lane depends on it.
-3. In parallel after task 2: lane P (pure `guide/plan`), lane M (`planner`), lane V (`speech`). Lane U (`ui`) starts when P, M and V have their interfaces committed; it can code against the types before the adapters work.
-4. Package install and native build (task 3), by the owner of `package.json` and `app.json`, only after approval.
+3. In parallel after task 2: lane P (pure `guide/plan`), lane M (`planner`), lane K (Kotlin module `modules/overlaykit-llm`, task 12), lane V (`speech`). Lane U (`ui`) starts when P, M and V have their interfaces committed; it can code against the types before the adapters work.
+4. Package install and native build (task 3), by the owner of `package.json` and `app.json`. Only `expo-speech-recognition` is installed. The LLM runtime is a Gradle dependency of our own module, not an npm package.
 5. Device measurement (task 14), docs and gate (task 17), cleanup (task 16).
 
 Done check for every task unless it says more: `npm run typecheck` and `npm run lint` exit 0, and `npx expo-doctor` at checkpoint tasks. `npm test` is not run (tests are deferred, owner decision 6). Report the commands run with exit codes, files changed, and device status.
@@ -27,22 +27,23 @@ Rules for every worker:
 | 0 owner/coordinator | `docs/DECISIONS.md` entries, `docs/QUALITY-GATES.md`, `docs/ARCHITECTURE.md`, `docs/DEVICE-TESTS.md` rows (task 17) | none | code |
 | S shared (task 2 only) | `src/modules/shared/index.ts` | n/a | all else |
 | P pure | `src/modules/guide/plan/**` | `src/modules/guide/index.ts` | `planner/`, `speech/`, `ui/`, `locale/`, `components/`, old `guide/*.ts` |
-| M planner | `src/modules/planner/**`, `modules/overlaykit-llm/**` (lane K only) | none | `guide/`, `ui/`, `speech/`, `package.json`, `app.json` |
+| M planner | `src/modules/planner/**` (includes `adapters/litert.ts`, which is written against the module's typed surface in `design.md`) | none | `guide/`, `ui/`, `speech/`, `modules/`, `package.json`, `app.json` |
+| K Kotlin module | `modules/overlaykit-llm/**` | none | all of `src/`, `package.json`, `app.json`, generated `android/` |
 | V speech | `src/modules/speech/**` | none | `guide/`, `ui/`, `planner/`, `package.json`, `app.json` |
 | U ui | `src/modules/ui/guide/**` | `src/modules/locale/strings/{en,hi,kn}.ts` (append keys), `src/modules/ui/index.ts` | `guide/`, `planner/`, `speech/` internals (import through `index.ts` only) |
-| X native config | `package.json`, `package-lock.json`, `app.json`, `eslint` `VENDOR_OWNERS` list | none | all `src/` code |
+| X native config | `package.json`, `package-lock.json`, `app.json`, `eslint` `VENDOR_OWNERS` list, and any config plugin file for Kotlin version, GPU libraries or manifest (task 3.3) | none | all `src/` code |
 
 ## Tasks
 
 - [ ] 1. Owner approvals
-  - [ ] 1.1 Approve packages and model
-    - Present the table in `design.md` ("Candidate packages") with: `llama.rn` (gate task: 3, 5.3), `expo-speech-recognition` (gate task: 3, 8), model Qwen3-1.7B Q4_K_M. Each request names the package, the task, the SDK 58 support source, and the risk (RN 0.88 unproven, release-candidate version, Android audio disclosure).
-    - Record the answer in `docs/DECISIONS.md` as a new entry (next free number). If the owner picks the fallback, open lane K (task 12).
+  - [ ] 1.1 Confirm the model
+    - Done in D-045 to D-047: Gemma route, LiteRT-LM runtime in a local Kotlin module, `expo-speech-recognition` approved. Still open: the model (OQ-1). Present the model table in `design.md`: Gemma 4 E2B (default, Apache-2.0, no login, 2.59 GB) or Gemma 3 1B int4 (gated, Gemma terms, 584 MB). Record the answer in `docs/DECISIONS.md` as a new entry (next free number). No new npm package is needed for the runtime.
     - _Requirements: OQ-1, OQ-5, R10.4_
   - [ ] 1.2 Owner answers OQ-2 to OQ-8
     - Record any change from the recommended defaults in `requirements.md` before lanes start.
-  - [ ] 1.3 Confirm the model source and download tap
-    - OQ-2: Hugging Face download on tap, or `adb push` for the demo build. Write the host and file name into the DECISIONS entry. Lane M needs the final URL, size and checksum for `model-manifest.ts`.
+  - [ ] 1.3 Confirm the model source and who does what
+    - Gemma 4 E2B: the app downloads it on tap, no account. Write the URL, size and SHA-256 from `design.md` into the DECISIONS entry. Lane M needs them for `model-manifest.ts`.
+    - Gemma 3 files: credentials item for the owner. The owner logs in to Hugging Face, opens the model page, accepts the licence, downloads the file, and runs `adb push`. The app never holds a token. See the report for the steps.
 
 - [x] 2. Shared codes and plan types (lane S, first, small)
   - Files: `src/modules/shared/index.ts` (append only).
@@ -50,17 +51,20 @@ Rules for every worker:
   - Done check: typecheck and lint exit 0. `src/modules/shared/__tests__/error-codes.test.ts` keeps all existing rows; the owner-approved row additions (new `PL_*` and `SP_*`) are added only if the owner confirms (existing rule: add rows only).
   - _Requirements: 12.1, 13.1_
 
-- [ ] 3. Install packages and prove the native build (lane X; blocked by 1.1)
-  - [ ] 3.1 Install the approved packages
-    - `npx expo install expo-speech-recognition`; `npm install llama.rn@<exact version>` (not an SDK package, so `expo install` does not pick it; pin the exact version). Then `npx expo install --check` and `npx expo-doctor`. Remove anything unused.
-    - Add the config plugin settings in `app.json` (microphone text; no GPU or OpenCL). Make sure `RECORD_AUDIO` is not in `blockedPermissions` (D-038) and no other new permission appears. Keep `recordAudioAndroid: false` for the camera plugin.
-    - Add both vendor packages to `VENDOR_OWNERS` in the lint config: `llama.rn` only in `planner/adapters/llama.ts`, `expo-speech-recognition` only in `speech/adapters/android-recognizer.ts`.
+- [ ] 3. Install the speech package and prove the native build (lane X; 3.1 needs no further approval, D-046)
+  - [ ] 3.1 Install `expo-speech-recognition`
+    - `npx expo install expo-speech-recognition`. Then `npx expo install --check` and `npx expo-doctor`. Remove anything unused. No other package is installed in this spec.
+    - Add the config plugin settings in `app.json` (microphone text). Make sure `RECORD_AUDIO` is not in `blockedPermissions` (D-038) and no other new permission appears. Keep `recordAudioAndroid: false` for the camera plugin.
+    - Add `expo-speech-recognition` to `VENDOR_OWNERS` in the lint config, only in `speech/adapters/android-recognizer.ts`. Add `modules/overlaykit-llm` to `VENDOR_OWNERS`, only in `planner/adapters/litert.ts`.
     - _Requirements: 10.4, 13.5_
   - [ ] 3.2 Smoke build on the phone or report the blocker
-    - `npx expo prebuild --clean`, then `npx expo run:android --device`. Set `abiFilters` to `arm64-v8a` through a config plugin or `expo-build-properties` only if the owner approves that package.
-    - Prove: the app starts, `llama.rn` loads, and telemetry of every dependency is off. If RN 0.88 breaks `llama.rn`, stop and report `question` with the error and the fallback (task 12).
+    - `npx expo prebuild --clean`, then `npx expo run:android --device`. Prove: the app starts with the speech package and the (still empty) Kotlin module linked, and telemetry of every dependency is off.
     - No phone: report "device validation pending" and what ran (prebuild, Gradle assemble).
     - _Requirements: 4.6, 10.5_
+  - [ ] 3.3 Decide the Kotlin version and the LiteRT-LM pin
+    - After `npx expo prebuild --clean`, read which Kotlin version Gradle resolves. If it is 2.2.x, either pin `litertlm-android` 0.16.1 or raise Kotlin to 2.3+ with a small config plugin that sets `android.kotlinVersion` (no new package). Check Expo SDK 58 accepts that Kotlin version. Record the pin, the Kotlin version and the release APK size in the report. If neither works, report `question`.
+    - Optional here, only if the owner approves `expo-build-properties`: `abiFilters` to `arm64-v8a`.
+    - _Requirements: 4.5_
 
 - [x] 4. Lane P: pure Guide plan modules
   - [x] 4.1 Text normalization and grounding
@@ -90,15 +94,15 @@ Rules for every worker:
     - _Requirements: 3.1, 3.2, 3.5, 13.1_
   - [ ] 5.2 Output schema and strict parser
     - Files: `planner/schema.ts`.
-    - JSON schema, GBNF text, `parseOutput`. No repair of bad output.
+    - JSON schema text and `parseOutput`. No repair of bad output. Works on constrained and unconstrained model text.
     - _Requirements: 3.8_
   - [ ] 5.3 Model store
     - Files: `planner/model-store.ts`, `planner/model-manifest.ts`.
     - Download on tap, resume, size and checksum check (DQ-1), delete on mismatch. Only file with network code. Needs the final URL, size and checksum from task 1.3. Until then the manifest holds `null` and `status()` returns `missing` with `PL_NO_MODEL`.
     - _Requirements: 4.1 to 4.4, 10.1_
-  - [ ] 5.4 `llama.rn` adapter
-    - Files: `planner/adapters/llama.ts`. Blocked by 3.1.
-    - Load, run with grammar and stop tokens, abort on signal, `PL_TIMEOUT`, `PL_UNSUPPORTED_DEVICE` on load failure, release on `release()`. Convert vendor types at this file. Thinking off.
+  - [ ] 5.4 LiteRT adapter
+    - Files: `planner/adapters/litert.ts`. Needs the typed JS surface from lane K (`design.md`, "Local Kotlin module"); can be coded against it before the native side builds, real calls blocked by task 12.
+    - Load the model path from `model-store`, call `generate` with the prompt, the schema string and the output-token cap, call `cancel` on abort, `PL_TIMEOUT` after `PLAN_TIMEOUT_MS`, map module codes to `PL_*` (table in `design.md`), call `release()` on `release()`. The only file that imports `modules/overlaykit-llm`.
     - _Requirements: 3.3 to 3.6, 4.5_
   - [ ]* 5.5 Unit tests for prompt and parser
     - Optional, last. Fixed strings only, no model.
@@ -150,15 +154,27 @@ Rules for every worker:
   - DT-G5-04 (airplane mode, record how no network use was observed), DT-G5-05 (voice in `en`, then `hi` if supported), DT-G5-06 (download interrupt, resume, corrupt file).
   - _Requirements: 14.5 to 14.7_
 
-- [ ]* 12. Lane K: fallback runtime as a Kotlin Expo Module (only if 3.2 fails or the owner picks it)
-  - Files: `modules/overlaykit-llm/**`, `planner/adapters/litert.ts`. Same pattern as `modules/overlaykit-ocr` (D-036). Needs its own DECISIONS entry and an owner OK before start. It replaces `adapters/llama.ts` behind the same `StepPlanner` interface; nothing else changes.
+- [ ] 12. Lane K: Kotlin Expo Module around LiteRT-LM (D-045; needed for any real planning)
+  - [ ] 12.1 Skeleton and API check
+    - Files: `modules/overlaykit-llm/{expo-module.config.json,package.json,index.ts,android/build.gradle,android/src/main/AndroidManifest.xml,android/src/main/java/com/overlaykit/llm/OverlaykitLlmModule.kt}`. Same pattern as `modules/overlaykit-ocr` (D-036).
+    - Pin `litertlm-android` per task 3.3. Read the pinned version's Kotlin API and confirm the real names: `Engine`, `EngineConfig`, `Conversation`, `ConversationConfig`, `SamplerConfig`, and whether `ResponseFormat.json` and `enableResponseFormat` exist (DQ-5). Write what was found in the report. If there is no response format, the module ignores `schemaJson` (the prompt carries the shape) and the parser is the only check.
+    - Needs: task 3.3 done. The typed JS surface in `design.md` is the contract; change it only by editing `design.md` first.
+    - _Requirements: 3.3, 3.5, 3.8, 13.6_
+  - [ ] 12.2 Engine and generate
+    - `load`, `generate`, `cancel`, `release` on one single-thread executor. `initialize()` off the main thread. Fresh `Conversation` per `generate`. Temperature 0, top-k 1. Thinking, tools and speculative decoding off. All exceptions become code strings. Conversation closed before engine, each once.
+    - Done check: `npm run typecheck`, `npm run lint`, and `npx expo run:android --device` builds (Gradle assemble at least). No device claim without a DEVICE-TESTS record.
+    - _Requirements: 3.3 to 3.6, 4.4, 4.5_
+  - [ ] 12.3 Smoke test on the phone (device)
+    - Load the model file (owner placed it, task 1.3), run one `generate` with a fixed prompt, record the raw text, load time and peak memory in `docs/DEVICE-TESTS.md` as part of DT-G5-07 prep. If the phone runs out of memory, report `question` with the numbers and the fallback model (Gemma 3 1B int4).
+    - No phone or no model file: "device validation pending".
+    - _Requirements: 4.6_
 
 - [ ] 13. Device: screen loss and backgrounding
   - DT-G5-08. Pause on screen loss and on backgrounding, resume only on a newer observation, mic and camera released.
   - _Requirements: 9.1 to 9.3_
 
 - [ ] 14. Device: measurements and thresholds
-  - DT-G5-07 on a **release** build: model load time, time to first token, time per step, peak memory, battery over 10 minutes. Then, for the unset constants (`PLAN_TIMEOUT_MS`, `MODEL_IDLE_RELEASE_MS`, `SCENE_OVERLAP_MIN`, `SCENE_LOST_TIMEOUT_MS`, `GOAL_NOT_SEEN_LIMIT`, `MAX_STEPS_PER_GOAL`, `LISTEN_MAX_MS`, capture cadence, context size and threads), propose values from the numbers and record them in a new `docs/DECISIONS.md` entry before setting any constant.
+  - DT-G5-07 on a **release** build: model load time, time to first token, time per step, peak memory, battery over 10 minutes. Then, for the unset constants (`PLAN_TIMEOUT_MS`, `MODEL_IDLE_RELEASE_MS`, `SCENE_OVERLAP_MIN`, `SCENE_LOST_TIMEOUT_MS`, `GOAL_NOT_SEEN_LIMIT`, `MAX_STEPS_PER_GOAL`, `LISTEN_MAX_MS`, capture cadence, backend (CPU or GPU), context size and output-token cap), propose values from the numbers and record them in a new `docs/DECISIONS.md` entry before setting any constant.
   - Measure Hindi planning quality and record it. Say "unmeasured" for Kannada and for voice languages not run.
   - _Requirements: 4.6, 14.8, 11.3_
 
@@ -172,9 +188,9 @@ Rules for every worker:
 
 - [ ] 17. Docs and gate
   - [ ] 17.1 `docs/QUALITY-GATES.md`: add gate G5 (AT-G5-01 to 08 from R14) in place of G4 text. No thresholds invented; unset values say "set at task 14".
-  - [ ] 17.2 `docs/ARCHITECTURE.md`: add `planner` to section 4 and the dependency map in section 5; add `PL_*` and `SP_*` to section 8; mark `GD_UNSUPPORTED`, `GD_MACHINE_CHANGED`, `GD_FIXTURE_INVALID` as not emitted by the new path; remove the fixture section's TM-01 requirement.
+  - [ ] 17.2 `docs/ARCHITECTURE.md`: add `planner` to section 4 and the dependency map in section 5; add `modules/overlaykit-llm` next to `modules/overlaykit-ocr`; add `PL_*` and `SP_*` to section 8; mark `GD_UNSUPPORTED`, `GD_MACHINE_CHANGED`, `GD_FIXTURE_INVALID` as not emitted by the new path; remove the fixture section's TM-01 requirement.
   - [ ] 17.3 `docs/DEVICE-TESTS.md`: add the DT-G5 rows, all NOT TESTED.
-  - [ ] 17.4 README and demo text: say plans are AI suggestions that can be wrong; no "verified" or "AR" wording; privacy statement as in R10.
+  - [ ] 17.4 README and demo text: say plans are AI suggestions that can be wrong; no "verified" or "AR" wording; privacy statement as in R10. Add the model name, source and licence notice (D-047) to the licence screen or README.
 
 - [ ] 18. Final checkpoint
   - typecheck, lint, `npx expo-doctor`, `npx expo install --check`. Report commands with exit codes, files changed, tests (none run unless the owner asked), device status per DT id, open risks. Ask the owner whether to run any tests.

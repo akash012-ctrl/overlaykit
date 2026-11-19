@@ -1,6 +1,6 @@
 # Design Document: any-machine-guide
 
-Status: **draft, 2026-11-19.** Implements `requirements.md` under D-039 to D-043. No code is written by this document. Package and model choices are **Proposed**; the owner approves before any install.
+Status: **draft, revised 2026-11-19 for the Gemma route.** Implements `requirements.md` under D-039 to D-043 and D-045 to D-047 (owner chose Google on-device AI with Gemma, and approved `expo-speech-recognition`). No code is written by this document. The runtime is our own Kotlin Expo Module around LiteRT-LM. The model choice is **Proposed** (owner confirms, OQ-1). Evidence and links: `.scratch/reports/spec-05-gemma-redesign.md`.
 
 ## Overview
 
@@ -10,13 +10,15 @@ Guide works on any machine. The user picks a goal (tap or voice). An on-device m
 
 | # | Decision | Why |
 | --- | --- | --- |
-| DD-1 | The planner returns **one next step** per call. | A 1 to 2 billion parameter model plans a whole route badly. The next step uses the screen the user is looking at. |
-| DD-2 | Model output is constrained by a JSON grammar, then **grounded** by pure code. | The model may name text that is not on screen. Pure code decides what is shown. |
-| DD-3 | The planner writes **English** step text. `locale` translates it (text only). | Small models are weaker in Hindi and Kannada. Translation already exists (D-027, D-028, D-030). |
+| DD-1 | The planner returns **one next step** per call. | A phone-size model (2 to 5 billion parameters) plans a whole route badly. The next step uses the screen the user is looking at. |
+| DD-2 | Model output is asked for as JSON under a schema constraint when the pinned runtime supports it, then **always** strictly parsed and **grounded** by pure code. No repair. | The runtime constraint lowers the bad-output rate but has open bugs (report, section "Constrained output"). Parse and grounding are the safety net. The model may also name text that is not on screen. Pure code decides what is shown. |
+| DD-3 | The planner writes **English** step text. `locale` translates it (text only). | Gemma lists 140+ languages, but Hindi and Kannada planning quality on this phone is unmeasured. Translation already exists (D-027, D-028, D-030). |
 | DD-4 | The expectation is **diffed against the planning frame**: only text that is new counts as "appear", only text that was there counts as "disappear". | Stops a step from being "met" at once by text that was already on screen. |
 | DD-5 | The new reducer is a **copy-and-adapt** of the spec 03 reducer in `guide/plan/`. The old files stay until task 16. | Lets lanes work in parallel without breaking spec 03 code or its tests. |
 | DD-6 | The plan-shape types live in `shared`. | `planner` and `guide` may not import each other. `shared` is the only common layer (ARCHITECTURE.md section 5). |
 | DD-7 | `speech` holds speech **input** now. Text-to-speech (spec D) joins the same module later. | One module per capability family. |
+| DD-8 | The runtime is **LiteRT-LM** (Google AI Edge) in a **local Kotlin Expo Module** `modules/overlaykit-llm/`, called from `planner/adapters/litert.ts`. Same pattern as `modules/overlaykit-ocr` (D-036). | There is no maintained npm package for it. MediaPipe LLM Inference is maintenance-only. ML Kit GenAI / Gemini Nano does not list the reference phone. |
+| DD-9 | The module holds one `Engine`, creates a **fresh `Conversation` per planning call**, runs speculative decoding **off**, and thinking and tools **off**. The module returns the raw model text (a string) and a code string to TypeScript. | Each PlanRequest is self-contained (goal, lines, done steps), so no history is needed. A fresh conversation keeps calls independent. Speculative decoding with a response format failed in a user report (LiteRT-LM issue 3944). No LiteRT-LM type crosses into JavaScript. |
 
 ## Architecture
 
@@ -81,9 +83,10 @@ src/modules/planner/
   index.ts                             (public API: StepPlanner, createStepPlanner, model-store API)
   types.ts                             (PlannerState, ModelInfo)
   prompt.ts                            (buildPrompt(PlanRequest): pure, vendor-neutral)
-  schema.ts                            (JSON schema + GBNF text; parseOutput(raw): Result)
+  schema.ts                            (JSON schema text; parseOutput(raw): Result)
   model-store.ts                       (download, verify, delete; the only network code)
-  adapters/llama.ts                    (only file importing the runtime package)
+  model-manifest.ts                    (pinned URL, size, SHA-256)
+  adapters/litert.ts                   (only file importing `modules/overlaykit-llm`)
 src/modules/speech/
   index.ts                             (SpeechInput API)
   types.ts
@@ -95,7 +98,11 @@ src/modules/ui/guide/
   ModelGate.tsx, CannotPlanView.tsx, FinishPrompt.tsx, usePlanGuide.ts, plan-view-model.ts
   (changed:) StepCard.tsx (AI label), error-map.ts (PL_*, SP_* rows), GuideScreen.tsx (new flow)
 src/modules/locale/strings/{en,hi,kn}.ts  (append keys, ui lane only)
-modules/overlaykit-llm/                (only if the Kotlin path is chosen, see Candidate packages)
+modules/overlaykit-llm/                (lane K: local Kotlin Expo Module around LiteRT-LM, see "Local Kotlin module")
+  expo-module.config.json  package.json  index.ts   (typed JS surface: strings and numbers only)
+  android/build.gradle                              (litertlm-android dependency, pinned)
+  android/src/main/AndroidManifest.xml              (optional GPU `uses-native-library` entries)
+  android/src/main/java/com/overlaykit/llm/OverlaykitLlmModule.kt
 ```
 
 ## Components and Interfaces
@@ -158,8 +165,8 @@ export function createStepPlanner(opts?: { /* model path, constants */ }): StepP
 ```
 
 - `prompt.ts` builds the system and user text from a PlanRequest. It states: use only the listed lines; copy `targetText` exactly from one line; never output personal data; say `cannot-plan` when unsure. Pure, so it can be reviewed and snapshot-tested.
-- `schema.ts` holds the JSON schema, the GBNF grammar derived from it, and `parseOutput(raw: string): Result<PlannerOutput, 'PL_BAD_OUTPUT'>`. Strict: unknown fields, wrong types, empty `targetText` for `press`, `enterHint` missing for `enter` all fail. No repair.
-- `adapters/llama.ts` loads the GGUF from `model-store`, runs the completion with the grammar, stop tokens and a max-tokens cap, and honors `signal`. Vendor types stop at this file.
+- `schema.ts` holds the JSON schema (passed to the module as a string) and `parseOutput(raw: string): Result<PlannerOutput, 'PL_BAD_OUTPUT'>`. Strict: unknown fields, wrong types, empty `targetText` for `press`, `enterHint` missing for `enter` all fail. No repair. It parses whatever comes back, constrained or not.
+- `adapters/litert.ts` is the only file that imports `modules/overlaykit-llm`. It loads the model file from `model-store`, calls `generate` with the prompt, the schema string and a max-output-token cap, calls `cancel` on `signal`, and maps the module's code strings to `PL_*`. It holds no LiteRT-LM type because the module exposes none.
 - `model-store.ts` downloads to app-private storage (`expo-file-system`, already installed, D-036), resumes, checks size and checksum against pinned values in `planner/model-manifest.ts`, deletes on mismatch. It is the only file with network code and sends no user data.
 
 ### speech
@@ -201,31 +208,39 @@ planReducer(state: PlanGuideState, event: PlanGuideEvent): PlanGuideState;
 
 ## Candidate packages (not installed)
 
-Checked 2026-11-19 from npm metadata, GitHub and vendor docs. App versions: Expo `~58.0.26`, React Native `0.88.1`, `react-native-worklets` `0.13.0` (from `package.json`).
+Checked 2026-11-19 from vendor docs, repos and model cards (links in `.scratch/reports/spec-05-gemma-redesign.md`). App versions: Expo `~58.0.26`, React Native `0.88.1`, Android `minSdk` 24 (React Native catalog), New Architecture on (`newArchEnabled=true` in the generated `gradle.properties`). Reference phone: Redmi Note 12 Pro 5G, Android 14, 5.67 GB RAM (`docs/DEVICE-TESTS.md`).
 
-### On-device LLM runtime
+### On-device LLM runtime (D-045)
 
-| Candidate | Maintained? | New Architecture / SDK 58, RN 0.88 | Size | Hindi / Kannada | Licence | Local Kotlin module? | Source checked |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| **`llama.rn`** 0.13.0-rc.12 (llama.cpp binding) | Yes: npm modified 2026-11-17, GitHub pushed 2026-11-19 | README: from v0.10 it requires the New Architecture. `peerDependencies` are `react: *`, `react-native: *`, so RN 0.88 is **not stated**; it must be proven by a build (task 3). Has Expo notes (config for OpenCL only, optional). | npm package 68 MB unpacked (all ABIs; prebuilt `.so` downloaded at postinstall from GitHub releases, SHA-256 checked). APK grows by the arm64 libraries only if `abiFilters` is set. | Depends on the model, not the runtime. | MIT | **No.** A config-plugin and `expo prebuild` are enough; no Kotlin of ours. | [github.com/mybigday/llama.rn](https://github.com/mybigday/llama.rn); `npm view llama.rn` |
-| `@react-native-ai/llama` 0.13.0 | Yes (npm 2026-11-11) | Wraps `llama.rn >=0.13.0-rc.8`; adds a Vercel AI SDK style API we do not need | small | same as above | MIT | No | `npm view @react-native-ai/llama` |
-| `react-native-executorch` 0.11.1 | Yes: npm 2026-11-19, GitHub pushed 2026-11-19 | Docs: New Architecture only, RN 0.83+, `react-native-worklets` `>=0.10.0 <0.14.0` (repo has 0.13.0, in range). Its compatibility table lists RN up to 0.86 and Expo SDK up to 57. **SDK 58 and RN 0.88 are not listed.** Also needs `react-native-blob-util` and `@kesha-antonov/react-native-background-downloader`, and Android 13+. Anonymous download telemetry is on by default and must be turned off (`setTelemetryEnabled(false)`), which matters under R10.5. | npm 10 MB; model files are `.pte` and large | Per model; curated models are in Software Mansion's Hugging Face collection (list not itemised here) | MIT | No | [docs.swmansion.com/react-native-executorch](https://docs.swmansion.com/react-native-executorch/docs/fundamentals/getting-started) and its [compatibility page](https://docs.swmansion.com/react-native-executorch/docs/other/compatibility) |
-| MediaPipe LLM Inference (Android, via our own module) | **Maintenance-only**; Google recommends LiteRT-LM | Not an npm package; we would write it | Gemma-class `.task` files, 1 GB or more | Per model (Gemma) | Runtime Apache-2.0; Gemma models use the Gemma Terms of Use, not an OSI licence | **Yes, Kotlin Expo Module** (same pattern as D-036) | [Google AI Edge docs](https://developers.google.com/edge/mediapipe/solutions/genai/llm_inference) |
-| LiteRT-LM (Android, via our own module) | Active (Google's recommended successor) | Same: our own module | per model | per model | Apache-2.0 (not re-checked) | **Yes, Kotlin Expo Module** | Same page (the migration notice). Licence and API not checked in detail. |
-| `react-native-mediapipe` 0.6.0 | **No**: last npm update 2024-12-12; it is a vision-camera package, not an LLM runtime | Needs `react-native-vision-camera` | n/a | n/a | MIT | n/a | `npm view react-native-mediapipe` |
-
-**Recommendation: `llama.rn`.** It is the only candidate with a maintained, ready JS API, GBNF/JSON-schema constrained output (needed for DD-2), stated New Architecture support, MIT licence, no Kotlin of ours, and no extra native packages. Risks: RN 0.88 is unproven (task 3 proves it with a build and a smoke call, and stops if it fails); the version on the `latest` tag is a release candidate (`0.13.0-rc.12`), so the exact version is pinned and the owner is told; the postinstall downloads native libraries from GitHub, so install needs network. Fallback if task 3 fails: LiteRT-LM through a local Kotlin Expo module (D-036 pattern), which needs its own decision.
+| Option | Status | Fit for OverlayKit | Source checked |
+| --- | --- | --- | --- |
+| **LiteRT-LM**, Kotlin API `com.google.ai.edge.litertlm:litertlm-android` | Google's recommended runtime. README calls it production-ready; latest tagged release in the README is v0.19.0. Kotlin API listed as stable. Apache-2.0. | **Chosen.** CPU and GPU (NPU only on listed chips). Android AAR `minSdk` 24 (0.18.0). Needs a local Kotlin Expo Module (no npm package exists). Constrained output through LLGuidance (regex, JSON schema, Lark). Gradle risk: 0.17.x and 0.18.x carry Kotlin 2.4 metadata and need a Kotlin 2.3+ compiler. 0.16.1 builds with Kotlin 2.2, which is what the React Native 0.88 catalog lists. | [LiteRT-LM README](https://github.com/google-ai-edge/LiteRT-LM), [Kotlin guide](https://github.com/google-ai-edge/LiteRT-LM/blob/main/docs/api/kotlin/getting_started.md), [Android skill](https://github.com/android/skills/blob/main/device-ai/litert/litert-lm/SKILL.md) |
+| MediaPipe LLM Inference (Android) | **Maintenance-only.** Google says new features go to LiteRT-LM and recommends migrating. | Not for new work. | [MediaPipe LLM Inference](https://developers.google.com/edge/mediapipe/solutions/genai/llm_inference) |
+| ML Kit GenAI Prompt API (Gemini Nano through AICore) | Beta, "not subject to any SLA or deprecation policy". | **Not usable as the main path.** Runs Gemini Nano, not Gemma. Needs a phone on Google's per-API device list, API 26+, locked bootloader, app in the foreground, per-app quota. The lists I could read name Pixel 9 and later, Galaxy S26, OnePlus 13 and 15, Xiaomi 15 and similar. The Redmi Note 12 Pro 5G is not named. Optional later adapter behind `StepPlanner`, not in this spec. | [Prompt API](https://developers.google.com/ml-kit/genai/prompt/android), [device list as summarised by Capawesome](https://dev.to/capawesome/how-to-use-gemini-nano-in-a-capacitor-app-5fgf) (secondary source; the official list page did not load for me) |
+| `llama.rn` with Qwen3-1.7B (earlier proposal) | Never approved. | **Dropped** by the owner's Gemma decision. | n/a |
 
 ### Model
 
-| Model | Quantization / size | Licence | Languages | Notes |
-| --- | --- | --- | --- | --- |
-| **Qwen3-1.7B** (`unsloth/Qwen3-1.7B-GGUF`) | Q4_K_M, 1056 MB (read from the Hugging Face file listing) | Apache-2.0 | Qwen reports broad multilingual training. Hindi and Kannada quality at this size is **unmeasured**. The design avoids the question by planning in English (DD-3). | Recommended. Run with thinking off (`/no_think` or the template flag) to keep latency down. |
-| Qwen2.5-1.5B-Instruct (`Qwen/Qwen2.5-1.5B-Instruct-GGUF`) | Q4_K_M, 1066 MB | Apache-2.0 | same caveat | Fallback: older, no thinking mode to turn off. |
-| Qwen3-0.6B | Q4 about 0.4 GB (not measured) | Apache-2.0 | same caveat | Fallback for low-memory phones. Likely too weak for grounded JSON; test before use. |
-| Llama-3.2-1B-Instruct (`bartowski/...-GGUF`) | Q4_K_M, 770 MB | Llama 3.2 Community Licence (not OSI) | Hindi is among its supported languages; Kannada is not | Not recommended: licence terms and no Kannada. |
+All files are `.litertlm` bundles from the LiteRT Community, read from the Hugging Face API on 2026-11-19. Peak memory and speed are Google's numbers on other phones. **Nothing is measured on the reference phone yet.**
 
-All sizes are file sizes, not RAM. RAM, speed and heat on the Reference phone are unknown until task 14 measures them. The model is not bundled in the APK. Pinned URL, size and checksum go in `planner/model-manifest.ts` at task 5, from the real file.
+| Model | File and size | Licence and access | Phone numbers from Google (other phones) | Notes |
+| --- | --- | --- | --- | --- |
+| **Gemma 4 E2B** (recommended) | `gemma-4-E2B-it.litertlm`, 2,588,147,712 bytes (2.59 GB), SHA-256 `181938105e0eefd105961417e8da75903eacda102c4fce9ce90f50b97139a63c`, repo [`litert-community/gemma-4-E2B-it-litert-lm`](https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm) | **Apache-2.0, not gated** (`gated: false`). No account or token needed. | Galaxy S26 Ultra, CPU: about 47 tokens/s decode, time to first token 1.8 s, 1,733 MB peak CPU memory. GPU: 0.3 s, 676 MB. | 2.3B effective parameters. 140+ languages claimed; Hindi and Kannada planning quality is unmeasured. Text, image and audio inputs exist but are not used. Mixed 2, 4 and 8-bit weights. The newest and largest of the three. On a 5.67 GB phone, 1.7 GB peak plus the app is plausible but not proven. |
+| Gemma 3 1B IT, int4 (small fallback) | `gemma3-1b-it-int4.litertlm`, 584,417,280 bytes (584 MB), SHA-256 `1325ae366d31950f137c9c357b9fa89448b176d76998180c08ceaca78bba98be`, repo [`litert-community/Gemma3-1B-IT`](https://huggingface.co/litert-community/Gemma3-1B-IT) | Gemma Terms of Use. **Gated** (`gated: auto`): needs a Hugging Face login and a click on "Acknowledge licence". | Galaxy S24 Ultra, CPU, int4: about 55 tokens/s decode, about 1,009 MB peak. GPU: about 1,205 MB. | Text only. Smallest and fastest. Likely weaker at following a JSON shape and at Hindi; unmeasured. Use if E2B does not fit the phone. |
+| Gemma 3n E2B (not recommended) | `gemma-3n-E2B-it-int4.litertlm`, 3,655,827,456 bytes (3.66 GB), repo [`google/gemma-3n-E2B-it-litert-lm`](https://huggingface.co/google/gemma-3n-E2B-it-litert-lm) | Gemma Terms of Use. **Gated, manual** approval (`gated: manual`). | S24 Ultra, CPU: about 16 tokens/s decode. | Larger, slower, older than Gemma 4 E2B, and needs manual approval. |
+
+**Hosting and gate.** The Gemma 4 E2B file can be downloaded over plain HTTPS from `https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it.litertlm` with no login. The two Gemma 3 files cannot: they need the owner's Hugging Face account and an accepted licence. An app must never carry the owner's token. For a gated file the only route is `adb push` by the owner (task 1.3).
+
+**Languages.** Hindi and Kannada are inside the "140+ languages" claim for Gemma 4 and Gemma 3. I found no per-language benchmark for either on these edge models. DD-3 keeps step text in English and translates it with `locale`, so the planner only has to read English or Hindi OCR lines. Task 14 measures Hindi; Kannada stays "unmeasured".
+
+**Performance expectation.** The reference phone (mid-range, 5.67 GB) is slower than the S24 and S26 Ultra phones in Google's tables. Expect several times slower decode and a slow first load. No number is promised. A step is about 80 to 150 output tokens, so a step may take several seconds to tens of seconds. Task 14 measures it on a release build.
+
+### Constrained output (DD-2)
+
+- LiteRT-LM supports constrained decoding with LLGuidance: regex, JSON Schema or Lark grammar ([constrained-decoding doc](https://github.com/google-ai-edge/LiteRT-LM/blob/main/docs/api/cpp/constrained-decoding.md); that doc shows the C++ API).
+- The Kotlin API exposes it as `ConversationConfig(enableResponseFormat = true)` and `sendMessageAsync(text, responseFormat = ResponseFormat.json(schema))`. I saw this only in a user's bug report on 0.17.0 ([issue 3944](https://github.com/google-ai-edge/LiteRT-LM/issues/3944)), not on a Google doc page. Task 12.1 confirms the exact names in the pinned version before any code depends on them.
+- The same report found: with speculative decoding off, 56 of 60 calls returned valid JSON and 4 timed out. With speculative decoding on, no call was usable. Therefore the module keeps speculative decoding off (DD-9). The report also lists related open issues for thinking mode and for tools combined with a response format, so the module uses neither.
+- If the pinned version has no usable response format, the fallback is the current design: ask for JSON in the prompt, parse strictly, return `PL_BAD_OUTPUT` on any mismatch, and allow one "Try again" (R6.2). Grounding stays the last check in both cases.
 
 ### Speech recognition
 
@@ -234,13 +249,41 @@ All sizes are file sizes, not RAM. RAM, speed and heat on the Reference phone ar
 | **`expo-speech-recognition`** 58.0.1 | Yes: npm 2026-10-29; its version number follows the SDK (58.x) | Expo Modules package, versioned for SDK 58. The README text I read does not say "New Architecture"; `npx expo install --check` and a build confirm (task 3). | npm 0.55 MB unpacked | Depends on the phone's recognizer. `getSupportedLocales()` lists installed on-device packs. Hindi (`hi-IN`) and Kannada (`kn-IN`) support on the Reference phone is **unverified**. | MIT | **No.** | [github.com/jamsch/expo-speech-recognition](https://github.com/jamsch/expo-speech-recognition) |
 | `@react-native-voice/voice` 3.2.4 | Slower: last npm update 2026-01-31 | Not stated; classic bridge module | small | Same dependence on the phone | MIT | No | `npm view @react-native-voice/voice` |
 
-**Recommendation: `expo-speech-recognition`.** Android notes from its README: on-device recognition needs Android 13+ and an installed language pack; continuous mode and some options need Android 13+; `requiresOnDeviceRecognition: false` lets Android use its default service, which may send audio to a network service. The app therefore requests on-device when the pack exists and discloses otherwise (D-042, R2.2). It adds `RECORD_AUDIO`, which the `blockedPermissions` list (D-038) must not block for this package: task 3 checks `app.json`.
+**Approved by the owner (D-046): `expo-speech-recognition`.** Android notes from its README: on-device recognition needs Android 13+ and an installed language pack; continuous mode and some options need Android 13+; `requiresOnDeviceRecognition: false` lets Android use its default service, which may send audio to a network service. The app therefore requests on-device when the pack exists and discloses otherwise (D-042, R2.2). It adds `RECORD_AUDIO`, which the `blockedPermissions` list (D-038) must not block for this package: task 3 checks `app.json`. The reference phone runs Android 14, so on-device recognition is possible if the Hindi or English pack is installed (unverified).
 
-### What needs a local Expo Module in Kotlin
+### Local Kotlin module `modules/overlaykit-llm` (lane K)
 
-- **Nothing**, with `llama.rn` and `expo-speech-recognition`.
-- Only the fallback runtime (LiteRT-LM, or MediaPipe LLM Inference) needs a local Kotlin Expo Module. That path is a separate decision and task lane K in `tasks.md`, which stays unstarted.
-- Spec 01's OCR module (`modules/overlaykit-ocr`) already follows that pattern.
+Pattern: the same as `modules/overlaykit-ocr` (D-036): `expo-module.config.json`, `package.json`, `index.ts`, `android/build.gradle`, a Kotlin `Module` class. Expo autolinking finds it in `modules/`. It works with the New Architecture because it uses the Expo Modules API, not a legacy bridge or a codegen spec. Android only. It adds no JavaScript package.
+
+JS surface (`modules/overlaykit-llm/index.ts`), strings and numbers only:
+
+```ts
+export type LlmLoadResult = { ok: true } | { ok: false; code: 'NO_FILE' | 'OUT_OF_MEMORY' | 'UNSUPPORTED' | 'FAILED' };
+export type LlmGenerateResult = { ok: true; text: string } | { ok: false; code: 'CANCELLED' | 'NOT_LOADED' | 'FAILED' };
+load(modelPath: string, options: { backend: 'cpu' | 'gpu'; maxTokens: number }): Promise<LlmLoadResult>;
+generate(requestId: string, system: string, user: string, schemaJson: string | null, maxOutputTokens: number): Promise<LlmGenerateResult>;
+cancel(requestId: string): void;
+release(): Promise<void>;
+```
+
+Kotlin rules (from Google's Android guide for the API):
+- One single-thread executor owns the `Engine` and every `Conversation`. `initialize()` runs on it, never on the main thread (it can take seconds).
+- `generate` creates a fresh `Conversation`, sends one message, collects the reply, then closes the conversation. `temperature` 0 and `topK` 1 for repeatable output. Thinking off, tools off, speculative decoding off.
+- `cancel` calls `cancelProcess()` and waits for the reply to end. Close the conversation first, then the engine, each once. A second `close` throws.
+- `cacheDir` is `context.cacheDir` (faster second load). The model file is outside the APK, at an absolute path.
+- All Kotlin exceptions (`LiteRtLmJniException`, `IllegalStateException`, out-of-memory) become a code string. Nothing is thrown to JavaScript. `planner/adapters/litert.ts` maps the codes to `PL_*`: `NO_FILE` to `PL_NO_MODEL`, `OUT_OF_MEMORY` and `UNSUPPORTED` to `PL_UNSUPPORTED_DEVICE`, `CANCELLED` to no error (user cancel) or `PL_TIMEOUT`, `FAILED` to `PL_BAD_OUTPUT` or `PL_UNSUPPORTED_DEVICE` by phase.
+- The module sends no data anywhere. LiteRT-LM's source docs mention no telemetry; task 3.2 re-checks with a network trace in airplane mode (DT-G5-04).
+
+Gradle and build (all through the module's own files and `app.json` config, never by editing generated `android/`):
+- Dependency `com.google.ai.edge.litertlm:litertlm-android:<pinned>` in the module's `build.gradle`. Candidate pins: 0.16.1 (Kotlin 2.2 compatible), or 0.18.1 and later (need Kotlin 2.3+). **Open:** which Kotlin version the Expo SDK 58 build resolves is not in the files I could read (the React Native catalog lists 2.2.0). Task 3.3 reads it from a real prebuild and picks the pin. Raising Kotlin is done with a config plugin that sets `android.kotlinVersion` in `gradle.properties` (Expo's own build reads it); this needs no new package, but it affects every native module and is a lane X change with its own check.
+- `minSdk`: 24 for both React Native and the AAR. No change.
+- GPU backend is optional and off by default (CPU first). If turned on, the module's `AndroidManifest.xml` adds the two `uses-native-library` entries (`libvndksupport.so`, `libOpenCL.so`, both `required="false"`). No new permission.
+- ABI: the phone is `arm64-v8a`. APK size impact of the native libraries is unmeasured (`reactNativeArchitectures` currently lists four ABIs). Task 3.3 records the release APK size.
+- `INTERNET` is already allowed (D-038). The model download in `model-store` uses it.
+
+Model file placement:
+- In-app download (E2B only, no login): `model-store` writes to app-private storage (`expo-file-system`), checks size and SHA-256, deletes on mismatch.
+- `adb push` for a gated file or an offline demo: debug builds can use `adb push` to `/data/local/tmp` then `adb shell run-as <package> cp ... files/` (works for debuggable builds only). A release build cannot use `run-as`; the alternative is the app-specific external folder, which may be blocked for `adb` on Android 14 or HyperOS. Task 5.3 tests which route works and writes it down. This is a device-only check.
 
 ## Data Models
 
@@ -256,7 +299,7 @@ All sizes are file sizes, not RAM. RAM, speed and heat on the Reference phone ar
 
 | Code | Module | Cause | UI text | Actions |
 | --- | --- | --- | --- | --- |
-| `PL_NO_MODEL` | planner | Model file missing or failed its check | "The planner isn't on this phone yet. Download it (about 1 GB)." | Download; Translate; Explore |
+| `PL_NO_MODEL` | planner | Model file missing or failed its check | "The planner isn't on this phone yet. Download it (about 2.6 GB)." | Download; Translate; Explore |
 | `PL_UNSUPPORTED_DEVICE` | planner | Model cannot load (memory, chip) | "This phone can't run the planner." | Translate; Explore |
 | `PL_NO_TEXT` | planner/ui | No readable lines in the frame | "I can't read any text here. Move closer or add light." | Retry; Translate |
 | `PL_CANNOT_PLAN` | planner | Model said it cannot plan, or step limit | "I can't plan this. {reason}" | Translate; Explore; Stop |
@@ -305,18 +348,21 @@ New rows in `docs/DEVICE-TESTS.md`, all NOT TESTED until run: DT-G5-01 (three re
 
 See `requirements.md` OQ-1 to OQ-8. Design-only points:
 
-- **DQ-1.** GGUF checksum without a new package. `expo-file-system` may or may not offer a hash in SDK 58; task 5 checks. If it does not, the owner chooses between a size check plus GGUF header check, or approving a hashing package.
-- **DQ-2.** `llama.rn` context size and thread count for the Reference phone. Set in task 14 from measurements.
+- **DQ-1.** File checksum without a new package. `expo-file-system` may or may not offer a hash in SDK 58; task 5.3 checks. If it does not, the owner chooses between a size check plus a `.litertlm` header check, or approving a hashing package. The Kotlin module could also hash the file with the JDK (`MessageDigest`), which needs no package: preferred if `expo-file-system` has no hash.
+- **DQ-2.** Backend (CPU or GPU), `maxNumTokens` (context size) and output-token cap for the Reference phone. Set in task 14 from measurements. Default: CPU.
 - **DQ-3.** Hindi OCR lines in the prompt: whether to send Devanagari as read, or transliterate. Default: as read.
+- **DQ-4.** Which `litertlm-android` version and which Kotlin version the Expo SDK 58 build uses (see "Local Kotlin module"). Decided by task 3.3 from a real prebuild.
+- **DQ-5.** Whether the pinned version has `ResponseFormat.json` and whether it is reliable on the phone. Decided by task 12.1 and measured in task 14.
 
 ## Flagged items for the owner
 
-1. Approve `llama.rn`, `expo-speech-recognition` and the model (Qwen3-1.7B Q4_K_M, about 1 GB, Apache-2.0). The `llama.rn` release on the `latest` tag is a release candidate.
-2. RN 0.88 support of `llama.rn` is not stated by its docs. Task 3 builds a smoke test and stops if it fails.
-3. Speech may send audio to Google's service unless an on-device pack exists. The app discloses this before first use.
-4. A 1 GB model download and RAM use may not suit all phones.
-5. Plans are AI suggestions and can be wrong. Demo and Devpost text must say so.
-6. Gate G4 and spec 03 tasks tied to TM-01 are replaced (D-043).
+1. Confirm the model: Gemma 4 E2B (2.59 GB, Apache-2.0, no login) as the default, with Gemma 3 1B int4 (584 MB, gated, Gemma terms) as the small fallback (OQ-1). `expo-speech-recognition` is already approved (D-046).
+2. A Gemma 3 file needs your Hugging Face login and a licence click. Gemma 4 E2B needs neither. See the report for the exact steps.
+3. LiteRT-LM has no npm package. We write a Kotlin module. Kotlin 2.2 versus 2.3+ is an open build risk (DQ-4).
+4. Speech may send audio to Google's service unless an on-device pack exists. The app discloses this before first use (D-046).
+5. A 2.6 GB model download and about 1.7 GB peak memory on a 5.67 GB phone are unproven. Task 14 measures them. The small fallback exists for this reason.
+6. Plans are AI suggestions and can be wrong. Demo and Devpost text must say so.
+7. Gate G4 and spec 03 tasks tied to TM-01 are replaced (D-043).
 
 ## Traceability
 

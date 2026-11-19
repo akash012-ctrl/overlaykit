@@ -1,6 +1,6 @@
 # Requirements Document
 
-Status: **draft, written 2026-11-19 without a review pause.** Based on owner decisions 1 to 6 of 2026-11-19, recorded as D-039 to D-043 in `docs/DECISIONS.md`, and on the updated `docs/PRODUCT.md`. Open questions OQ-1 to OQ-8 use their recommended defaults until the owner decides them. The package and model picks are **Proposed** and need owner approval before anything is installed (stack rule "Adding a dependency"). Writing this document installs nothing.
+Status: **draft, written 2026-11-19 without a review pause; revised the same day for the Gemma route.** Based on owner decisions 1 to 6 of 2026-11-19, recorded as D-039 to D-043 in `docs/DECISIONS.md`, on the Gemma and speech decisions recorded as D-045 to D-047, and on the updated `docs/PRODUCT.md`. Open questions OQ-1 to OQ-8 use their recommended defaults until the owner decides them. The runtime is LiteRT-LM through a local Kotlin Expo Module (D-045, no npm package). The model pick is **Proposed** and needs owner confirmation. `expo-speech-recognition` is approved (D-046), but nothing is installed by writing this document.
 
 ## Introduction
 
@@ -100,6 +100,7 @@ What this spec adds:
 4. THE OverlayKit_App SHALL load the model only after the user opened Guide, and SHALL release it when the app is backgrounded for longer than `MODEL_IDLE_RELEASE_MS` (Named threshold, unset).
 5. IF the phone cannot load the model (not enough memory, unsupported chip), THEN Guide SHALL show `PL_UNSUPPORTED_DEVICE`, not retry in a loop, and offer Translate and Explore.
 6. Device: model size on disk, load time, peak memory and time to the first token SHALL be measured on the Reference phone and recorded in `docs/DEVICE-TESTS.md`.
+7. THE OverlayKit_App SHALL name the model, its source and its licence on the model download screen and in the app's licence notices (D-047). If a model under the Gemma Terms of Use is ever used, the notice text and the prohibited-use pointer required by those terms SHALL be added before any build that carries or downloads it for other people.
 
 ### Requirement 5: Grounding and honesty
 
@@ -159,7 +160,7 @@ What this spec adds:
 1. NO image, no pixel data, and no text SHALL leave the phone for planning (D-040). A source search of `planner`, `guide` and `speech` SHALL find no `fetch`, `XMLHttpRequest`, `WebSocket`, `Linking`, or Bluetooth use. The only network code in the Guide path is the model download in `planner/model-store`, and it is listed.
 2. THE only text that leaves the phone in Guide SHALL be text sent to the translation provider under D-027 and D-028, as in Translate. Guide SHALL show the same privacy note.
 3. THE OverlayKit_App SHALL NOT upload, store or log audio. Transcripts SHALL NOT be stored beyond the current Goal and SHALL NOT be logged.
-4. THE microphone permission SHALL be requested only on the first tap of the microphone. The manifest SHALL contain `RECORD_AUDIO` only if the owner approved the speech package. The camera config (`recordAudioAndroid: false`, D-036) SHALL stay.
+4. THE microphone permission SHALL be requested only on the first tap of the microphone. The manifest SHALL contain `RECORD_AUDIO` because the owner approved the speech package (D-046). The camera config (`recordAudioAndroid: false`, D-036) SHALL stay.
 5. THE OverlayKit_App SHALL have no login, accounts, analytics, ads or tracking. Telemetry of any dependency SHALL be off. A dependency that sends telemetry by default SHALL be configured off before first use, and the build SHALL be checked for it.
 6. No fixture state SHALL reach the app except through the camera. No Bluetooth, network, shared storage, deep link or timer carries machine state.
 
@@ -201,8 +202,8 @@ What this spec adds:
 
 | ID | Question | Recommended default |
 | --- | --- | --- |
-| OQ-1 | Which runtime and model? (design.md table) | `llama.rn` with Qwen3-1.7B Q4_K_M, JSON-grammar output. Needs owner approval. |
-| OQ-2 | Where does the model file come from? | Download on tap from Hugging Face over HTTPS. For the demo build the owner may place the file by `adb push` instead. |
+| OQ-1 | Which model? (runtime is decided: LiteRT-LM in a local Kotlin module, D-045) | Gemma 4 E2B `.litertlm` (2.59 GB, Apache-2.0, no login). Fallback: Gemma 3 1B int4 (584 MB, gated, Gemma terms). Needs owner confirmation. |
+| OQ-2 | Where does the model file come from? | Gemma 4 E2B: download on tap from Hugging Face over HTTPS, no login. A gated Gemma 3 file: only by the owner's `adb push` (an app must not carry a token). |
 | OQ-3 | Plan one step or the whole route at once? | One step at a time (R3.7): it is simpler for a small model and uses the current screen. |
 | OQ-4 | Should the planner see Hindi text directly? | Yes, as read. Quality is measured in task 14 and reported. |
 | OQ-5 | Speech engine on-device only, or also the phone's default (may use network)? | Request on-device when the language pack is present. Otherwise tell the user, and let them choose tap input. |
