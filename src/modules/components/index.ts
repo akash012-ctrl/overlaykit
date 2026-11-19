@@ -29,6 +29,26 @@ export function createMachineService(fixture: MachineFixtureB = tm01Fixture): Ma
 }
 
 export { validateFixture } from './validate-fixture';
-export type { FixtureIssue, FixtureRule, MachineFixtureB, ReviewState } from './fixture-types';
+export type {
+  Checkpoint,
+  FixtureIssue,
+  FixtureRule,
+  LocalizedText,
+  MachineFixture,
+  MachineFixtureB,
+  ReviewState,
+  ScreenDef,
+  ScreenIssueRule,
+  StepDef,
+  WorkflowDef,
+  WorkflowReview,
+} from './fixture-types';
+export { tm01Fixture } from './fixtures/tm-01';
+export { matchScreen } from './screen-match';
+export type { ScreenMatch } from './screen-match';
+export { checkpointResult } from './checkpoint';
+export type { CheckpointResult } from './checkpoint';
+export { describeObservedText } from './observed-text';
+export type { ObservedText } from './observed-text';
 export type { Explanation, ExplainError } from './explain';
 export type { LocateResult } from './locate';

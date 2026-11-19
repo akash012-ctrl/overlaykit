@@ -27,6 +27,8 @@ Every Named threshold constant (R20.5) gets a pinned-value test and a behaviour 
 
 ## Tasks
 
+Lane P note (2026-11-19): ticks on 2, 3, 5, 6, 8 cover the code only. Their unit and property tests are deferred by owner: tests. Task 4 is parked (no authored hi/kn, expected results or performed record). Task 9 verify/doctor run, vision review not run.
+
 - [ ] 1. Prerequisites
   - [ ] 1.1 Confirm spec 02 gate tasks AT-G3-01 and AT-G3-02 pass
     - Read `.kiro/specs/02-translation-explore/tasks.md` and the evidence it names. Both ATs must have a recorded PASSED result. If either is pending, stop and report which one. Do not start task 2.
@@ -45,20 +47,20 @@ Every Named threshold constant (R20.5) gets a pinned-value test and a behaviour 
     - Confirm that D-029 (printed panel plus screen images on an iPad) and D-031 (no reviewers, status `unreviewed`) are the basis for TM-01 content. Confirm OQ-10: the owner approves the separate update of PRODUCT.md "verified" item 3 and ARCHITECTURE.md §10 (spec 02 OQ-11).
     - _Requirements: 1.7, 2.1, 2.6_
 
-- [ ] 2. Add shared `GD_*` codes
+- [x] 2. Add shared `GD_*` codes
   - Files: `src/modules/shared/index.ts`, `src/modules/shared/__tests__/gd-codes.test.ts`.
   - Add `GdErrorCode` and `GD_ERROR_CODES` for the five codes in ARCHITECTURE.md §8, unless spec A or B already defined them. No Guide state types go here: they stay in `guide/index.ts`.
   - Unit test: the list holds exactly the five codes, with no duplicates.
   - _Requirements: 16.1, 16.2, 19.9_
 
-- [ ] 3. Add the workflow fixture schema and validation (components)
-  - [ ] 3.1 Add the screen and workflow types and extend `validateFixture`
+- [x] 3. Add the workflow fixture schema and validation (components)
+  - [x] 3.1 Add the screen and workflow types and extend `validateFixture`
     - Files: `src/modules/components/fixture-types.ts`, `validate-fixture.ts`, `index.ts`, `__tests__/validate-fixture-screens.test.ts`.
     - Add `LocalizedText`, `ScreenDef`, `Checkpoint`, `StepDef`, `WorkflowDef`, the widened `MachineFixture` (with `simulated`, `screens`, `workflows`) and `ScreenIssueRule`. `identification` and `components` stay unchanged.
     - `validateFixture` reports `NO_SCREENS_FOR_CHECKPOINT`, `EMPTY_SCREEN_TEXT` and `DUPLICATE_SCREEN_ID`. It never throws.
     - Unit tests: one valid fixture and one invalid fixture per rule. Spec B's existing tests still pass unchanged.
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.9, 1.10, 1.11_
-  - [ ] 3.2 Add the Guide types and the workflow loader (`GD_FIXTURE_INVALID`)
+  - [x] 3.2 Add the Guide types and the workflow loader (`GD_FIXTURE_INVALID`)
     - Files: `src/modules/guide/types.ts`, `load-workflow.ts`, `index.ts` (`loadWorkflow`, `listWorkflows`, `ValidatedWorkflow`, `LoadError`), `__tests__/load-workflow.test.ts`.
     - Rules in the design's order: unknown id, empty or duplicate Steps, missing locale value, missing review status (`unreviewed` is accepted, D-031), performed record, unknown component, unknown screen, empty checkpoint text. The failing field path goes in `detail`.
     - Unit tests: one invalid fixture per rule, and a mutation test that removes each required field in turn from a valid workflow and expects `GD_FIXTURE_INVALID`. A test pins that the bundled fixture with no workflows gives an empty `listWorkflows` (no fast-check needed).
@@ -78,33 +80,33 @@ Every Named threshold constant (R20.5) gets a pinned-value test and a behaviour 
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.7, 1.12, 1.13_
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 1.10, 4.11, 18.6_
 
-- [ ] 5. Add the screen matcher and checkpoint result (components)
-  - [ ] 5.1 Add `matchScreen` and the thresholds file
+- [x] 5. Add the screen matcher and checkpoint result (components)
+  - [x] 5.1 Add `matchScreen` and the thresholds file
     - Files: `src/modules/components/screen-match.ts`, `thresholds.ts` (`SCREEN_MIN_TEXTS`, `SCREEN_MARGIN`, unset until G4), `index.ts`, `__tests__/screen-match.test.ts`.
     - Same normalization as `identifyMachine`, Latin and Devanagari lines only. `cannot-tell` for none, a tie, `OCR_LOW_QUALITY`, or unset constants (safe direction). Deterministic, no network, no throw. OCR text is plain data (T8).
     - Unit tests start from recorded snapshots of the Screen images when they exist. Until then, tests use hand-built `OcrResult` values in `test-support/` labelled as synthetic, and say so. A test fails if G4 evidence is claimed while the constants are unset.
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.10, 20.1, 20.5_
-  - [ ] 5.2 Add `checkpointResult` and `describeObservedText`
+  - [x] 5.2 Add `checkpointResult` and `describeObservedText`
     - Files: `src/modules/components/checkpoint.ts`, `observed-text.ts`, `index.ts`, tests.
     - `met` only when the checkpoint text is on a Latin or Devanagari line and, if a screen is named, `matchScreen` matched that id. `cannot-tell` for a `cannot-tell` screen, `OCR_LOW_QUALITY`, or a `manual` checkpoint. `not-met` otherwise. `describeObservedText` returns readable and anchor line counts.
     - Unit tests: each outcome, with named fields changed from a snapshot for partial and ambiguous cases.
     - _Requirements: 3.8, 3.9, 3.10, 20.1_
 
-- [ ] 6. Add the Guide reducer, observation evaluation and transition proof
-  - [ ] 6.1 Add constants, `GuideObservation` and `evaluateObservation`
+- [x] 6. Add the Guide reducer, observation evaluation and transition proof
+  - [x] 6.1 Add constants, `GuideObservation` and `evaluateObservation`
     - Files: `src/modules/guide/constants.ts`, `evaluate.ts`, `index.ts`, `__tests__/constants.test.ts`, `__tests__/evaluate.test.ts`.
     - `CONSECUTIVE_MATCHES_REQUIRED = 2` (pinned). `MACHINE_LOST_TIMEOUT_MS` (proposed 3000, ARCHITECTURE.md §8), `CHECKPOINT_NOT_SEEN_LIMIT`, `LOSS_MIN_READABLE_LINES`, `LOSS_MAX_ANCHOR_LINES` stay unset or proposed until G4 and get a DECISIONS.md entry when set.
     - `evaluateObservation` builds `obs:<frameId>`, copies `frameId` and `capturedAtMs` (as `seq`), and reports `machine: none` when the MachineMatch frameId differs from the OcrResult's.
     - Unit tests: id derivation, frame mismatch, each machine status.
     - _Requirements: 6.6, 7.9, 8.1, 10.1, 13.12, 20.5_
-  - [ ] 6.2 Add `guideReducer`: start, observation, advance
+  - [x] 6.2 Add `guideReducer`: start, observation, advance
     - Files: `src/modules/guide/reducer.ts`, `index.ts` (`GuideState`, `GuideEvent`, `TransitionProof`, `initialGuideState`, `guideReducer`, `currentStep`, `advanceCount`), `__tests__/reducer-start.test.ts`, `__tests__/reducer-observation.test.ts`.
     - Implement the design's check order for `start` and `observation`: dedup by id and frameId, `seq` against `lastSeq` and `notBeforeSeq`, `forStepId` mismatch, the streak of two, the not-seen count, the single `advance` function that appends one proof and moves to `completed` from the last Step. Rejected observations return the same state object.
     - Pure and total: no React, no clock, no random, no throw, no mutation.
     - Unit tests: `GD_UNSUPPORTED` and `GD_FIXTURE_INVALID` starts, two matching distinct observations advance once, one `met` does not, duplicates and replays, out-of-order, manual Step ignores observations, advance from the last Step completes.
     - Add a Node-environment test that imports the reducer without React Native.
     - _Requirements: 5.2, 5.3, 5.7, 5.8, 6.1, 6.2, 6.3, 6.4, 6.5, 6.8, 6.9, 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7, 7.8, 8.2, 8.3, 8.4, 8.5, 8.6, 8.7, 11.1, 11.2, 11.4, 11.6, 11.9, 13.4, 13.10, 13.11_
-  - [ ] 6.3 Add the remaining reducer events and the transition proof checks
+  - [x] 6.3 Add the remaining reducer events and the transition proof checks
     - Files: `src/modules/guide/reducer.ts`, `__tests__/reducer-events.test.ts`, `__tests__/reducer-proof.test.ts`.
     - `confirm-manual` (matching `stepId`, manual Step only, `done` proof with `atMs`), `machine-lost` (`not-seen` pauses with `GD_MACHINE_LOST`, `other-machine-text` cancels with `GD_MACHINE_CHANGED`), `interrupted`, `retry`, `step-back`, `cancel`, `reset`, resume on a `verified` observation, cancel on a `verified` observation of another machine id.
     - Transition proof tests: `proofs.length` equals the advance count, ordinals run `1..n`, observed proofs hold two distinct frameIds both in `acceptedFrameIds`, `step-back` and `retry` append none, no proof holds image data or OCR text.
@@ -119,7 +121,7 @@ Every Named threshold constant (R20.5) gets a pinned-value test and a behaviour 
   - Each test records its seed and shrunk counterexample on failure. No test is skipped or weakened.
   - _Requirements: 6.4, 7.4, 8.6, 10.11, 11.5, 14.4, 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 15.7, 15.8, 15.9, 15.10, 15.11, 15.12_
 
-- [ ] 8. Add loss classification
+- [x] 8. Add loss classification
   - Files: `src/modules/guide/loss.ts`, `index.ts`, `__tests__/loss.test.ts`.
   - `classifyLoss(sinceVerified)` returns `other-machine-text` when summed readable lines reach `LOSS_MIN_READABLE_LINES` and summed anchor lines stay at or below `LOSS_MAX_ANCHOR_LINES`, else `not-seen`. One place defines "a different machine" (R10.13). If the owner rejected the OQ-3 default in task 1.2, return `not-seen` always and say that DT-G4-04 cannot pass as written.
   - Unit tests on both sides of each constant. Constants stay unset until G4 snapshots exist: with unset values the function returns `not-seen`. Snapshot-based cases (NEG-01 to NEG-10, blank, wall) are added in task 18.2.

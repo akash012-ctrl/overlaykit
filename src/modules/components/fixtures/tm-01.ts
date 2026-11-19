@@ -1,5 +1,5 @@
 import type { ComponentKind, Quad } from '../../shared';
-import type { MachineFixtureB } from '../fixture-types';
+import type { MachineFixture } from '../fixture-types';
 
 /**
  * Every box and region below is a DRAFT value from test-fixtures/tm-01/FIXTURE.md
@@ -47,7 +47,17 @@ const COMPONENTS: readonly { id: string; kind: ComponentKind; box: Box }[] = [
  * - verification is recorded (task 12.1).
  * Empty strings are placeholders, never shown: the validator rejects them.
  */
-export const tm01Fixture: MachineFixtureB = {
+/** Screen images S01 to S06: exact on-screen text from FIXTURE.md section 6. */
+const SCREENS = [
+  { id: 'S01', identifyingTexts: ['Select Destination', 'Central Station', 'Airport', 'Harbour'] },
+  { id: 'S02', identifyingTexts: ['Single Journey', 'Return Journey', 'Day Pass'] },
+  { id: 'S03', identifyingTexts: ['Single Journey to Central Station', 'Total: 20', 'Press Confirm'] },
+  { id: 'S04', identifyingTexts: ['Insert Card', 'Total: 20'] },
+  { id: 'S05', identifyingTexts: ['Printing', 'Please wait'] },
+  { id: 'S06', identifyingTexts: ['Collect your ticket', 'Thank you'] },
+] as const;
+
+export const tm01Fixture: MachineFixture = {
   id: 'TM-01',
   version: 0,
   verification: { verifiedBy: '', verifiedOn: '', method: 'replica', evidence: [] },
@@ -64,4 +74,11 @@ export const tm01Fixture: MachineFixtureB = {
     explanation: { en: '', hi: '', kn: '' },
   })),
   review: { hi: 'unreviewed', kn: 'unreviewed' },
+  simulated: true,
+  screens: SCREENS,
+  /**
+   * PARKED (spec 03 task 4): no workflow is authored. FIXTURE.md has no hi or kn text, no expected
+   * results and no performed record, and nothing may be invented. Empty means Guide offers nothing.
+   */
+  workflows: [],
 };
