@@ -67,6 +67,41 @@ const EXPECTED: { readonly [C in CamErrorCode | OcrErrorCode | TrErrorCode]: Exp
     message: 'Translation not available',
     action: null,
   },
+  TR_OFFLINE: {
+    surface: { kind: 'label', labelState: 'failed' },
+    message: 'No internet connection, so this text was not translated.',
+    action: null,
+  },
+  TR_TIMEOUT: {
+    surface: { kind: 'label', labelState: 'failed' },
+    message: 'Translation took too long.',
+    action: null,
+  },
+  TR_RATE_LIMITED: {
+    surface: { kind: 'label', labelState: 'failed' },
+    message: 'Too many requests. Try again in a moment.',
+    action: null,
+  },
+  TR_PROVIDER_ERROR: {
+    surface: { kind: 'label', labelState: 'failed' },
+    message: 'The translation service failed.',
+    action: null,
+  },
+  TR_UNSUPPORTED_PAIR: {
+    surface: { kind: 'label', labelState: 'failed' },
+    message: "This language pair can't be translated.",
+    action: null,
+  },
+  TR_KEY_INVALID: {
+    surface: { kind: 'label', labelState: 'failed' },
+    message: 'The OpenRouter key was rejected.',
+    action: null,
+  },
+  TR_NO_CREDITS: {
+    surface: { kind: 'label', labelState: 'failed' },
+    message: 'The OpenRouter account has no credit left.',
+    action: null,
+  },
 };
 
 describe('ERROR_UI', () => {
