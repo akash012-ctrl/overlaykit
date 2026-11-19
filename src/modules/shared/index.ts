@@ -237,7 +237,10 @@ export type MonotonicClock = () => number;
 export const PL_ERROR_CODES = [
   'PL_NO_MODEL', 'PL_UNSUPPORTED_DEVICE', 'PL_NO_TEXT', 'PL_CANNOT_PLAN',
   'PL_BAD_OUTPUT', 'PL_TARGET_NOT_FOUND', 'PL_TIMEOUT',
+  'PL_LIVE_NO_KEY', 'PL_LIVE_AUTH', 'PL_LIVE_QUOTA', 'PL_LIVE_NETWORK',
+  'PL_LIVE_SESSION_ENDED', 'PL_LIVE_MIC_DENIED',
 ] as const;
+export type PlannerChoice = 'on-device' | 'gemini-live'; // default 'on-device'
 export type PlErrorCode = (typeof PL_ERROR_CODES)[number];
 
 export type PlanLine = { readonly lineId: string; readonly text: string };
