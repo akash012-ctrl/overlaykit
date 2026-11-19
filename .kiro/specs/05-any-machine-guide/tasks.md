@@ -183,16 +183,16 @@ Rules for every worker:
   - _Requirements: 14.5 to 14.7_
 
 - [ ] 12. Lane K: Kotlin Expo Module around LiteRT-LM (D-045; needed for any real planning)
-  - [ ] 12.1 Skeleton and API check
+  - [x] 12.1 Skeleton and API check
     - Files: `modules/overlaykit-llm/{expo-module.config.json,package.json,index.ts,android/build.gradle,android/src/main/AndroidManifest.xml,android/src/main/java/com/overlaykit/llm/OverlaykitLlmModule.kt}`. Same pattern as `modules/overlaykit-ocr` (D-036).
     - Pin `litertlm-android` per task 3.3. Read the pinned version's Kotlin API and confirm the real names: `Engine`, `EngineConfig`, `Conversation`, `ConversationConfig`, `SamplerConfig`, and whether `ResponseFormat.json` and `enableResponseFormat` exist (DQ-5). Write what was found in the report. If there is no response format, the module ignores `schemaJson` (the prompt carries the shape) and the parser is the only check.
     - Needs: task 3.3 done. The typed JS surface in `design.md` is the contract; change it only by editing `design.md` first.
     - _Requirements: 3.3, 3.5, 3.8, 13.6_
-  - [ ] 12.2 Engine and generate
+  - [x] 12.2 Engine and generate
     - `load`, `generate`, `cancel`, `release` on one single-thread executor. `initialize()` off the main thread. Fresh `Conversation` per `generate`. Temperature 0, top-k 1. Thinking, tools and speculative decoding off. All exceptions become code strings. Conversation closed before engine, each once.
     - Done check: `npm run typecheck`, `npm run lint`, and `npx expo run:android --device` builds (Gradle assemble at least). No device claim without a DEVICE-TESTS record.
     - _Requirements: 3.3 to 3.6, 4.4, 4.5_
-  - [ ] 12.4 Model download in the module (lane K; D-049)
+  - [x] 12.4 Model download in the module (lane K; D-049)
     - Add `downloadModel(url, destPath, expectedSize, expectedSha256)` with progress events, `cancelDownload()`, HTTP Range resume of a `<dest>.part` file, a free-space check before the first byte, a SHA-256 check (JDK `MessageDigest`), and an atomic rename on success. It returns strings and numbers only, never throws, and sends no headers beyond the standard ones (no token, no user data). Also add the file hash helper from DQ-1.
     - Done check: typecheck, lint, Gradle assemble. Device behavior goes to DT-G5-12.
     - _Requirements: 4.2, 4.3_
