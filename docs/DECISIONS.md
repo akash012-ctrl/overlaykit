@@ -582,3 +582,19 @@ Sarvam limits input to 1,000 characters per request for `mayura:v1` and 2,000 fo
 - Threat model: ARCHITECTURE.md section 11 gets rows T13 to T17 (this entry's change).
 - D-040, D-042 and P5 text is amended by this entry, only for Gemini Live. D-006's rule stands for every other path.
 **Consequences:** PRODUCT.md P5 and the "Not built" and privacy lines, requirements R10, and the first-run privacy note change. The "Guide offline" claim holds only for on-device. Gemini Live costs the user's own money or free quota (about US$0.007 per minute of streaming input at paid-tier prices, more while the model speaks; see the report). Without a valid Google key the choice is not selectable. Device privacy checks (DT-G5-09 to DT-G5-11) must show the banner, Stop and no stream before consent. Hindi and Kannada quality with Gemini Live is unmeasured; Kannada is a listed Live language, Hindi too.
+
+## D-051 Owner approvals for Gemini Live (D-050)
+
+**Status:** Accepted (owner, 2026-11-19).
+**Context:** D-050 left four items for the owner.
+**Decision:** The owner approved:
+- Package xpo-secure-store (SDK 58, ~58.0.3) for the Google API key. Installed later by task 3.4 with 
+px expo install, followed by 
+px expo install --check and 
+px expo-doctor.
+- The local Kotlin module modules/overlaykit-live (microphone PCM and JPEG scaling). No npm package.
+- Model id gemini-3.8-live, kept as one constant in the adapter manifest.
+- Camera video and microphone audio going to Google, opt-in only, under the D-050 rules: off by default, consent screen, "Start Gemini Live" tap per session, "Streaming to Google" banner with Stop, nothing stored.
+- The owner supplies the Google API key later by typing it in Settings. It is never given to a worker, a file, a command or git.
+**Not decided here:** the mic toggle default (off) and no spoken reply in v1 stay as the design defaults (OQ-9, OQ-10) until the owner says otherwise.
+**Consequences:** Tasks 2.2, 3.4, 19, 20 and 21 are unblocked. Task 19.1's real call and task 22 still wait for the key (task 1.6).

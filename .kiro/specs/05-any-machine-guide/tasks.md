@@ -51,10 +51,11 @@ Rules for every worker:
     - Done check: the owner says the file is there and the hash matched. Record the date. Until then: "device validation pending".
     - _Requirements: R4.2, R4.3_
 
-  - [ ] 1.5 Owner approves the Gemini Live design and its packages (D-050)
+  - [x] 1.5 Owner approves the Gemini Live design and its packages (D-050) - approved 2026-11-19, recorded in D-051 (items a to d; e and f stay at the design defaults)
     - Approve or change, in one reply: (a) `expo-secure-store` (task 3.4; SDK 58 source in `design.md`, "Gemini Live packages"); (b) the local Kotlin module `modules/overlaykit-live` (no npm package); (c) the model id `gemini-3.8-live` (it exists: Google's model page and pricing page list it as stable, read 2026-11-19); (d) that Gemini Live sends camera frames, microphone audio, the goal and the OCR text lines to Google, only after the consent screen and a "Start Gemini Live" tap; (e) the mic toggle default off (OQ-10); (f) no spoken reply in v1 (OQ-9).
-    - Park until answered: tasks 2.2, 3.4, 19, 20, 21, 22. Nothing in them is installed or built before then.
+    - Approved (D-051). Tasks 2.2, 3.4, 19, 20 and 21 are unblocked. Task 22 and the real call in 19.1 still wait for 1.6.
   - [ ] 1.6 Owner provides a Google API key (credentials item for the owner)
+    - Owner approval given (D-051): the owner types the key into Settings on the phone later. Still open until the owner says it is saved.
     - The owner makes a Google API key in Google AI Studio and enters it on the phone in Settings. No worker sees it. It is not written in any file or command and is not committed. A paid-tier key keeps content out of Google's product improvement (pricing page); a free-tier key does not. Needed for task 19.1 (one real call) and task 22 only.
     - Done check: the owner says the key is saved on the phone.
 
