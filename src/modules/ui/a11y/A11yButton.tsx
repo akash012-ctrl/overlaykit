@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { StyleProp, TextStyle, ViewStyle } from 'react-native';
 import { Pressable, StyleSheet, Text } from 'react-native';
 
@@ -13,12 +14,15 @@ export function A11yButton({
   disabled,
   style,
   textStyle,
+  children,
 }: {
   label: string;
   onPress: () => void;
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
   textStyle?: StyleProp<TextStyle>;
+  /** Extra drawing inside the button, for example an outline ring. */
+  children?: ReactNode;
 }) {
   return (
     <Pressable
@@ -30,6 +34,7 @@ export function A11yButton({
       style={[styles.target, style]}
     >
       <Text style={textStyle}>{label}</Text>
+      {children}
     </Pressable>
   );
 }

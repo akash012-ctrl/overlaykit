@@ -33,6 +33,8 @@ export const COLOR_PAIRS: readonly { readonly name: string; readonly text: Rgb; 
   { name: 'mode tab', text: WHITE, background: [28, 37, 48] },
   { name: 'settings button text', text: WHITE, background: [28, 37, 48] },
   { name: 'privacy accept text on blue', text: WHITE, background: [47, 111, 235] },
+  { name: 'destructive Stop text on guide panel over white', text: [255, 180, 171], background: over([11, 15, 20], 0.92, WHITE) },
+  { name: 'Live banner text on red', text: WHITE, background: [127, 29, 29] },
   { name: 'settings hint on dark', text: [184, 194, 207], background: [11, 15, 20] },
 ];
 
