@@ -11,3 +11,4 @@ export { PlannerSettings } from './PlannerSettings';
 export { useLiveSendGate } from './useLiveSendGate';
 export { LIVE_CONSENT_VERSION, liveSendAllowed, liveStartBlock, resolvePlannerSelection } from './live-view-model';
 export type { LiveBannerState, LiveGateInput, LiveKeyPort } from './live-view-model';
+export { liveKeys } from './live-ports';

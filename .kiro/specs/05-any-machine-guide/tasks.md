@@ -269,7 +269,7 @@ Rules for every worker:
   - [x] 21.3 Consent screen
     - File: `ui/guide/LiveConsentScreen.tsx`. Plain words per R16.3, "Agree and turn on" and "No, keep on-device". Stores the consent with the text version. Declining changes nothing and sends nothing.
     - _Requirements: 16.2, 16.3_
-  - [ ] 21.4 Banner, start button and send gate
+  - [x] 21.4 Banner, start button and send gate
     - Files: `ui/guide/LiveBanner.tsx`, `LiveStartButton.tsx`, `live-view-model.ts`, and the changes in `usePlanGuide.ts` and `GuideScreen.tsx`. "Start Gemini Live" on every session. The banner is rendered from `sessionState()` ("Streaming to Google", red dot, Stop, mic toggle default off). `usePlanGuide` passes frames and mic to the adapter only when the banner state is connecting or open. Stop, leaving Guide, backgrounding, goal done and any error call `stopSession()`. The Guide planner line names the active planner. Both planners show "AI suggestion" and "This may be wrong".
     - Supplies `LiveFrameSource` from `capture` stills through `scaleJpegBase64`, and the mic from the module.
     - _Requirements: 15.2 to 15.6, 16.4 to 16.7, 16.11_

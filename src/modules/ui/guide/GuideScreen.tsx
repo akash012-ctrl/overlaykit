@@ -1,10 +1,15 @@
 import { StyleSheet, View } from 'react-native';
 
+import { t } from '../../locale';
 import { CannotPlanView } from './CannotPlanView';
+import { PLAN_ERROR_UI } from './error-map';
 import { FinishPrompt } from './FinishPrompt';
 import { GoalBoxes, GoalPicker, voiceGoalSource } from './GoalPicker';
 import { HighlightLayer } from './HighlightLayer';
+import { LiveBanner } from './LiveBanner';
+import { LiveStartButton } from './LiveStartButton';
 import { ModelGate } from './ModelGate';
+import { GuideButton, Message, Note, Panel } from './parts';
 import { PlanningView } from './PlanningView';
 import { SpeakControl } from './SpeakControl';
 import { CompletionView, PausedView } from './StatusViews';
@@ -13,9 +18,10 @@ import type { GuideDeps } from './usePlanGuide';
 import { usePlanGuide } from './usePlanGuide';
 
 /**
- * Guide mode of the Camera_Screen: pick a goal by tap or voice, the on-device planner proposes one step
- * at a time, a 2D mark shows where. Not a route. The parent mounts it only while the mode is Guide, so
- * switching mode unmounts it and drops all Guide state. Marks are drawn on the image; they do not track.
+ * Guide mode of the Camera_Screen: pick a goal by tap or voice, the planner proposes one step at a time, a 2D
+ * mark shows where. Works on any machine, so every step is an AI suggestion. Not a route. The parent mounts it only
+ * while the mode is Guide, so switching mode unmounts it and drops all Guide state (and any Live session).
+ * Marks are drawn on the image; they do not track.
  */
 export function GuideScreen({
   deps,
@@ -25,24 +31,52 @@ export function GuideScreen({
   onSwitchMode: (mode: 'translate' | 'explore') => void;
 }) {
   const g = usePlanGuide(deps);
-  const { view, actions } = g;
+  const { view, actions, liveInfo } = g;
   const toTranslate = () => onSwitchMode('translate');
   const toExplore = () => onSwitchMode('explore');
   const stepSpeakable = g.stepText.kind === 'translated' || g.locale === 'en';
+  /** With Gemini Live chosen, goals are taken only while the session is open, so nothing is planned without Start. */
+  const goalReady = !liveInfo.active || liveInfo.banner === 'open';
+  const showsPlannerLine = view.kind === 'goal' || view.kind === 'planning' || view.kind === 'step';
 
   return (
     <>
-      {view.kind === 'goal' ? (
+      {view.kind === 'goal' && goalReady ? (
         <GoalBoxes boxes={g.goalLines.boxes} region={g.region} onPick={(text, source) => actions.setGoal(text, source)} />
       ) : null}
       {view.kind === 'step' && g.highlight?.kind === 'drawn' ? (
         <HighlightLayer highlight={g.highlight.highlight} region={g.region} />
       ) : null}
       <View style={styles.dock}>
-        {view.kind === 'model-gate' ? (
-          <ModelGate planner={view.planner} onTranslate={toTranslate} onExplore={toExplore} />
+        <LiveBanner session={liveInfo.banner} onStop={actions.stop} />
+        {liveInfo.banner === 'open' ? (
+          <Panel>
+            <GuideButton
+              label={liveInfo.micOn ? t('live.mic.off') : t('live.mic.toggle')}
+              onPress={() => liveInfo.setMic(!liveInfo.micOn)}
+            />
+            {liveInfo.micError !== null ? <Message>{t(PLAN_ERROR_UI[liveInfo.micError].messageKey)}</Message> : null}
+          </Panel>
         ) : null}
-        {view.kind === 'goal' ? (
+        {showsPlannerLine ? (
+          <Panel>
+            <Note>{t('guide.planner.line', { name: t(g.plannerNameKey) })}</Note>
+          </Panel>
+        ) : null}
+        {view.kind === 'model-gate' ? (
+          <ModelGate planner={view.planner} models={g.models} onTranslate={toTranslate} onExplore={toExplore} />
+        ) : null}
+        {view.kind === 'goal' && liveInfo.active && liveInfo.banner === 'off' ? (
+          <>
+            {liveInfo.endedCode !== null ? (
+              <Panel>
+                <Message>{t(PLAN_ERROR_UI[liveInfo.endedCode].messageKey, { reason: '' })}</Message>
+              </Panel>
+            ) : null}
+            <LiveStartButton gate={liveInfo.gate} onStart={liveInfo.start} />
+          </>
+        ) : null}
+        {view.kind === 'goal' && goalReady ? (
           <GoalPicker
             lines={g.goalLines.list}
             reading={g.reading}
