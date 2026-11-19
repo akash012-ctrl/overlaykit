@@ -6,6 +6,8 @@ import type { Point } from '../../shared';
 import type { ViewComponent } from '../explore/component-items';
 import { TR_UI } from '../translate/error-map';
 import { t } from '../../locale';
+import { colors } from '../theme';
+import { TwoToneRing } from './TwoToneRing';
 import type { OverlayItem } from './build-items';
 import {
   LABEL_COLOURS,
@@ -14,7 +16,6 @@ import {
   LABEL_PADDING_DP,
   LOW_QUALITY_COLOURS,
   MIN_TOUCH_TARGET_DP,
-  OUTLINE_COLOUR,
   OUTLINE_WIDTH_DP,
 } from './styles';
 
@@ -86,7 +87,9 @@ export function OverlayLayer({
                 transform: [{ rotate: `${angleRad}rad` }],
               },
             ]}
-          />
+          >
+            <TwoToneRing width={OUTLINE_WIDTH_DP} />
+          </View>
         );
         if (item.label.kind === 'unplaced') {
           const { a11y } = labelTexts(item);
@@ -109,7 +112,9 @@ export function OverlayLayer({
                   transform: [{ rotate: `${angleRad}rad` }],
                 },
               ]}
-            />
+            >
+              <TwoToneRing width={OUTLINE_WIDTH_DP} />
+            </Pressable>
           );
         }
         const box = item.label.box;
@@ -151,16 +156,17 @@ export function OverlayLayer({
           pointerEvents="none"
           style={[
             styles.componentOutline,
-            c.id === explore.highlightId && styles.componentHighlight,
             {
               left: c.outline.centre.x - region.x - c.outline.width / 2,
               top: c.outline.centre.y - region.y - c.outline.height / 2,
               width: c.outline.width,
               height: c.outline.height,
-              transform: [{ rotate: `rad` }],
+              transform: [{ rotate: `${c.outline.angleRad}rad` }],
             },
           ]}
-        />
+        >
+          <TwoToneRing width={c.id === explore.highlightId ? 4 : 3} />
+        </View>
       ))}
       <LabelDetailSheet item={open} onClose={() => setOpen(null)} onRetry={onRetry} />
     </View>
@@ -207,15 +213,14 @@ export function LabelDetailSheet({ item, onClose, onRetry }: { item: OverlayItem
 
 const styles = StyleSheet.create({
   clip: { position: 'absolute', overflow: 'hidden' },
-  outline: { position: 'absolute', borderWidth: OUTLINE_WIDTH_DP, borderColor: OUTLINE_COLOUR, borderRadius: 2 },
-  componentOutline: { position: 'absolute', borderWidth: 3, borderColor: '#4DD0E1', borderStyle: 'dashed', borderRadius: 4 },
-  componentHighlight: { borderWidth: 5, borderStyle: 'solid' },
+  outline: { position: 'absolute' },
+  componentOutline: { position: 'absolute' },
   label: { position: 'absolute', paddingHorizontal: LABEL_PADDING_DP, paddingVertical: LABEL_PADDING_DP, borderRadius: 4 },
   labelText: { fontSize: LABEL_FONT_SIZE_SP, fontWeight: '600' },
   sheetBackdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.6)' },
-  sheet: { backgroundColor: '#11161C', padding: 20, gap: 12 },
-  sheetText: { color: '#FFFFFF', fontSize: 20, lineHeight: 32 },
-  sheetMarker: { color: '#D9E3EE', fontSize: 16, lineHeight: 26 },
-  sheetButton: { minHeight: MIN_TOUCH_TARGET_DP, alignItems: 'center', justifyContent: 'center', backgroundColor: '#37474F', borderRadius: 8 },
-  sheetButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '600' },
+  sheet: { backgroundColor: colors.surface, padding: 20, gap: 12 },
+  sheetText: { color: colors.text, fontSize: 20, lineHeight: 32 },
+  sheetMarker: { color: colors.textSoft, fontSize: 16, lineHeight: 26 },
+  sheetButton: { minHeight: MIN_TOUCH_TARGET_DP, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.neutral, borderRadius: 8 },
+  sheetButtonText: { color: colors.text, fontSize: 16, fontWeight: '600' },
 });

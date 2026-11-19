@@ -6,6 +6,8 @@ import { getUiLocale, t } from '../../locale';
 import type { SourceLocale } from '../../shared';
 import { A11yButton } from '../a11y/A11yButton';
 import { MIN_TOUCH_TARGET_DP } from '../overlay/styles';
+import { TwoToneRing } from '../overlay/TwoToneRing';
+import { StatusChip } from '../status/StatusChip';
 import type { GoalLine } from './plan-view-model';
 import { GuideButton, Message, Note, Panel } from './parts';
 import { VoiceGoal } from './VoiceGoal';
@@ -42,7 +44,9 @@ export function GoalBoxes({
               styles.box,
               { left: centre.x - region.x - w / 2, top: centre.y - region.y - h / 2, width: w, height: h, transform: [{ rotate: `${angleRad}rad` }] },
             ]}
-          />
+          >
+            <TwoToneRing width={2} />
+          </A11yButton>
         );
       })}
     </View>
@@ -66,6 +70,7 @@ export function GoalPicker({
   return (
     <Panel>
       <Message>{t('guide.plan.pickGoal')}</Message>
+      {reading ? <StatusChip busy text={t('guide.plan.reading')} /> : null}
       <GuideButton primary label={reading ? t('guide.plan.reading') : t('guide.plan.readScreen')} onPress={onRead} />
       {lines.length === 0 ? (
         <Note>{t('guide.plan.noLines')}</Note>
@@ -92,7 +97,7 @@ export function voiceGoalSource(): SourceLocale | null {
 
 const styles = StyleSheet.create({
   clip: { position: 'absolute', overflow: 'hidden' },
-  box: { position: 'absolute', borderWidth: 2, borderColor: '#FFD54F', backgroundColor: 'rgba(11,15,20,0.15)' },
+  box: { position: 'absolute', backgroundColor: 'rgba(11,15,20,0.15)' },
   // The box shows only an outline. The line text is the accessibility label, so it is drawn invisible.
   hiddenText: { color: 'transparent', fontSize: 14 },
   list: { maxHeight: 140 },
