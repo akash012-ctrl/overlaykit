@@ -64,7 +64,7 @@ Rules for every worker:
   - Add `PL_ERROR_CODES`, `PlErrorCode`, `SP_ERROR_CODES`, `SpErrorCode`, `PlanLine`, `PlanRequest`, `PlanAction`, `ProposedStep`, `PlannerOutput` exactly as in `design.md`. Do not edit existing codes.
   - Done check: typecheck and lint exit 0. `src/modules/shared/__tests__/error-codes.test.ts` keeps all existing rows; the owner-approved row additions (new `PL_*` and `SP_*`) are added only if the owner confirms (existing rule: add rows only).
   - _Requirements: 12.1, 13.1_
-  - [ ] 2.2 Append the Gemini Live codes and the choice type (lane S, tiny; needs 1.5)
+  - [x] 2.2 Append the Gemini Live codes and the choice type (lane S, tiny; needs 1.5)
     - Files: `src/modules/shared/index.ts` (append only). Add `PL_LIVE_NO_KEY`, `PL_LIVE_AUTH`, `PL_LIVE_QUOTA`, `PL_LIVE_NETWORK`, `PL_LIVE_SESSION_ENDED`, `PL_LIVE_MIC_DENIED` to `PL_ERROR_CODES`, and `export type PlannerChoice = 'on-device' | 'gemini-live'`. Existing rows of `error-codes.test.ts` stay. New rows come only under the owner's rows-only approval.
     - Done check: typecheck and lint exit 0.
     - _Requirements: 12.1, 15.1, 16.13_
@@ -83,7 +83,7 @@ Rules for every worker:
     - Optional here, only if the owner approves `expo-build-properties`: `abiFilters` to `arm64-v8a`.
     - _Requirements: 4.5_
 
-  - [ ] 3.4 Install `expo-secure-store` (lane X; needs 1.5; D-050)
+  - [x] 3.4 Install `expo-secure-store` (lane X; needs 1.5; D-050)
     - `npx expo install expo-secure-store`, then `npx expo install --check` and `npx expo-doctor`. Keep the plugin default `configureAndroidBackup: true`. Add `expo-secure-store` to `VENDOR_OWNERS`, only in `planner/live-key-store.ts`, and `modules/overlaykit-live` only in `planner/adapters/gemini-live.ts`. Run `npx expo prebuild --clean` and confirm `RECORD_AUDIO` is present and no other new permission appears.
     - SDK 58 source: Expo SecureStore docs (reference v58.0.0, recommended `~58.0.3`).
     - _Requirements: 13.5, 17.2_
