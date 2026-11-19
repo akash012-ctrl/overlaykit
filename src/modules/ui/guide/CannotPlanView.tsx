@@ -43,7 +43,7 @@ export function CannotPlanView({
       <View style={guideStyles.row}>
         {ui.actions.map((a, i) =>
           a === 'setup' || (a === 'key' && onOpenKey === undefined) ? null : (
-            <GuideButton key={a} primary={i === 0} label={t(label[a])} onPress={run[a] ?? onStop} />
+            <GuideButton key={a} primary={i === 0} destructive={a === 'stop'} label={t(label[a])} onPress={run[a] ?? onStop} />
           ),
         )}
       </View>

@@ -10,7 +10,7 @@ export function PausedView({ onCheck, onStop, checking }: { onCheck: () => void;
       <Message>{t('guide.plan.lost')}</Message>
       <View style={guideStyles.row}>
         <GuideButton primary label={checking ? t('guide.plan.reading') : t('guide.plan.checkNow')} onPress={onCheck} />
-        <GuideButton label={t('guide.plan.stop')} onPress={onStop} />
+        <GuideButton destructive label={t('guide.plan.stop')} onPress={onStop} />
       </View>
     </Panel>
   );

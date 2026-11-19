@@ -11,7 +11,7 @@ export function FinishPrompt({ onFinish, onNotYet, onStop }: { onFinish: () => v
       <View style={guideStyles.row}>
         <GuideButton primary label={t('guide.plan.finish')} onPress={onFinish} />
         <GuideButton label={t('guide.plan.notYet')} onPress={onNotYet} />
-        <GuideButton label={t('guide.plan.stop')} onPress={onStop} />
+        <GuideButton destructive label={t('guide.plan.stop')} onPress={onStop} />
       </View>
     </Panel>
   );

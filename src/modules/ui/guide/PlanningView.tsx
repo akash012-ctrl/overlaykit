@@ -1,4 +1,5 @@
 import { t } from '../../locale';
+import { StatusChip } from '../status/StatusChip';
 import { GuideButton, Message, Note, Panel } from './parts';
 import type { StepText } from './usePlanGuide';
 
@@ -17,8 +18,8 @@ export function PlanningView({
       <Message>{t('guide.plan.goal', { goal: goalText.kind === 'translated' ? goalText.text : goal })}</Message>
       {goalText.kind === 'translated' ? <Note>{t('guide.plan.goalOriginal', { text: goal })}</Note> : null}
       {goalText.kind === 'failed' ? <Note>{t('guide.plan.translateFailed')}</Note> : null}
-      <Message>{t('guide.plan.planning')}</Message>
-      <GuideButton label={t('guide.plan.stop')} onPress={onStop} />
+      <StatusChip busy text={t('guide.plan.planning')} />
+      <GuideButton destructive label={t('guide.plan.stop')} onPress={onStop} />
     </Panel>
   );
 }
