@@ -4,7 +4,7 @@ import type { Rect } from '../../geometry';
 import { placeLabels, quadToRotatedBox } from '../../geometry';
 import { LABEL_FONT_SIZE_SP, LABEL_LINE_HEIGHT_FACTOR, LABEL_PADDING_DP, OUTLINE_WIDTH_DP } from '../overlay/styles';
 import { t } from '../../locale';
-import type { HighlightModel } from './highlight-model';
+import type { PlanHighlight } from './plan-view-model';
 
 /** Two-tone outline: one tone contrasts on any background (R12.8). Checked on device screenshots, not by a test. */
 const OUTLINE_LIGHT = '#FFFFFF';
@@ -22,7 +22,7 @@ export function HighlightLayer({
   highlight,
   region,
 }: {
-  highlight: HighlightModel | null;
+  highlight: PlanHighlight | null;
   region: Rect | null;
 }) {
   if (highlight === null || region === null) return null;
@@ -32,7 +32,7 @@ export function HighlightLayer({
   const labelHeight = LABEL_FONT_SIZE_SP * LABEL_LINE_HEIGHT_FACTOR + 2 * pad;
   const labelWidth = Math.min(region.width, text.length * LABEL_FONT_SIZE_SP * GLYPH_WIDTH_FACTOR + 2 * pad);
   const placement = placeLabels(
-    [{ id: highlight.componentId, quad: highlight.viewQuad, size: { width: labelWidth, height: labelHeight } }],
+    [{ id: highlight.frameId, quad: highlight.viewQuad, size: { width: labelWidth, height: labelHeight } }],
     region,
   )[0];
   const a11y = t('guide.highlightLabel', { component: text });

@@ -126,22 +126,22 @@ Rules for every worker:
   - [ ]* 7.3 Unit tests for the error mapping
     - Optional, last.
 
-- [ ] 8. Lane U: ui
-  - [ ] 8.1 Strings
+- [x] 8. Lane U: ui
+  - [x] 8.1 Strings
     - Append `guide.plan.*` and `guide.voice.*` keys to `locale/strings/{en,hi,kn}.ts` (append only). `hi` and `kn` are unreviewed drafts (D-031). All text from the Error handling table, "AI suggestion", "This may be wrong. Check the machine.", "Not in view", the model download text, the audio disclosure.
     - _Requirements: 5.4, 6.1, 11.4_
-  - [ ] 8.2 Goal picker and voice goal
+  - [x] 8.2 Goal picker and voice goal
     - Files: `ui/guide/GoalPicker.tsx`, `VoiceGoal.tsx`. Tappable lines placed through `geometry`. Mic only when `isAvailable`. Editable transcript with Confirm.
     - _Requirements: 1.1 to 1.5, 2.1 to 2.7_
-  - [ ] 8.3 Plan hook and flow
+  - [x] 8.3 Plan hook and flow
     - Files: `ui/guide/usePlanGuide.ts`, `plan-view-model.ts`, `GuideScreen.tsx` (changed).
     - Capture loop (existing cadence, unset), build PlanRequest, call planner, `groundStep`, dispatch to `planReducer`, cancel on unmount, release camera and mic on background. The only place `planner`, `speech` and `guide` meet.
     - _Requirements: 3.1, 3.4, 7.3, 8.2, 8.3, 9.3, 13.4_
-  - [ ] 8.4 Views
+  - [x] 8.4 Views
     - Files: `ui/guide/PlanningView.tsx`, `ModelGate.tsx`, `CannotPlanView.tsx`, `FinishPrompt.tsx`, `StepCard.tsx` (changed), `error-map.ts` (changed).
     - "AI suggestion" label fixed, no setting to hide it. Done always visible. Highlight from `GroundedStep.target` with frame id and expiry. "Not in view" with no highlight. Enter hint, never a value.
     - _Requirements: 4.1, 4.2, 5.3 to 5.8, 6.1 to 6.4, 8.1_
-  - [ ] 8.5 Mode switcher entry
+  - [x] 8.5 Mode switcher entry
     - Keep `GUIDE_MODE_ENTRY`. Remove the "verified machine" wording from Guide strings that spec 03 added. No new mode (P1).
   - [ ]* 8.6 Error-map and view-model unit tests
     - Optional, last.
