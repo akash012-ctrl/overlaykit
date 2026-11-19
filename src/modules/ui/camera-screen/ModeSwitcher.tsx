@@ -5,6 +5,7 @@ import type { StringKey } from '../../locale';
 import { announce } from '../a11y/announcer';
 import { GUIDE_MODE_ENTRY } from '../guide';
 import { MIN_TOUCH_TARGET_DP } from '../overlay/styles';
+import { colors, fontSize, radius, spacing } from '../theme';
 
 export type Mode = 'translate' | 'explore' | 'guide';
 
@@ -34,7 +35,7 @@ export function ModeSwitcher({ enabled, mode, onChange }: { enabled: boolean; mo
             }}
             style={[styles.tab, selected && styles.selected, !enabled && styles.disabled]}
           >
-            <Text style={styles.text}>
+            <Text numberOfLines={2} style={styles.text}>
               {selected ? '\u2713 ' : ''}
               {t(tab.labelKey)}
             </Text>
@@ -45,10 +46,11 @@ export function ModeSwitcher({ enabled, mode, onChange }: { enabled: boolean; mo
   );
 }
 
+// Equal-width tabs that may wrap to two lines, so long Hindi and Kannada labels or a large font do not overflow.
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', justifyContent: 'center', gap: 8 },
-  tab: { minHeight: MIN_TOUCH_TARGET_DP, paddingHorizontal: 20, justifyContent: 'center', borderRadius: 24, backgroundColor: '#1C2530' },
-  selected: { backgroundColor: '#1565C0' },
+  row: { flexDirection: 'row', gap: spacing.sm },
+  tab: { flex: 1, minHeight: MIN_TOUCH_TARGET_DP, paddingHorizontal: spacing.sm, paddingVertical: spacing.xs, justifyContent: 'center', alignItems: 'center', borderRadius: radius.lg, backgroundColor: colors.surfaceRaised },
+  selected: { backgroundColor: colors.primary },
   disabled: { opacity: 0.6 },
-  text: { color: '#FFFFFF', fontSize: 15, fontWeight: '600', lineHeight: 22 },
+  text: { color: colors.text, fontSize: fontSize.note + 1, fontWeight: '600', lineHeight: 22, textAlign: 'center' },
 });

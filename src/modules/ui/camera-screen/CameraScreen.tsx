@@ -13,6 +13,7 @@ import { useBackHandler } from '../nav/useBackHandler';
 import { OverlayLayer } from '../overlay/OverlayLayer';
 import { MIN_TOUCH_TARGET_DP } from '../overlay/styles';
 import type { CameraServices } from '../services';
+import { colors, fontSize, radius, spacing } from '../theme';
 import { CameraServicesProvider, useCameraServices } from '../services';
 import { PrivacyNote } from '../settings/PrivacyNote';
 import { ModeSwitcher } from './ModeSwitcher';
@@ -22,7 +23,8 @@ import { useCameraScreen } from './useCameraScreen';
 // eslint-disable-next-line @typescript-eslint/no-require-imports -- __DEV__-only debug accessor (DD-13)
 const DebugTools = __DEV__ ? (require('../debug') as typeof import('../debug')) : null;
 
-const BAR_BACKGROUND = 'rgba(11,15,20,0.88)';
+const BAR_BACKGROUND = colors.bar;
+const PRIMARY_BUTTON_HEIGHT_DP = 56;
 
 function Screen() {
   const services = useCameraServices();
@@ -71,18 +73,21 @@ function Screen() {
       ) : null}
 
       <View
+        pointerEvents="box-none"
         style={[styles.topBar, { paddingTop: insets.top + 8, paddingLeft: insets.left + 12, paddingRight: insets.right + 12 }]}
         onLayout={(e) => actions.onTopBarHeight(Math.max(0, e.nativeEvent.layout.height - insets.top))}
       >
-        <Text accessibilityLiveRegion="polite" style={styles.message}>
-          {t(view.messageKey)}
-        </Text>
-        <A11yButton
-          label={t('settings.open')}
-          onPress={() => router.push('/settings')}
-          style={styles.actionButton}
-          textStyle={styles.buttonText}
-        />
+        <View style={styles.topRow} pointerEvents="box-none">
+          <Text accessibilityLiveRegion="polite" style={styles.message}>
+            {t(view.messageKey)}
+          </Text>
+          <A11yButton
+            label={t('settings.open')}
+            onPress={() => router.push('/settings')}
+            style={styles.settingsButton}
+            textStyle={styles.buttonText}
+          />
+        </View>
         {view.action ? (
           <A11yButton
             label={t(view.action.labelKey)}
@@ -110,7 +115,10 @@ function Screen() {
           />
         ) : null}
         <ModeSwitcher enabled={view.translateEnabled} mode={state.mode} onChange={actions.setMode} />
-        {state.mode === 'guide' ? null : stillShown ? (
+        {state.mode === 'guide' ? (
+          // Keeps the bar the same height in every mode, so the Guide dock does not jump when the mode changes.
+          <View style={styles.primarySlot} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden />
+        ) : stillShown ? (
           <A11yButton
             label={t('action.closeStill')}
             onPress={actions.dismissStill}
@@ -148,14 +156,18 @@ export function CameraScreen({ services }: { services?: CameraServices }) {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#0B0F14' },
+  root: { flex: 1, backgroundColor: colors.background },
   guideHost: { position: 'absolute', left: 0, right: 0, top: 0 },
-  privacy: { ...StyleSheet.absoluteFill, backgroundColor: '#0B0F14', justifyContent: 'center', padding: 16 },
-  topBar: { position: 'absolute', top: 0, left: 0, right: 0, backgroundColor: BAR_BACKGROUND, paddingBottom: 10, gap: 8 },
+  privacy: { ...StyleSheet.absoluteFill, backgroundColor: colors.background, justifyContent: 'center', padding: spacing.lg },
+  // No bar background at the top: the camera shows through. The message and buttons carry their own backing.
+  topBar: { position: 'absolute', top: 0, left: 0, right: 0, paddingBottom: 10, gap: spacing.sm },
+  topRow: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
   bottomBar: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: BAR_BACKGROUND, paddingTop: 10, gap: 10 },
-  message: { color: '#FFFFFF', fontSize: 16, lineHeight: 24 },
-  actionButton: { alignSelf: 'flex-start', minHeight: MIN_TOUCH_TARGET_DP, minWidth: MIN_TOUCH_TARGET_DP, paddingHorizontal: 16, justifyContent: 'center', borderRadius: 8, backgroundColor: '#37474F' },
-  primaryButton: { minHeight: 56, alignItems: 'center', justifyContent: 'center', borderRadius: 28, backgroundColor: '#1565C0' },
-  disabled: { backgroundColor: '#37474F' },
-  buttonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '600', lineHeight: 24 },
+  message: { flex: 1, color: colors.text, fontSize: fontSize.body, lineHeight: 24, backgroundColor: BAR_BACKGROUND, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: radius.md, overflow: 'hidden' },
+  settingsButton: { minHeight: MIN_TOUCH_TARGET_DP, minWidth: MIN_TOUCH_TARGET_DP, paddingHorizontal: spacing.md, justifyContent: 'center', borderRadius: radius.lg, backgroundColor: BAR_BACKGROUND },
+  actionButton: { alignSelf: 'flex-start', minHeight: MIN_TOUCH_TARGET_DP, minWidth: MIN_TOUCH_TARGET_DP, paddingHorizontal: spacing.lg, justifyContent: 'center', borderRadius: radius.sm, backgroundColor: colors.neutral },
+  primaryButton: { minHeight: PRIMARY_BUTTON_HEIGHT_DP, alignItems: 'center', justifyContent: 'center', borderRadius: radius.pill, backgroundColor: colors.primary },
+  primarySlot: { minHeight: PRIMARY_BUTTON_HEIGHT_DP },
+  disabled: { backgroundColor: colors.neutral },
+  buttonText: { color: colors.text, fontSize: fontSize.body, fontWeight: '600', lineHeight: 24 },
 });
