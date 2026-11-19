@@ -53,6 +53,12 @@ Record the commit (`git rev-parse --short HEAD`) and build variant for every ses
 | ID | Item | Notes |
 | --- | --- | --- |
 | TM-01 | First-party simulated ticket machine: images of a base panel and screens S01 to S06, shown on an iPad as a passive display (D-029, D-032). Ground truth: `test-fixtures/tm-01/FIXTURE.md`. | iPad at full brightness, auto-lock off. Printed paper is the fallback if glare or screen pattern gives recall under 70%. |
+| S01 | TM-01 Screen image S01 (screen shown on the iPad). Identifying texts and the expected Guide checkpoints: `test-fixtures/tm-01/FIXTURE.md` section 6. | Used by DT-G4-02 to DT-G4-06. Final images pending (box positions are DRAFT). |
+| S02 | TM-01 Screen image S02 (screen shown on the iPad). Identifying texts and the expected Guide checkpoints: `test-fixtures/tm-01/FIXTURE.md` section 6. | Used by DT-G4-02 to DT-G4-06. Final images pending (box positions are DRAFT). |
+| S03 | TM-01 Screen image S03 (screen shown on the iPad). Identifying texts and the expected Guide checkpoints: `test-fixtures/tm-01/FIXTURE.md` section 6. | Used by DT-G4-02 to DT-G4-06. Final images pending (box positions are DRAFT). |
+| S04 | TM-01 Screen image S04 (screen shown on the iPad). Identifying texts and the expected Guide checkpoints: `test-fixtures/tm-01/FIXTURE.md` section 6. | Used by DT-G4-02 to DT-G4-06. Final images pending (box positions are DRAFT). |
+| S05 | TM-01 Screen image S05 (screen shown on the iPad). Identifying texts and the expected Guide checkpoints: `test-fixtures/tm-01/FIXTURE.md` section 6. | Used by DT-G4-02 to DT-G4-06. Final images pending (box positions are DRAFT). |
+| S06 | TM-01 Screen image S06 (screen shown on the iPad). Identifying texts and the expected Guide checkpoints: `test-fixtures/tm-01/FIXTURE.md` section 6. | Used by DT-G4-02 to DT-G4-06. Final images pending (box positions are DRAFT). |
 | CARD-EN | Image (or printed card) with 10 English sign/label lines | Ground-truth text kept in `test-fixtures/` |
 | CARD-HI | Image (or printed card) with 10 Hindi lines (Devanagari) | Same |
 | CARD-KN | Image (or printed card) with 10 Kannada lines | Expected result: unsupported script |
@@ -92,6 +98,7 @@ Record the commit (`git rev-parse --short HEAD`) and build variant for every ses
 | DT-G4-04 | AT-G4-05 | Mid-workflow | Point at NEG-01 | Workflow cancelled |
 | DT-G4-05 | AT-G4-07 | With and without a Kannada voice installed | Open a step | Speak works, or is hidden |
 | DT-G4-06 | AT-G4-08 | Mid-workflow | Background the app 30 s, return | Same step or safe reset; no skipped step |
+| DT-G4-07 | AT-G4-06, QE-2 | Debug build, invalid-workflow hook | Open Guide, choose the DEBUG invalid workflow | `GD_FIXTURE_INVALID` state: "Step-by-step help isn't available" with Translate and Explore; no Step |
 | DT-ERR-01 | QE-2 | Another app holding the camera | Open OverlayKit | `CAM_UNAVAILABLE` state |
 | DT-ERR-02 | QE-2 | Debug build with test hooks forcing `CAM_CAPTURE_FAILED`, `OCR_ENGINE_UNAVAILABLE`, `TR_UNSUPPORTED_PAIR`, `SP_FAILED` | Trigger each | Matching state from ARCHITECTURE.md §8 |
 | DT-ERR-03 | QE-2 | TM-01, L3 (dim) | Capture | `OCR_LOW_QUALITY` hint |
@@ -142,3 +149,18 @@ Summary: 0 PASSED, 0 FAILED, 2 NOT TESTED. The phone is connected and authorized
 | DT-G0-02 | NOT TESTED | — | — | Release build (B2) not attempted yet. |
 
 Summary: 1 PASSED, 0 FAILED, 1 NOT TESTED. AT-G0-01 is met on this phone. AT-G0-02 (release build, B2) is still open. Later on 2026-11-19 the app was rebuilt with the new launcher icon and splash (build-log, "App icon and splash"), with no JavaScript change. The owner still has to look at the new icon on the launcher.
+
+## Guide (spec 03): rows waiting for a phone run
+
+Added by spec 03 lane G. Every row is NOT TESTED. No Guide gate is claimed. Results go in a dated block under Results, from a real phone run.
+
+| Test ID | Result | Needs |
+| --- | --- | --- |
+| DT-G4-01 | NOT TESTED | NEG-01 to NEG-10, Guide build |
+| DT-G4-02 | NOT TESTED | TM-01 S01 to S06, G4 thresholds set |
+| DT-G4-03 | NOT TESTED | TM-01, G4 thresholds set |
+| DT-G4-04 | NOT TESTED | TM-01, NEG-01, G4 thresholds set (OQ-3) |
+| DT-G4-06 | NOT TESTED | TM-01, G4 thresholds set |
+| DT-G4-07 | NOT TESTED | Debug build only |
+| DT-ERR-04 | NOT TESTED | TM-01, G4 thresholds set |
+| DT-ERR-05 | NOT TESTED | TM-01, G4 thresholds set |

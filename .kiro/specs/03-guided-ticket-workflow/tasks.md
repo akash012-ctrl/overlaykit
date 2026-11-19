@@ -133,7 +133,7 @@ Lane P note (2026-11-19): ticks on 2, 3, 5, 6, 8 cover the code only. Their unit
   - Check by source search that `guide` imports no React, React Native, `capture`, `ocr`, `locale`, `speech`, network or clock. Ask the owner if questions came up.
   - _Requirements: 6.2, 6.7, 18.1, 18.2, 18.4, 19.1_
 
-- [ ] 10. Add the highlight model (ui)
+- [x] 10. Add the highlight model (ui)
   - Files: `src/modules/ui/guide/highlight-model.ts`, `HighlightLayer.tsx`, `__tests__/highlight-model.test.ts`.
   - The model calls `locateComponents` with the latest `verified` match and its OcrResult, finds the current Step's target, and gets `viewQuad` from `geometry.frameQuadToView` with the current Cover transform. No coordinate math in `ui`.
   - `null` unless the status is `running` and the latest match is `verified`; `null` for a non-finite quad; `CMP_NOT_VISIBLE` gives no Highlight and the prompt `t('guide.pointCameraAt', { component })`. Only the target is highlighted. The model carries the `frameId` and is recomputed per render, so the previous Highlight goes in the same render as a Step change.
@@ -142,45 +142,45 @@ Lane P note (2026-11-19): ticks on 2, 3, 5, 6, 8 cover the code only. Their unit
   - Contrast of 3:1 is checked on device screenshots in task 18.3, not here.
   - _Requirements: 12.1, 12.2, 12.3, 12.4, 12.5, 12.6, 12.7, 12.8, 12.9, 12.10, 12.11, 16.6, 18.8, 19.5_
 
-- [ ] 11. Add the Guide hook
-  - [ ] 11.1 Add `useGuide` and the observation loop
+- [x] 11. Add the Guide hook
+  - [x] 11.1 Add `useGuide` and the observation loop
     - Files: `src/modules/ui/guide/useGuide.ts`, `__tests__/useGuide.test.tsx` (fake services from spec A and B `test-support/`).
     - `useReducer(guideReducer, initialGuideState)`. On open: a `verified` match shows the picker, otherwise dispatch `start` so the reducer sets `GD_UNSUPPORTED`. Picker selection dispatches `start` with that Workflow's loader result. Per OcrResult: `identifyMachine`, `matchScreen`, `checkpointResult`, `describeObservedText`, `evaluateObservation`, dispatch. Drop any result whose `frameId` was never shown or processed. `GUIDE_CAPTURE_INTERVAL_MS` stays an unset named constant until G4 (OQ-1).
     - No decision rule in `ui`: no `verified`, `met` or advance logic (R19.4).
     - Tests: the dispatched event sequence for a fake observation stream, a stale frame dropped, `invalid` workflows left out of the picker.
     - _Requirements: 4.9, 5.1, 5.9, 5.10, 8.8, 18.3, 19.3, 19.4, 19.7_
-  - [ ] 11.2 Add the machine-lost timer and loss classification wiring
+  - [x] 11.2 Add the machine-lost timer and loss classification wiring
     - Files: `src/modules/ui/guide/useMachineLostTimer.ts`, test with fake timers.
     - The timer restarts on each dispatched `verified` observation, stops in the background, and on firing sends `{ type: 'machine-lost', cause: classifyLoss(sinceVerified), atMs }` once per quiet period. `ui` keeps the observations since the last verified one in a bounded array and reads none of their counts.
     - Tests: fires once at `MACHINE_LOST_TIMEOUT_MS` (value injected by the test until G4), restarts on `verified`, no event while backgrounded, never an event that advances.
     - _Requirements: 10.1, 10.2, 10.3, 10.11, 14.8, 18.3_
 
-- [ ] 12. Add the Guide views
-  - [ ] 12.1 Add the task picker, refusal view and mode switcher entry
+- [x] 12. Add the Guide views
+  - [x] 12.1 Add the task picker, refusal view and mode switcher entry
     - Files: `src/modules/ui/guide/GuideScreen.tsx`, `TaskPicker.tsx`, `RefusalView.tsx`, `src/modules/ui/camera-screen/ModeSwitcher.tsx` (add `guide` to `MODES`), `strings/{en,hi,kn}.ts` (new guide keys), tests.
     - Picker lists valid Workflow titles in the UI language. With none valid, show "Step-by-step help isn't available" with Translate and Explore. The Refusal_State shows the `GD_UNSUPPORTED` text, Translate and Explore buttons that switch mode, and no Step and no Highlight. Show the tamper note and the "TM-01 only" capability text.
     - Render tests: touch targets of at least 48 dp, `accessibilityRole` and localized `accessibilityLabel`, each state shown as text. New `hi` and `kn` strings are marked `unreviewed` (D-031), and the README and demo script say so (R1.14).
     - _Requirements: 4.9, 4.10, 5.4, 5.5, 5.6, 5.9, 5.11, 5.12, 16.9, 18.7_
-  - [ ] 12.2 Add the step card, Done and the Speak slot
+  - [x] 12.2 Add the step card, Done and the Speak slot
     - Files: `src/modules/ui/guide/StepCard.tsx`, `SpeakSlot.tsx`, tests.
     - Shows the Workflow title, "Step n of N", the fixture instruction, and "Waiting to see: …" with the Expected result for `text-visible` Steps. Done appears only on `manual` Steps and sends `confirm-manual` with the visible Step id. Back appears from the second Step. Each new Step is announced with `AccessibilityInfo.announceForAccessibility`. Layout wraps, no fixed heights, uses spec A's Devanagari and Kannada line-height factor.
     - `SpeakSlot = ({ control }) => control ?? null`. `ui` does not import `speech`. No microphone permission, no speech dependency.
     - Tests: Done absent for `text-visible`, present with a 48 dp target for `manual`, slot renders nothing and takes no space, a source search finds no `speech` import, no text passes through `locale` translation.
     - _Requirements: 9.2, 9.3, 13.1, 13.2, 13.3, 13.8, 13.14, 13.15, 13.16, 17.1, 17.2, 17.3, 17.4, 17.5, 18.4, 18.5_
-  - [ ] 12.3 Add the checkpoint-not-seen prompt, paused, cancelled and completion views
+  - [x] 12.3 Add the checkpoint-not-seen prompt, paused, cancelled and completion views
     - Files: `src/modules/ui/guide/CheckpointPrompt.tsx`, `PausedView.tsx`, `CancelledView.tsx`, `CompletionView.tsx`, tests.
     - `GD_CHECKPOINT_NOT_SEEN`: "Didn't see [expected result]. Check the machine." with Retry and Back (no Back on the first Step). Retry sends `retry`, Back sends `step-back`; neither advances. Paused view: "Paused. Point the camera at the machine to continue." with no Highlight. Cancelled view: "Guide stopped. A different machine was found." with a start-again control that sends `reset`. Completion view: completion text and a control back to the picker.
     - Tests: each view's text and controls, no Highlight in paused, cancelled, idle and completed, Retry and Back dispatch the right events.
     - _Requirements: 10.7, 10.9, 10.10, 12.6, 13.5, 13.6, 13.7, 13.8, 13.13, 13.14_
 
-- [ ] 13. Handle backgrounding and leaving Guide
+- [x] 13. Handle backgrounding and leaving Guide
   - Files: `src/modules/ui/guide/useGuide.ts` (AppState and back handling), `__tests__/useGuide-lifecycle.test.tsx`.
   - `AppState` leaving `active` while `running` sends `interrupted`. Any other status is left alone. On return: drop the still and Highlight under spec A's lifetime rules, show the paused view, show no Highlight until a new `verified` MachineMatch, and resume only through the reducer (OQ-6). Switching mode or Android back while `running` or `paused` sends `cancel` (OQ-7).
   - Property check (after task 7): an `interrupted` event never advances a Step.
   - Tests: interrupted then a stale pre-interruption observation is ignored, return shows paused, cancel returns to `idle` with no proof, timer stopped while backgrounded.
   - _Requirements: 14.1, 14.2, 14.3, 14.4, 14.5, 14.6, 14.7, 14.8_
 
-- [ ] 14. Add the error-to-UI map and the `GD_*` tests
+- [x] 14. Add the error-to-UI map and the `GD_*` tests
   - Files: `src/modules/ui/guide/error-map.ts`, `debug/invalid-workflow-hook.ts` (`__DEV__` only, marker `OVERLAYKIT_DEBUG_ONLY`), `__tests__/error-map.test.ts`, `__tests__/gd-production.test.ts`.
   - `error-map.ts` is a total `Record<GdErrorCode | 'CMP_NOT_VISIBLE', GuideUiState>`, so a missing code is a type error. Each state has a text and an accessibility state. The debug hook loads a broken Workflow so `GD_FIXTURE_INVALID` can be reached on the phone.
   - QE-1 tests for each of the five `GD_*` codes: one test that `guide` produces it (reducer or loader) and one that `ui` maps it to its state. One test for the `CMP_NOT_VISIBLE` prompt in the Guide_Screen. Loop over `GD_ERROR_CODES` so a new code fails the test until it is mapped. The release bundle check for the debug hook runs in task 17.
@@ -192,17 +192,17 @@ Lane P note (2026-11-19): ticks on 2, 3, 5, 6, 8 cover the code only. Their unit
   - Run the `vision-reviewer` agent on the diff. Fix BLOCKER and HIGH findings and record the review in `docs/kiro-evidence.md`.
   - Ask the owner if questions came up.
 
-- [ ] 16. Add the DEVICE-TESTS.md rows for Guide
+- [x] 16. Add the DEVICE-TESTS.md rows for Guide
   - Files: `docs/DEVICE-TESTS.md` only.
   - Add one row per Screen image (S01 to S06) and per negative-set image (NEG-01 to NEG-10) under Physical fixtures, with its id, if the existing rows don't cover them. Add or confirm rows for DT-G4-01 to DT-G4-04, DT-G4-06, DT-ERR-04 and DT-ERR-05, plus a `GD_FIXTURE_INVALID` debug-hook row. Every new row starts as NOT TESTED. Add no PASSED result.
   - Do this before any G4 device testing starts.
   - _Requirements: 2.8, 20.8, 20.9_
 
-- [ ] 17. Run the release bundle and boundary checks
-  - [ ] 17.1 Search the release bundle for debug code
+- [x] 17. Run the release bundle and boundary checks
+  - [x] 17.1 Search the release bundle for debug code
     - Run `npx expo export --platform android`. Search the output for `OVERLAYKIT_DEBUG_ONLY`, the invalid-workflow hook name, and Transition proof logging. Record the command and result (no matches) in `docs/build-log.md`.
     - _Requirements: 11.8, 16.8_
-  - [ ] 17.2 Check for hidden state channels and forbidden imports
+  - [x] 17.2 Check for hidden state channels and forbidden imports
     - Source search of `guide`, `components` and `ui/guide` for `fetch`, `XMLHttpRequest`, `WebSocket`, deep-link handlers, shared-storage reads, Bluetooth, `Date.now`, `Math.random`, and any `locale` or `speech` import. Check no timer moves a Step and `ui` imports no `backend/`. Record the results.
     - Confirm the Android manifest gains no microphone permission after `npx expo prebuild --clean`.
     - _Requirements: 2.5, 17.5, 18.1, 18.2, 18.3, 18.4, 19.1, 19.8_
