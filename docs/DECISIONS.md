@@ -361,3 +361,18 @@ Sarvam limits input to 1,000 characters per request for `mayura:v1` and 2,000 fo
 - **CM-4:** A mode appears in the switcher only once its spec delivers it: Translate in A, Explore in B, Guide in C.
 - **CM-5:** The first-run privacy note ships in B, before any text goes to a provider.
 **Consequences:** No gate threshold changed. `docs/QUALITY-GATES.md` still holds the old AT-G1-03 and AT-G1-11 text. Until it is edited, the wording above wins. Updating QUALITY-GATES.md is left to the owner or a later task, because the quality rules treat gate text as owner-controlled.
+
+## D-034 TM-01 and the test cards are shown as an offline static web page on the iPad
+
+**Status:** Accepted (user) for using a web page, 2026-11-19. The safeguards below are Proposed.
+**Context:** D-029 and `test-fixtures/tm-01/FIXTURE.md` §1 say the iPad shows images and "runs no app or web page", and D-032 makes the panel from AI artwork with our text added in an editor. The owner wants to build the fixture as a simple HTML page instead, generated with Claude or a similar tool. HTML renders the exact ground-truth strings with system fonts, so no image model can misspell them, and every box is known from the layout.
+**Decision:**
+- TM-01 (screens S01 to S06), CARD-EN, CARD-HI, CARD-KN, BLANK and a GRID alignment card are scenes in one self-contained page, `test-fixtures/tm-01/web/index.html`, built from `test-fixtures/tm-01/WEB-FIXTURE-PROMPT.md`.
+- Safeguards that keep the "no hidden fixture state" rule (PRODUCT.md, D-019, D-029):
+  - The page makes no network request after it loads and stores nothing (no storage APIs, cookies or service worker).
+  - A person changes the scene by hand. No timer or animation changes what is shown.
+  - No visible text other than each scene's ground-truth strings.
+  - The phone never opens the page, and the page knows nothing about OverlayKit.
+- The page is a test fixture only. It is not part of the app and doesn't change the product's "mobile only, no web UI" boundary.
+- The CARD-HI and CARD-KN lines are AI-drafted and unreviewed (D-031).
+**Consequences:** D-029's "runs no app or web page" and D-032's "AI art with text added in an editor" no longer apply to TM-01. FIXTURE.md §1 and §2 point here. The generator, model and date go into FIXTURE.md §1 once the page exists. Box values come from the page's Measure view on the iPad, and replace the DRAFT boxes (task 1.3).

@@ -2,6 +2,8 @@
 
 Status: **draft, 2026-11-18.** Decisions: D-029 (printed panel plus screen images, iPad as passive display), D-031 (no reviewers for now), D-032 (AI art, our own text).
 
+**Changed by D-034 (2026-11-19):** TM-01 and the test cards are now scenes in one offline static web page on the iPad, `web/index.html`, built from [WEB-FIXTURE-PROMPT.md](WEB-FIXTURE-PROMPT.md). Where §1 and §2 below talk about AI art, image files or "no web page", D-034 applies instead. The strings, boxes, workflow and negative set below stay as they are.
+
 ## 1. What TM-01 is
 
 TM-01 is a **first-party simulated ticket machine**. It is a set of images shown on an iPad. It is not a real machine, and the demo, README and Devpost text must say so.
