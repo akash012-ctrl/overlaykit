@@ -1,3 +1,4 @@
+import type { ModelStore } from './model-store';
 import type { PlanRequest, PlannerOutput, PlErrorCode, Result } from '../shared';
 
 /** Planner state. Same shape as design.md section "Interfaces". */
@@ -42,6 +43,8 @@ export interface PlannerEngine {
 
 export type StepPlannerOptions = {
   readonly engine?: PlannerEngine;
+  /** Where the sideloaded model is checked. Without it, or without the native module, the stub engine is used. */
+  readonly store?: ModelStore;
   /** Cap on model output tokens. */
   readonly maxOutputTokens?: number;
 };

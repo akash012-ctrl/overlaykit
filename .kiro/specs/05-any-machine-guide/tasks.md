@@ -100,11 +100,11 @@ Rules for every worker:
     - Files: `planner/schema.ts`.
     - JSON schema text and `parseOutput`. No repair of bad output. Works on constrained and unconstrained model text.
     - _Requirements: 3.8_
-  - [ ] 5.3 Model store
+  - [x] 5.3 Model store
     - Files: `planner/model-store.ts`, `planner/model-manifest.ts`.
     - Locate the pushed file, check size and SHA-256, report `ready` or `missing` with `PL_NO_MODEL`. No network code, no download, never delete the owner's file (D-048). Manifest holds file name, 584,417,280 bytes, and the SHA-256 from task 1.3. Hash with the Kotlin module (JDK `MessageDigest`) if `expo-file-system` has no hash (DQ-1). Also tests which path works for a release build (`run-as` is debug only) and writes it down.
     - _Requirements: 4.1 to 4.3, 10.1_
-  - [ ] 5.4 LiteRT adapter
+  - [x] 5.4 LiteRT adapter
     - Files: `planner/adapters/litert.ts`. Needs the typed JS surface from lane K (`design.md`, "Local Kotlin module"); can be coded against it before the native side builds, real calls blocked by task 12.
     - Load the model path from `model-store`, call `generate` with the prompt, the schema string and the output-token cap, call `cancel` on abort, `PL_TIMEOUT` after `PLAN_TIMEOUT_MS`, map module codes to `PL_*` (table in `design.md`), call `release()` on `release()`. The only file that imports `modules/overlaykit-llm`.
     - _Requirements: 3.3 to 3.6, 4.5_
