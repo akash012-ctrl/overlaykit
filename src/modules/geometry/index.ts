@@ -18,4 +18,4 @@ export type { ControlBars, Insets, Visibility } from './visibility';
 export { placeLabels } from './placement';
 export type { LabelPlacement, LabelRequest } from './placement';
 
-export { LABEL_GAP_DP } from './thresholds';
+export { LABEL_GAP_DP, ROUND_TRIP_TOLERANCE_PX } from './thresholds';

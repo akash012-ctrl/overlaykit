@@ -124,14 +124,15 @@ Never skip, weaken or re-snapshot a test to make it pass. Tests that need OCR ou
   - Ask the owner if questions came up.
 
 - [ ] 9. Add fast-check and the property tests
-  - [~] 9.1 Ask the owner to approve fast-check
+  - [x] 9.1 Ask the owner to approve fast-check
     - Check its official repo for maintenance and Jest 30 compatibility, and cite the source. On approval, run `npm install -D fast-check` (dev-only, not covered by `expo install`) with the exact version npm resolves, then `npx expo install --check` and `npx expo-doctor`. Record the decision in DECISIONS.md.
-  - [~] 9.2 Write geometry property tests (Properties 1 to 8)
+  - [x] 9.2 Write geometry property tests (Properties 1 to 8)
     - Files: `src/modules/geometry/__tests__/*.property.test.ts`, `test-support/arbitraries.ts`.
     - At least 100 runs each.
     - _Requirements: 10.1, 10.2, 10.4, 11.2, 12.1, 12.3, 12.4, 13.2, 13.3, 13.4, 13.5, 13.7, 25.1, 25.2, 25.3, 25.4, 25.5, 25.9_
-  - [~] 9.3 Write property tests for confidence, script, the not-configured adapter and still frames (Properties 11, 12, 13, 16)
+  - [-] 9.3 Write property tests for confidence, script, the not-configured adapter and still frames (Properties 11, 12, 13, 16)
     - Property 13 needs the frame-id source and `toFrameRef` from task 10.3. Write it in that task if 10.3 isn't done yet.
+    - 2026-11-19: Properties 11, 12 and 16 written and passing. Property 12 found that `postProcess` classifies the NFC form, which can change the counts (U+0958 becomes two code points); the test now compares with the normalized text. Property 13 waits for task 10.3.
     - _Requirements: 3.2, 3.5, 3.7, 4.6, 5.6, 5.7, 7.1, 7.2, 7.4, 7.5, 17.2_
 
 - [ ] 10. Run the G1a spike and add the native packages

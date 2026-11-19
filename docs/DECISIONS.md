@@ -376,3 +376,13 @@ Sarvam limits input to 1,000 characters per request for `mayura:v1` and 2,000 fo
 - The page is a test fixture only. It is not part of the app and doesn't change the product's "mobile only, no web UI" boundary.
 - The CARD-HI and CARD-KN lines are AI-drafted and unreviewed (D-031).
 **Consequences:** D-029's "runs no app or web page" and D-032's "AI art with text added in an editor" no longer apply to TM-01. FIXTURE.md §1 and §2 point here. The generator, model and date go into FIXTURE.md §1 once the page exists. Box values come from the page's Measure view on the iPad, and replace the DRAFT boxes (task 1.3).
+
+## D-035 fast-check for property tests
+
+**Status:** Accepted (user), 2026-11-19 ("you can add the fast check if necessary"). The quality steering requires property tests for geometry and the Guide reducer, so it is necessary.
+**Context:** Spec 01 task 9.1. The library had to be maintained and work with Jest 30 (`jest-expo` 58).
+**Sources checked 2026-11-19:**
+- npm registry: version 4.10.3, published 2026-11-18, MIT licence, one runtime dependency (`pure-rand` ^8.0.0), engines Node ≥ 12.17.
+- https://github.com/dubzzz/fast-check README: lists Jest integration. The 4.x line needs Node 12.17 or later and ES2020; this host runs Node 26.13.1.
+**Decision:** `npm install -D --save-exact fast-check@4.10.3`. It is dev-only and never bundled into the app, so `npx expo install` doesn't cover it. `npx expo install --check` → "Dependencies are up to date" afterwards.
+**Consequences:** Property tests start with `// Feature: camera-ocr-geometry, Property <n>: <title>` and run at least 100 iterations each. Shared generators live in `test-support/arbitraries.ts`, which app code may not import (lint rule).

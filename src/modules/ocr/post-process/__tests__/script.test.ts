@@ -66,6 +66,18 @@ describe('classifyScript', () => {
   });
 });
 
+describe('classification after NFC normalization', () => {
+  // Found by Property 12. postProcess classifies the NFC form, which can differ.
+  it('counts क़ (U+0958) as one Devanagari code point, but its NFC form as two', () => {
+    const text = 'ಟಿಕ\u0958';
+    expect(classifyScript(text)).toBe('unsupported'); // other 3 against devanagari 1
+    expect(text.normalize('NFC')).toBe('ಟಿಕ\u0915\u093c');
+    expect(classifyScript(text.normalize('NFC'))).toBe('unsupported'); // other 3 against devanagari 2
+    expect(classifyScript('ಟಿ\u0958')).toBe('unsupported'); // other 2 against devanagari 1
+    expect(classifyScript('ಟಿ\u0958'.normalize('NFC'))).toBe('devanagari'); // other 2 no longer outnumbers devanagari 2
+  });
+});
+
 describe('countNonWhitespace', () => {
   it('ignores spaces, tabs, no-break spaces and other whitespace', () => {
     expect(countNonWhitespace(' A\tB\u00a0C\u2003D\u3000')).toBe(4);
