@@ -250,10 +250,10 @@ Rules for every worker:
     - Optional, last. Fixed strings only, no network, no key.
 
 - [ ] 20. Lane K2: `modules/overlaykit-live` (new, needs 1.5; native)
-  - [ ] 20.1 Skeleton and JPEG scale
+  - [x] 20.1 Skeleton and JPEG scale
     - Files: `modules/overlaykit-live/**`, same pattern as `modules/overlaykit-ocr`. `scaleJpegBase64(stillUri, maxLongEdge, quality)` using Android `BitmapFactory` and `Bitmap.compress`; honors EXIF rotation; returns the code strings `NO_FILE` or `FAILED`; writes nothing to disk.
     - _Requirements: 16.7_
-  - [ ] 20.2 Microphone PCM
+  - [x] 20.2 Microphone PCM
     - `startMic(onChunk)`, `stopMic()` with `AudioRecord`, 16 kHz, mono, 16-bit, about 50 ms chunks, base64. Permission is requested by the module only on the first `startMic` after the user tapped the mic toggle (`DENIED` otherwise). Stops on `stopMic`. Writes no file.
     - Also measure on the phone (device, DQ-7): time to scale and encode one still, and whether `expo-camera` stills at 1 per second work without a shutter sound and with acceptable load. If not, report `question` with numbers; the capture change is a separate owner decision.
     - Done check: typecheck, lint, Gradle assemble.
