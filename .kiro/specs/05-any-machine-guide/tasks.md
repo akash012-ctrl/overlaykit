@@ -88,11 +88,11 @@ Rules for every worker:
     - Optional, last. fast-check per D-035. Each file starts with `// Feature: any-machine-guide, Property <n>: <title>`.
 
 - [ ] 5. Lane M: planner module
-  - [ ] 5.1 Interface and prompt
+  - [x] 5.1 Interface and prompt
     - Files: `planner/index.ts`, `types.ts`, `prompt.ts`.
     - `StepPlanner`, `createStepPlanner`, `PlannerState`, `buildPrompt`. No network code, no vendor import.
     - _Requirements: 3.1, 3.2, 3.5, 13.1_
-  - [ ] 5.2 Output schema and strict parser
+  - [x] 5.2 Output schema and strict parser
     - Files: `planner/schema.ts`.
     - JSON schema text and `parseOutput`. No repair of bad output. Works on constrained and unconstrained model text.
     - _Requirements: 3.8_
