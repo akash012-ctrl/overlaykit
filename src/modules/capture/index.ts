@@ -30,3 +30,15 @@ export function createCaptureService(): CaptureService {
     openSettings: () => Linking.openSettings(),
   });
 }
+
+export type { SnapshotWriter } from './debug/snapshot-writer';
+
+/** Debug-only accessor. The require sits inside the __DEV__ branch so Metro drops the module from release bundles (R21.6). */
+export function getSnapshotWriter(): import('./debug/snapshot-writer').SnapshotWriter | null {
+  if (__DEV__) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- __DEV__-only debug accessor (DD-13)
+    const { createSnapshotWriter } = require('./debug/snapshot-writer') as typeof import('./debug/snapshot-writer');
+    return createSnapshotWriter(createExpoFileSystemPort());
+  }
+  return null;
+}

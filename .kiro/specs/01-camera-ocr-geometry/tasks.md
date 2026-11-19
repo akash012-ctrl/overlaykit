@@ -130,7 +130,7 @@ Never skip, weaken or re-snapshot a test to make it pass. Tests that need OCR ou
     - Files: `src/modules/geometry/__tests__/*.property.test.ts`, `test-support/arbitraries.ts`.
     - At least 100 runs each.
     - _Requirements: 10.1, 10.2, 10.4, 11.2, 12.1, 12.3, 12.4, 13.2, 13.3, 13.4, 13.5, 13.7, 25.1, 25.2, 25.3, 25.4, 25.5, 25.9_
-  - [-] 9.3 Write property tests for confidence, script, the not-configured adapter and still frames (Properties 11, 12, 13, 16)
+  - [-]* 9.3 Write property tests for confidence, script, the not-configured adapter and still frames (Properties 11, 12, 13, 16)
     - Property 13 needs the frame-id source and `toFrameRef` from task 10.3. Write it in that task if 10.3 isn't done yet.
     - 2026-11-19: Properties 11, 12 and 16 written and passing. Property 12 found that `postProcess` classifies the NFC form, which can change the counts (U+0958 becomes two code points); the test now compares with the normalized text. Property 13 waits for task 10.3.
     - _Requirements: 3.2, 3.5, 3.7, 4.6, 5.6, 5.7, 7.1, 7.2, 7.4, 7.5, 17.2_
@@ -167,7 +167,7 @@ Never skip, weaken or re-snapshot a test to make it pass. Tests that need OCR ou
     - Covers: the Translate-only switcher; a message in every state; the clip container at the Visible region; outlines and labels; ellipsis with tap for the full text; roles and labels in the UI language; 48 dp targets; controls inside the safe area; portrait only through `app.json`; no fake OCR output, boxes or demo text.
     - Tests: render tests for the states and accessibility props.
     - _Requirements: 1.4, 1.7, 1.8, 2.2, 2.5, 3.8, 7.5, 8.2, 8.4, 8.5, 8.8, 8.10, 12.2, 13.1, 13.6, 14.3, 18.1, 18.2, 18.3, 18.4, 18.5, 18.6, 19.3, 19.4, 19.6, 19.7, 19.8, 19.9_
-  - [~] 11.3 Add the debug snapshot exporter and fault-injection hooks
+  - [x] 11.3 Add the debug snapshot exporter and fault-injection hooks
     - Files: `src/modules/capture/debug/snapshot-writer.ts`, `src/modules/ocr/debug/raw-lines.ts`, `src/modules/ui/debug/*`, the snapshot schema with `parseSnapshot` and `serializeSnapshot`, and tests.
     - Everything behind `__DEV__`, with the debug marker string. Exports go to app-specific storage outside the cache, never to the gallery.
     - Fault-injection hooks for `CAM_CAPTURE_FAILED`, `OCR_ENGINE_UNAVAILABLE` and `OCR_RECOGNITION_FAILED`.
@@ -175,10 +175,10 @@ Never skip, weaken or re-snapshot a test to make it pass. Tests that need OCR ou
     - _Requirements: 21.1, 21.2, 21.3, 21.4, 21.5, 25.11_
 
 - [ ] 12. Run release and privacy checks
-  - [~] 12.1 Search the release bundle for debug code
+  - [x] 12.1 Search the release bundle for debug code
     - Run `npx expo export --platform android`. Search the output for the debug marker and the test-hook names, and record the command and the result (no matches) in `docs/build-log.md`.
     - _Requirements: 21.6_
-  - [~] 12.2 Check network calls, keys and log statements
+  - [x] 12.2 Check network calls, keys and log statements
     - Search `src/modules/capture`, `ocr` and `geometry` for `fetch`, `XMLHttpRequest`, `WebSocket` and HTTP libraries. Search `src/modules/locale` for API-key storage and `openrouter`. Check that release builds log no OCR text or image data. Record the results.
     - _Requirements: 17.9, 22.1, 22.2, 22.3_
   - [~] 12.3 Inspect the merged Android manifest permissions

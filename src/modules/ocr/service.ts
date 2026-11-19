@@ -2,12 +2,13 @@ import type { FrameRef, OcrResult, ReadableScript, Result } from '../shared';
 import type { OcrEngine } from './engine';
 import type { OcrThresholds } from './post-process/post-process';
 import { postProcess } from './post-process/post-process';
-import type { OcrFailureCode, OcrService, RawOcrLine } from './types';
+import type { ConfidenceScale, OcrFailureCode, OcrService, RawOcrLine } from './types';
 
 export type OcrServiceWithDebug = OcrService & {
   /** Raw lines of the last few frames, for the debug snapshot export only. */
   rawLinesFor(frameId: string): readonly RawOcrLine[] | null;
   readonly engineId: string;
+  readonly confidenceScale: ConfidenceScale;
 };
 
 const KEEP_RAW_FRAMES = 3;
@@ -35,6 +36,7 @@ export function createOcrServiceFrom(engine: OcrEngine, thresholds: OcrThreshold
 
   return {
     engineId: engine.id,
+    confidenceScale: engine.confidenceScale,
     async checkEngine(): Promise<Result<void, 'OCR_ENGINE_UNAVAILABLE'>> {
       return (await load()) ? { ok: true, value: undefined } : { ok: false, error: 'OCR_ENGINE_UNAVAILABLE' };
     },

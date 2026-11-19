@@ -4,7 +4,7 @@ import { AppState, PixelRatio } from 'react-native';
 import type { CameraState, PreviewHandle } from '../../capture';
 import type { ControlBars, Insets } from '../../geometry';
 import { getTargetLocale } from '../../locale';
-import type { Size } from '../../shared';
+import type { OcrResult, Size } from '../../shared';
 import type { OverlayLayout } from '../overlay/build-items';
 import { buildOverlayItems } from '../overlay/build-items';
 import { EMPTY_FREEZE_OVERLAY, freezeOverlayReducer, translationRequestFor } from '../overlay/freeze-overlay';
@@ -26,6 +26,7 @@ export function useCameraScreen(services: CameraServices, insets: Insets) {
   const [viewSize, setViewSize] = useState<Size>(NO_SIZE);
   const [bars, setBars] = useState<ControlBars>(NO_BARS);
   const [fontScale, setFontScale] = useState(() => PixelRatio.getFontScale());
+  const [lastResult, setLastResult] = useState<OcrResult | null>(null);
   const previewRef = useRef<PreviewHandle | null>(null);
   // Latest state for async handlers. Synced after each commit, never during render.
   const modelRef = useRef(model);
@@ -75,6 +76,7 @@ export function useCameraScreen(services: CameraServices, insets: Insets) {
     const shown = overlayRef.current.shown;
     dispatch({ type: 'still-dismissed' });
     dispatchOverlay({ type: 'still-dismissed' });
+    setLastResult(null);
     if (shown) void capture.releaseStill(shown);
   }, [capture]);
 
@@ -98,6 +100,7 @@ export function useCameraScreen(services: CameraServices, insets: Insets) {
     const ocrResult = await ocr.recognize(frame);
     dispatch({ type: 'ocr-finished', frameId: frame.frameId, result: ocrResult });
     if (!ocrResult.ok) return;
+    setLastResult(ocrResult.value);
     dispatchOverlay({ type: 'result-applied', result: ocrResult.value });
 
     const request = translationRequestFor(ocrResult.value);
@@ -144,6 +147,8 @@ export function useCameraScreen(services: CameraServices, insets: Insets) {
       view: toScreenView(model),
       previewActive: previewActive(model),
       shownFrame: overlay.shown,
+      lastResult,
+      layout,
       items: built.ok ? built.value.items : [],
       region: built.ok ? built.value.region : null,
     },

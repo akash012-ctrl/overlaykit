@@ -20,7 +20,10 @@ let defaults: CameraServices | null = null;
 /** Built once: they wrap native adapter instances, the only singletons allowed. */
 function defaultServices(): CameraServices {
   if (!defaults) {
-    defaults = { capture: createCaptureService(), ocr: createOcrService(), translation: getTranslationProvider() };
+    const base: CameraServices = { capture: createCaptureService(), ocr: createOcrService(), translation: getTranslationProvider() };
+    // QE-2 hooks exist only in development builds (DD-13, R21.6).
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- __DEV__-only debug accessor (DD-13)
+    defaults = __DEV__ ? (require('./debug') as typeof import('./debug')).withFaultInjection(base) : base;
   }
   return defaults;
 }

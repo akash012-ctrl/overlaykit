@@ -10,6 +10,10 @@ import { CameraServicesProvider, useCameraServices } from '../services';
 import { ModeSwitcher } from './ModeSwitcher';
 import { useCameraScreen } from './useCameraScreen';
 
+// Debug tools are required only in development builds; release bundles never include them (R21.6).
+// eslint-disable-next-line @typescript-eslint/no-require-imports -- __DEV__-only debug accessor (DD-13)
+const DebugTools = __DEV__ ? (require('../debug') as typeof import('../debug')) : null;
+
 const BAR_BACKGROUND = 'rgba(11,15,20,0.88)';
 
 function Screen() {
@@ -54,6 +58,9 @@ function Screen() {
         style={[styles.bottomBar, { paddingBottom: insets.bottom + 12, paddingLeft: insets.left + 12, paddingRight: insets.right + 12 }]}
         onLayout={(e) => actions.onBottomBarHeight(Math.max(0, e.nativeEvent.layout.height - insets.bottom))}
       >
+        {DebugTools && stillShown && shownFrame ? (
+          <DebugTools.SnapshotExportButton frame={shownFrame} result={state.lastResult} layout={state.layout} ocr={services.ocr} />
+        ) : null}
         <ModeSwitcher enabled={view.translateEnabled} />
         {stillShown ? (
           <Pressable
