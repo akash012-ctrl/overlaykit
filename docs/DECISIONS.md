@@ -538,3 +538,15 @@ Sarvam limits input to 1,000 characters per request for `mayura:v1` and 2,000 fo
 - The owner's own copy by `adb push` for testing is not a distribution. Publishing an APK, or a download link that serves the file, is a distribution.
 - Gemma 3 files on Hugging Face need the owner's login and a licence click (credentials item for the owner). The app never carries a token.
 **Consequences:** Task 17.4 adds the notice text and licence line before any public build. This is a summary for planning, not legal advice; the owner reads the linked terms before publishing.
+
+## D-048 Model: Gemma 3 1B IT int4, pushed by the owner; sideload only
+
+**Status:** Accepted (owner, 2026-11-19). Settles OQ-1 and OQ-2 of spec 05. Updates D-045 (default model) and D-047 (the Gemma Terms now apply).
+**Context:** D-045 proposed Gemma 4 E2B as the default and Gemma 3 1B as the fallback. The owner chose Gemma 3 1B.
+**Decision:**
+- Model: `gemma3-1b-it-int4.litertlm`, 584,417,280 bytes, SHA-256 `1325ae366d31950f137c9c357b9fa89448b176d76998180c08ceaca78bba98be`, from `litert-community/Gemma3-1B-IT` on Hugging Face (read from the Hugging Face API on 2026-11-19). Licence: Gemma Terms of Use. The repository is gated.
+- The owner does these steps: log in to Hugging Face, accept the Gemma terms, download the file, and put it on the phone with `adb push`. No Hugging Face token goes to the app or to any worker or agent. Workers do not download this file.
+- The app is sideload-only for this file. It has no in-app download of the gated file. The APK does not contain the model and the model is not redistributed with any APK or link we publish.
+- The app locates the pushed file, checks its size and SHA-256, and makes no network call for it. Until an authorised public mirror is found, there is none; no mirror was found. Gemma 4 E2B (Apache-2.0, public) stays a documented fallback only, and using it needs a new entry.
+- Because Gemma Terms apply to this file, D-047 items for Gemma 3 become tasks in spec 05: a Notice text file with the required sentence, the Prohibited Use Policy restrictions carried into the app's terms or README, and a copy of the terms for recipients, all before any build or link is given to other people.
+**Consequences:** The planner states are `missing`, `ready`, `loading`, `failed`; there is no `downloading` state. The "Download" button becomes setup instructions. A phone without the file shows `PL_NO_MODEL`. A public demo for other people needs the notice tasks done and each tester must obtain the file under their own acceptance, or the owner takes a separate decision. Gemma 3 1B is the weaker model for JSON and Hindi (unmeasured), so task 14 measures both.

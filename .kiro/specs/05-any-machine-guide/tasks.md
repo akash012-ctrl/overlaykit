@@ -36,14 +36,18 @@ Rules for every worker:
 ## Tasks
 
 - [ ] 1. Owner approvals
-  - [ ] 1.1 Confirm the model
-    - Done in D-045 to D-047: Gemma route, LiteRT-LM runtime in a local Kotlin module, `expo-speech-recognition` approved. Still open: the model (OQ-1). Present the model table in `design.md`: Gemma 4 E2B (default, Apache-2.0, no login, 2.59 GB) or Gemma 3 1B int4 (gated, Gemma terms, 584 MB). Record the answer in `docs/DECISIONS.md` as a new entry (next free number). No new npm package is needed for the runtime.
+  - [x] 1.1 Confirm the model
+    - Done in D-045 to D-047: Gemma route, LiteRT-LM runtime in a local Kotlin module, `expo-speech-recognition` approved. Model decided in D-048: Gemma 3 1B IT int4, sideload only. Gemma 4 E2B is the documented fallback only. No new npm package is needed for the runtime.
     - _Requirements: OQ-1, OQ-5, R10.4_
   - [ ] 1.2 Owner answers OQ-2 to OQ-8
     - Record any change from the recommended defaults in `requirements.md` before lanes start.
-  - [ ] 1.3 Confirm the model source and who does what
-    - Gemma 4 E2B: the app downloads it on tap, no account. Write the URL, size and SHA-256 from `design.md` into the DECISIONS entry. Lane M needs them for `model-manifest.ts`.
-    - Gemma 3 files: credentials item for the owner. The owner logs in to Hugging Face, opens the model page, accepts the licence, downloads the file, and runs `adb push`. The app never holds a token. See the report for the steps.
+  - [x] 1.3 Confirm the model source and who does what
+    - Done in D-048: file name, size (584,417,280 bytes) and SHA-256 (`1325ae366d31950f137c9c357b9fa89448b176d76998180c08ceaca78bba98be`) are pinned. Lane M uses them for `model-manifest.ts`. No authorised public mirror was found, so there is no download. The owner does the credentials steps in task 1.4.
+  - [ ] 1.4 Owner steps to put the model on the phone (credentials item for the owner; no worker does these)
+    - 1. Log in to Hugging Face. 2. Open `https://huggingface.co/litert-community/Gemma3-1B-IT`, read and accept the Gemma terms. 3. Download `gemma3-1b-it-int4.litertlm`. 4. Check the SHA-256 on the PC: `Get-FileHash .\gemma3-1b-it-int4.litertlm -Algorithm SHA256` must print `1325ae366d31950f137c9c357b9fa89448b176d76998180c08ceaca78bba98be`. 5. Install the debug build (`npx expo run:android --device`). 6. `adb push .\gemma3-1b-it-int4.litertlm /data/local/tmp/`. 7. `adb shell run-as com.overlaykit.app cp /data/local/tmp/gemma3-1b-it-int4.litertlm files/`. 8. `adb shell rm /data/local/tmp/gemma3-1b-it-int4.litertlm`. The file is then at `/data/data/com.overlaykit.app/files/gemma3-1b-it-int4.litertlm`.
+    - `run-as` works for debug builds only. Release builds need another route, tested in task 5.3. No token goes to the app, to a worker, or into git.
+    - Done check: the owner says the file is there and the hash matched. Record the date. Until then: "device validation pending".
+    - _Requirements: R4.2, R4.3_
 
 - [x] 2. Shared codes and plan types (lane S, first, small)
   - Files: `src/modules/shared/index.ts` (append only).
@@ -98,8 +102,8 @@ Rules for every worker:
     - _Requirements: 3.8_
   - [ ] 5.3 Model store
     - Files: `planner/model-store.ts`, `planner/model-manifest.ts`.
-    - Download on tap, resume, size and checksum check (DQ-1), delete on mismatch. Only file with network code. Needs the final URL, size and checksum from task 1.3. Until then the manifest holds `null` and `status()` returns `missing` with `PL_NO_MODEL`.
-    - _Requirements: 4.1 to 4.4, 10.1_
+    - Locate the pushed file, check size and SHA-256, report `ready` or `missing` with `PL_NO_MODEL`. No network code, no download, never delete the owner's file (D-048). Manifest holds file name, 584,417,280 bytes, and the SHA-256 from task 1.3. Hash with the Kotlin module (JDK `MessageDigest`) if `expo-file-system` has no hash (DQ-1). Also tests which path works for a release build (`run-as` is debug only) and writes it down.
+    - _Requirements: 4.1 to 4.3, 10.1_
   - [ ] 5.4 LiteRT adapter
     - Files: `planner/adapters/litert.ts`. Needs the typed JS surface from lane K (`design.md`, "Local Kotlin module"); can be coded against it before the native side builds, real calls blocked by task 12.
     - Load the model path from `model-store`, call `generate` with the prompt, the schema string and the output-token cap, call `cancel` on abort, `PL_TIMEOUT` after `PLAN_TIMEOUT_MS`, map module codes to `PL_*` (table in `design.md`), call `release()` on `release()`. The only file that imports `modules/overlaykit-llm`.
@@ -165,7 +169,7 @@ Rules for every worker:
     - Done check: `npm run typecheck`, `npm run lint`, and `npx expo run:android --device` builds (Gradle assemble at least). No device claim without a DEVICE-TESTS record.
     - _Requirements: 3.3 to 3.6, 4.4, 4.5_
   - [ ] 12.3 Smoke test on the phone (device)
-    - Load the model file (owner placed it, task 1.3), run one `generate` with a fixed prompt, record the raw text, load time and peak memory in `docs/DEVICE-TESTS.md` as part of DT-G5-07 prep. If the phone runs out of memory, report `question` with the numbers and the fallback model (Gemma 3 1B int4).
+    - Load the model file (owner placed it, task 1.4), run one `generate` with a fixed prompt, record the raw text, load time and peak memory in `docs/DEVICE-TESTS.md` as part of DT-G5-07 prep. If the phone runs out of memory, report `question` with the numbers and the documented fallback (Gemma 4 E2B, which needs a new DECISIONS entry).
     - No phone or no model file: "device validation pending".
     - _Requirements: 4.6_
 
@@ -191,6 +195,11 @@ Rules for every worker:
   - [ ] 17.2 `docs/ARCHITECTURE.md`: add `planner` to section 4 and the dependency map in section 5; add `modules/overlaykit-llm` next to `modules/overlaykit-ocr`; add `PL_*` and `SP_*` to section 8; mark `GD_UNSUPPORTED`, `GD_MACHINE_CHANGED`, `GD_FIXTURE_INVALID` as not emitted by the new path; remove the fixture section's TM-01 requirement.
   - [ ] 17.3 `docs/DEVICE-TESTS.md`: add the DT-G5 rows, all NOT TESTED.
   - [ ] 17.4 README and demo text: say plans are AI suggestions that can be wrong; no "verified" or "AR" wording; privacy statement as in R10. Add the model name, source and licence notice (D-047) to the licence screen or README.
+  - [ ] 17.5 Gemma Terms notice and Prohibited Use Policy (R4.7, D-047, D-048; before any build or link goes to other people)
+    - Add a `NOTICE` text file in the repo and on the app's licence screen with exactly: "Gemma is provided under and subject to the Gemma Terms of Use found at gemma.ai/resources/terms".
+    - Add the Prohibited Use Policy restrictions (read from `gemma.ai/resources/prohibited_use_policy`) to the README or app terms as an enforceable provision, and say the model is subject to them. Link the full Gemma Terms for recipients.
+    - State in the README: the model file is not included; each user gets it under their own acceptance of the terms (sideload only). No model file in git, in the APK, or on any link we publish.
+    - Done check: the files exist, and a search of the release bundle finds no `.litertlm` file. The owner reads the terms first. This is not legal advice.
 
 - [ ] 18. Final checkpoint
   - typecheck, lint, `npx expo-doctor`, `npx expo install --check`. Report commands with exit codes, files changed, tests (none run unless the owner asked), device status per DT id, open risks. Ask the owner whether to run any tests.

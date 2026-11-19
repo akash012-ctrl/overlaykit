@@ -1,6 +1,6 @@
 # Requirements Document
 
-Status: **draft, written 2026-11-19 without a review pause; revised the same day for the Gemma route.** Based on owner decisions 1 to 6 of 2026-11-19, recorded as D-039 to D-043 in `docs/DECISIONS.md`, on the Gemma and speech decisions recorded as D-045 to D-047, and on the updated `docs/PRODUCT.md`. Open questions OQ-1 to OQ-8 use their recommended defaults until the owner decides them. The runtime is LiteRT-LM through a local Kotlin Expo Module (D-045, no npm package). The model pick is **Proposed** and needs owner confirmation. `expo-speech-recognition` is approved (D-046), but nothing is installed by writing this document.
+Status: **draft, written 2026-11-19 without a review pause; revised the same day for the Gemma route.** Based on owner decisions 1 to 6 of 2026-11-19, recorded as D-039 to D-043 in `docs/DECISIONS.md`, on the Gemma, speech and model decisions recorded as D-045 to D-048, and on the updated `docs/PRODUCT.md`. Open questions OQ-1 to OQ-8 use their recommended defaults until the owner decides them. The runtime is LiteRT-LM through a local Kotlin Expo Module (D-045, no npm package). The model is Gemma 3 1B IT int4, pushed to the phone by the owner and sideload only (D-048). `expo-speech-recognition` is approved (D-046), but nothing is installed by writing this document.
 
 ## Introduction
 
@@ -94,13 +94,13 @@ What this spec adds:
 
 **User Story:** As a user, I want to know whether the planner is ready, and what it costs me to get it.
 
-1. THE OverlayKit_App SHALL show the planner state in Guide: `missing`, `downloading` (with bytes and a Cancel), `ready`, `loading`, `failed`.
-2. IF the model file is missing, THEN Guide SHALL show `PL_NO_MODEL` with the model size and a "Download" control. THE OverlayKit_App SHALL NOT download without that tap.
-3. THE download SHALL use HTTPS from the host named in `design.md`, SHALL resume or restart after an interruption, and SHALL send no user data. The OverlayKit_App SHALL check the file against a pinned size and checksum before first use and delete a file that fails (`PL_NO_MODEL` again).
+1. THE OverlayKit_App SHALL show the planner state in Guide: `missing`, `ready`, `loading`, `failed`. There is no downloading state (D-048).
+2. IF the model file is missing, THEN Guide SHALL show `PL_NO_MODEL` with the setup steps (log in to Hugging Face, accept the Gemma terms, download the file, `adb push` to the shown path) and the file size. THE OverlayKit_App SHALL NOT download the model and SHALL NOT ask for or hold a Hugging Face token.
+3. THE OverlayKit_App SHALL look for the pushed file at the path named in `design.md`, SHALL check it against the pinned size (584,417,280 bytes) and SHA-256 before first use, and SHALL make no network call for it. A file that fails the check gives `PL_NO_MODEL`; the app SHALL NOT delete the owner's file. The model SHALL NOT be bundled in the APK or redistributed with it (D-048).
 4. THE OverlayKit_App SHALL load the model only after the user opened Guide, and SHALL release it when the app is backgrounded for longer than `MODEL_IDLE_RELEASE_MS` (Named threshold, unset).
 5. IF the phone cannot load the model (not enough memory, unsupported chip), THEN Guide SHALL show `PL_UNSUPPORTED_DEVICE`, not retry in a loop, and offer Translate and Explore.
 6. Device: model size on disk, load time, peak memory and time to the first token SHALL be measured on the Reference phone and recorded in `docs/DEVICE-TESTS.md`.
-7. THE OverlayKit_App SHALL name the model, its source and its licence on the model download screen and in the app's licence notices (D-047). If a model under the Gemma Terms of Use is ever used, the notice text and the prohibited-use pointer required by those terms SHALL be added before any build that carries or downloads it for other people.
+7. THE OverlayKit_App SHALL name the model, its source and its licence on the model setup screen and in the app's licence notices (D-047, D-048). The model is under the Gemma Terms of Use, so before any build or link is given to other people THE OverlayKit_App SHALL carry a Notice text file with the sentence "Gemma is provided under and subject to the Gemma Terms of Use found at gemma.ai/resources/terms", SHALL carry the Prohibited Use Policy restrictions in its own terms or README and tell users the model is subject to them, and SHALL give recipients a copy of the terms or a link to it.
 
 ### Requirement 5: Grounding and honesty
 
@@ -194,7 +194,7 @@ What this spec adds:
 4. AT-G5-03 (Device): a plan that names text not on screen shows `PL_TARGET_NOT_FOUND`, not a highlight.
 5. AT-G5-04 (Device): airplane mode with the model present: planning works, and no network request occurs during planning (record how this was observed).
 6. AT-G5-05 (Device): voice Goal in English and in Hindi, if the phone supports them; unsupported languages show `SP_LANGUAGE_UNSUPPORTED`.
-7. AT-G5-06 (Device): model download interrupted, resumed, and verified; a corrupt file is rejected.
+7. AT-G5-06 (Device): pushed model file missing, wrong size or wrong checksum: each is rejected with `PL_NO_MODEL`; the right file loads.
 8. AT-G5-07 (Device): load time, time per step, peak memory and battery use are measured on a release build and recorded. Thresholds are set from these numbers in a DECISIONS.md entry before they gate anything.
 9. AT-G5-08 (Review): the vision-safety review finds no claim of "verified", "correct", "AR" or "world tracking", and no image or text leaving the phone for planning.
 
@@ -202,8 +202,8 @@ What this spec adds:
 
 | ID | Question | Recommended default |
 | --- | --- | --- |
-| OQ-1 | Which model? (runtime is decided: LiteRT-LM in a local Kotlin module, D-045) | Gemma 4 E2B `.litertlm` (2.59 GB, Apache-2.0, no login). Fallback: Gemma 3 1B int4 (584 MB, gated, Gemma terms). Needs owner confirmation. |
-| OQ-2 | Where does the model file come from? | Gemma 4 E2B: download on tap from Hugging Face over HTTPS, no login. A gated Gemma 3 file: only by the owner's `adb push` (an app must not carry a token). |
+| OQ-1 | Which model? (decided, D-048) | Gemma 3 1B IT int4 `gemma3-1b-it-int4.litertlm` (584 MB, gated, Gemma terms). Fallback only: Gemma 4 E2B (Apache-2.0). |
+| OQ-2 | Where does the model file come from? | The owner logs in to Hugging Face, accepts the terms and runs `adb push` (decided, D-048). No in-app download, no token in the app. No authorised public mirror was found. |
 | OQ-3 | Plan one step or the whole route at once? | One step at a time (R3.7): it is simpler for a small model and uses the current screen. |
 | OQ-4 | Should the planner see Hindi text directly? | Yes, as read. Quality is measured in task 14 and reported. |
 | OQ-5 | Speech engine on-device only, or also the phone's default (may use network)? | Request on-device when the language pack is present. Otherwise tell the user, and let them choose tap input. |

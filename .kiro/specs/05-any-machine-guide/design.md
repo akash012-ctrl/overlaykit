@@ -1,6 +1,6 @@
 # Design Document: any-machine-guide
 
-Status: **draft, revised 2026-11-19 for the Gemma route.** Implements `requirements.md` under D-039 to D-043 and D-045 to D-047 (owner chose Google on-device AI with Gemma, and approved `expo-speech-recognition`). No code is written by this document. The runtime is our own Kotlin Expo Module around LiteRT-LM. The model choice is **Proposed** (owner confirms, OQ-1). Evidence and links: `.scratch/reports/spec-05-gemma-redesign.md`.
+Status: **draft, revised 2026-11-19 for the Gemma route.** Implements `requirements.md` under D-039 to D-043 and D-045 to D-048 (owner chose Google on-device AI with Gemma, approved `expo-speech-recognition`, and chose Gemma 3 1B IT int4, sideload only). No code is written by this document. The runtime is our own Kotlin Expo Module around LiteRT-LM. The model is **Gemma 3 1B IT int4**, pushed to the phone by the owner (D-048). Gemma 4 E2B is a documented fallback only. Evidence and links: `.scratch/reports/spec-05-gemma-redesign.md`.
 
 ## Overview
 
@@ -84,7 +84,7 @@ src/modules/planner/
   types.ts                             (PlannerState, ModelInfo)
   prompt.ts                            (buildPrompt(PlanRequest): pure, vendor-neutral)
   schema.ts                            (JSON schema text; parseOutput(raw): Result)
-  model-store.ts                       (download, verify, delete; the only network code)
+  model-store.ts                       (locate the pushed file, check size and SHA-256; no network code)
   model-manifest.ts                    (pinned URL, size, SHA-256)
   adapters/litert.ts                   (only file importing `modules/overlaykit-llm`)
 src/modules/speech/
@@ -154,11 +154,10 @@ Existing `GD_*` codes and the existing `error-codes.test.ts` rows stay. New code
 
 ```ts
 export interface StepPlanner {
-  status(): PlannerState;                          // missing | downloading | ready | loading | failed
+  status(): PlannerState;                          // missing | ready | loading | failed
   subscribe(cb: (s: PlannerState) => void): () => void;
   /** Never throws. Resolves with a PL_* code on failure. */
   planNext(req: PlanRequest, signal: AbortSignal): Promise<Result<PlannerOutput, PlErrorCode>>;
-  download(signal: AbortSignal): Promise<Result<void, PlErrorCode>>;
   release(): Promise<void>;
 }
 export function createStepPlanner(opts?: { /* model path, constants */ }): StepPlanner;
@@ -167,7 +166,7 @@ export function createStepPlanner(opts?: { /* model path, constants */ }): StepP
 - `prompt.ts` builds the system and user text from a PlanRequest. It states: use only the listed lines; copy `targetText` exactly from one line; never output personal data; say `cannot-plan` when unsure. Pure, so it can be reviewed and snapshot-tested.
 - `schema.ts` holds the JSON schema (passed to the module as a string) and `parseOutput(raw: string): Result<PlannerOutput, 'PL_BAD_OUTPUT'>`. Strict: unknown fields, wrong types, empty `targetText` for `press`, `enterHint` missing for `enter` all fail. No repair. It parses whatever comes back, constrained or not.
 - `adapters/litert.ts` is the only file that imports `modules/overlaykit-llm`. It loads the model file from `model-store`, calls `generate` with the prompt, the schema string and a max-output-token cap, calls `cancel` on `signal`, and maps the module's code strings to `PL_*`. It holds no LiteRT-LM type because the module exposes none.
-- `model-store.ts` downloads to app-private storage (`expo-file-system`, already installed, D-036), resumes, checks size and checksum against pinned values in `planner/model-manifest.ts`, deletes on mismatch. It is the only file with network code and sends no user data.
+- `model-store.ts` looks for the pushed file at the fixed path (see "Model file placement"), checks its size and SHA-256 against the pinned values in `planner/model-manifest.ts`, and reports `ready`, or `missing` with `PL_NO_MODEL`. It never downloads and never deletes the owner's file. It has no network code (D-048).
 
 ### speech
 
@@ -203,7 +202,7 @@ planReducer(state: PlanGuideState, event: PlanGuideEvent): PlanGuideState;
 - `usePlanGuide` owns the capture loop (reusing the spec 03 cadence and highlight code), calls the planner, grounds, dispatches events, and cancels on unmount.
 - `GoalPicker` draws tappable boxes through `geometry` placement (no coordinate math in `ui`). `VoiceGoal` shows the mic and the editable transcript.
 - `StepCard` shows the English-or-translated instruction, the "AI suggestion" label, "This may be wrong", the enter hint, Done, Back, Stop. The label has no off switch.
-- `ModelGate` shows planner state and the Download button with the size.
+- `ModelGate` shows planner state. When the file is missing it shows the setup steps (log in, accept terms, download, `adb push`, exact path), not a download button.
 - Highlight uses the existing `highlight-model.ts` and `HighlightLayer.tsx` fed from `GroundedStep.target`.
 
 ## Candidate packages (not installed)
@@ -225,11 +224,11 @@ All files are `.litertlm` bundles from the LiteRT Community, read from the Huggi
 
 | Model | File and size | Licence and access | Phone numbers from Google (other phones) | Notes |
 | --- | --- | --- | --- | --- |
-| **Gemma 4 E2B** (recommended) | `gemma-4-E2B-it.litertlm`, 2,588,147,712 bytes (2.59 GB), SHA-256 `181938105e0eefd105961417e8da75903eacda102c4fce9ce90f50b97139a63c`, repo [`litert-community/gemma-4-E2B-it-litert-lm`](https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm) | **Apache-2.0, not gated** (`gated: false`). No account or token needed. | Galaxy S26 Ultra, CPU: about 47 tokens/s decode, time to first token 1.8 s, 1,733 MB peak CPU memory. GPU: 0.3 s, 676 MB. | 2.3B effective parameters. 140+ languages claimed; Hindi and Kannada planning quality is unmeasured. Text, image and audio inputs exist but are not used. Mixed 2, 4 and 8-bit weights. The newest and largest of the three. On a 5.67 GB phone, 1.7 GB peak plus the app is plausible but not proven. |
-| Gemma 3 1B IT, int4 (small fallback) | `gemma3-1b-it-int4.litertlm`, 584,417,280 bytes (584 MB), SHA-256 `1325ae366d31950f137c9c357b9fa89448b176d76998180c08ceaca78bba98be`, repo [`litert-community/Gemma3-1B-IT`](https://huggingface.co/litert-community/Gemma3-1B-IT) | Gemma Terms of Use. **Gated** (`gated: auto`): needs a Hugging Face login and a click on "Acknowledge licence". | Galaxy S24 Ultra, CPU, int4: about 55 tokens/s decode, about 1,009 MB peak. GPU: about 1,205 MB. | Text only. Smallest and fastest. Likely weaker at following a JSON shape and at Hindi; unmeasured. Use if E2B does not fit the phone. |
+| Gemma 4 E2B (documented fallback only, D-048) | `gemma-4-E2B-it.litertlm`, 2,588,147,712 bytes (2.59 GB), SHA-256 `181938105e0eefd105961417e8da75903eacda102c4fce9ce90f50b97139a63c`, repo [`litert-community/gemma-4-E2B-it-litert-lm`](https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm) | **Apache-2.0, not gated** (`gated: false`). No account or token needed. | Galaxy S26 Ultra, CPU: about 47 tokens/s decode, time to first token 1.8 s, 1,733 MB peak CPU memory. GPU: 0.3 s, 676 MB. | 2.3B effective parameters. 140+ languages claimed; Hindi and Kannada planning quality is unmeasured. Text, image and audio inputs exist but are not used. Mixed 2, 4 and 8-bit weights. The newest and largest of the three. On a 5.67 GB phone, 1.7 GB peak plus the app is plausible but not proven. |
+| **Gemma 3 1B IT, int4 (chosen, D-048)** | `gemma3-1b-it-int4.litertlm`, 584,417,280 bytes (584 MB), SHA-256 `1325ae366d31950f137c9c357b9fa89448b176d76998180c08ceaca78bba98be`, repo [`litert-community/Gemma3-1B-IT`](https://huggingface.co/litert-community/Gemma3-1B-IT) | Gemma Terms of Use. **Gated** (`gated: auto`): needs a Hugging Face login and a click on "Acknowledge licence". | Galaxy S24 Ultra, CPU, int4: about 55 tokens/s decode, about 1,009 MB peak. GPU: about 1,205 MB. | Text only. Smallest and fastest. Likely weaker at following a JSON shape and at Hindi; unmeasured. Chosen by the owner (D-048). Gemma 4 E2B is the documented fallback if this one is too weak. |
 | Gemma 3n E2B (not recommended) | `gemma-3n-E2B-it-int4.litertlm`, 3,655,827,456 bytes (3.66 GB), repo [`google/gemma-3n-E2B-it-litert-lm`](https://huggingface.co/google/gemma-3n-E2B-it-litert-lm) | Gemma Terms of Use. **Gated, manual** approval (`gated: manual`). | S24 Ultra, CPU: about 16 tokens/s decode. | Larger, slower, older than Gemma 4 E2B, and needs manual approval. |
 
-**Hosting and gate.** The Gemma 4 E2B file can be downloaded over plain HTTPS from `https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it.litertlm` with no login. The two Gemma 3 files cannot: they need the owner's Hugging Face account and an accepted licence. An app must never carry the owner's token. For a gated file the only route is `adb push` by the owner (task 1.3).
+**Hosting and gate (D-048).** The chosen Gemma 3 1B file is gated: it needs the owner's Hugging Face login and an accepted licence. The owner downloads it and runs `adb push`. No token goes to the app or to any worker. The app is sideload-only for this file: no in-app download, and the model is never put in an APK or served by a link we publish. No authorised public mirror was found. The fallback Gemma 4 E2B file, which needs no login, can be downloaded over plain HTTPS from `https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it.litertlm` with no login. Using it needs a new DECISIONS entry (D-048).
 
 **Languages.** Hindi and Kannada are inside the "140+ languages" claim for Gemma 4 and Gemma 3. I found no per-language benchmark for either on these edge models. DD-3 keeps step text in English and translates it with `locale`, so the planner only has to read English or Hindi OCR lines. Task 14 measures Hindi; Kannada stays "unmeasured".
 
@@ -279,11 +278,11 @@ Gradle and build (all through the module's own files and `app.json` config, neve
 - `minSdk`: 24 for both React Native and the AAR. No change.
 - GPU backend is optional and off by default (CPU first). If turned on, the module's `AndroidManifest.xml` adds the two `uses-native-library` entries (`libvndksupport.so`, `libOpenCL.so`, both `required="false"`). No new permission.
 - ABI: the phone is `arm64-v8a`. APK size impact of the native libraries is unmeasured (`reactNativeArchitectures` currently lists four ABIs). Task 3.3 records the release APK size.
-- `INTERNET` is already allowed (D-038). The model download in `model-store` uses it.
+- `INTERNET` is already allowed (D-038). `model-store` does not use it: there is no model download (D-048).
 
 Model file placement:
-- In-app download (E2B only, no login): `model-store` writes to app-private storage (`expo-file-system`), checks size and SHA-256, deletes on mismatch.
-- `adb push` for a gated file or an offline demo: debug builds can use `adb push` to `/data/local/tmp` then `adb shell run-as <package> cp ... files/` (works for debuggable builds only). A release build cannot use `run-as`; the alternative is the app-specific external folder, which may be blocked for `adb` on Android 14 or HyperOS. Task 5.3 tests which route works and writes it down. This is a device-only check.
+- No in-app download (D-048). The owner pushes the file; `model-store` checks size and SHA-256 and never deletes it.
+- Owner `adb push`, debug build: `adb push gemma3-1b-it-int4.litertlm /data/local/tmp/` then `adb shell run-as <package> cp /data/local/tmp/gemma3-1b-it-int4.litertlm files/` (works for debuggable builds only). The file then sits at `<app files dir>/gemma3-1b-it-int4.litertlm`, which is the path `model-store` checks. Delete `/data/local/tmp` copy afterwards. A release build cannot use `run-as`; the alternative is the app-specific external folder, which may be blocked for `adb` on Android 14 or HyperOS. Task 5.3 tests which route works and writes it down. This is a device-only check.
 
 ## Data Models
 
@@ -293,13 +292,13 @@ Model file placement:
 | `Expectation` | `shared` or `guide/plan` | `'manual'` or `{ appear: string[], disappear: string[] }` (normalized) |
 | `GroundedStep` | `guide/plan` | `id`, `instruction`, `action`, `enterHint`, `target { lineId, quad, frameId }`, `expectation` |
 | `PlanGuideState` | `guide/plan` | `status`, `goal`, `done[]`, `step`, `streak[]`, `notSeenCount`, `lastSeq`, `notBeforeSeq`, `acceptedObservationIds[]`, `acceptedFrameIds[]`, `proofs[]`, `error` |
-| `PlannerState` | `planner` | `{ kind: 'missing' } \| { kind: 'downloading', receivedBytes, totalBytes } \| { kind: 'ready' } \| { kind: 'loading' } \| { kind: 'failed', code }` |
+| `PlannerState` | `planner` | `{ kind: 'missing' } \| { kind: 'ready' } \| { kind: 'loading' } \| { kind: 'failed', code }` |
 
 ## Error handling
 
 | Code | Module | Cause | UI text | Actions |
 | --- | --- | --- | --- | --- |
-| `PL_NO_MODEL` | planner | Model file missing or failed its check | "The planner isn't on this phone yet. Download it (about 2.6 GB)." | Download; Translate; Explore |
+| `PL_NO_MODEL` | planner | Model file missing or failed its check | "The planner file isn't on this phone. Setup steps are in Settings (about 584 MB)." | Show setup steps; Translate; Explore |
 | `PL_UNSUPPORTED_DEVICE` | planner | Model cannot load (memory, chip) | "This phone can't run the planner." | Translate; Explore |
 | `PL_NO_TEXT` | planner/ui | No readable lines in the frame | "I can't read any text here. Move closer or add light." | Retry; Translate |
 | `PL_CANNOT_PLAN` | planner | Model said it cannot plan, or step limit | "I can't plan this. {reason}" | Translate; Explore; Stop |
@@ -342,7 +341,7 @@ Optional and last. Unit tests per pure function in `guide/plan`, `planner/schema
 
 ### Device tests
 
-New rows in `docs/DEVICE-TESTS.md`, all NOT TESTED until run: DT-G5-01 (three real machines, tap goal), DT-G5-02 (advance on camera and on Done, 60 s idle), DT-G5-03 (ungrounded plan), DT-G5-04 (airplane mode planning, no network), DT-G5-05 (voice en and hi), DT-G5-06 (model download interrupt, resume, corrupt), DT-G5-07 (release build speed, memory, battery), DT-G5-08 (backgrounding and screen loss), DT-ERR-PL (each PL and SP state).
+New rows in `docs/DEVICE-TESTS.md`, all NOT TESTED until run: DT-G5-01 (three real machines, tap goal), DT-G5-02 (advance on camera and on Done, 60 s idle), DT-G5-03 (ungrounded plan), DT-G5-04 (airplane mode planning, no network), DT-G5-05 (voice en and hi), DT-G5-06 (pushed file missing, wrong size, wrong checksum: each shows `PL_NO_MODEL`), DT-G5-07 (release build speed, memory, battery), DT-G5-08 (backgrounding and screen loss), DT-ERR-PL (each PL and SP state).
 
 ## Open Questions
 
@@ -356,11 +355,11 @@ See `requirements.md` OQ-1 to OQ-8. Design-only points:
 
 ## Flagged items for the owner
 
-1. Confirm the model: Gemma 4 E2B (2.59 GB, Apache-2.0, no login) as the default, with Gemma 3 1B int4 (584 MB, gated, Gemma terms) as the small fallback (OQ-1). `expo-speech-recognition` is already approved (D-046).
-2. A Gemma 3 file needs your Hugging Face login and a licence click. Gemma 4 E2B needs neither. See the report for the exact steps.
+1. Decided (D-048): Gemma 3 1B int4 (584 MB, gated, Gemma terms), pushed by you with `adb push`; Gemma 4 E2B is the documented fallback only. `expo-speech-recognition` is already approved (D-046).
+2. You log in to Hugging Face, accept the terms, download the file and push it (task 1.4). No token goes to the app or to any worker. The app is sideload-only for this file.
 3. LiteRT-LM has no npm package. We write a Kotlin module. Kotlin 2.2 versus 2.3+ is an open build risk (DQ-4).
 4. Speech may send audio to Google's service unless an on-device pack exists. The app discloses this before first use (D-046).
-5. A 2.6 GB model download and about 1.7 GB peak memory on a 5.67 GB phone are unproven. Task 14 measures them. The small fallback exists for this reason.
+5. About 1 GB peak memory for the 1B (Google's number on another phone) is unproven on the 5.67 GB phone, and the 1B may be too weak at JSON and Hindi. Task 14 measures both.
 6. Plans are AI suggestions and can be wrong. Demo and Devpost text must say so.
 7. Gate G4 and spec 03 tasks tied to TM-01 are replaced (D-043).
 
