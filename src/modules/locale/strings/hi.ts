@@ -98,4 +98,11 @@ export const HI_STRINGS: LocalizedTable = {
   'guide.stepAnnounce': { text: 'चरण {n} / {total}। {text}', review: 'unreviewed' },
   'guide.highlightLabel': { text: 'तस्वीर पर निशान: {component}', review: 'unreviewed' },
   'guide.looking': { text: 'मशीन खोज रहे हैं। कैमरा उसकी ओर करें।', review: 'unreviewed' },
+  // Speech (spec 04). Unreviewed AI draft (D-031).
+  'guide.speak': { text: 'बोलकर सुनाएँ', review: 'unreviewed' },
+  'guide.speak.stop': { text: 'बोलना रोकें', review: 'unreviewed' },
+  'speech.failed': { text: 'इसे बोला नहीं जा सका। लिखा हुआ पाठ अब भी दिख रहा है।', review: 'unreviewed' },
+  'settings.voice.title': { text: 'आवाज़', review: 'unreviewed' },
+  'settings.voice.available': { text: 'इस भाषा की आवाज़ इंस्टॉल है, इसलिए बोलकर सुनाएँ चालू है।', review: 'unreviewed' },
+  'settings.voice.missing': { text: 'इस भाषा की कोई आवाज़ इंस्टॉल नहीं है, इसलिए बोलकर सुनाएँ छिपा है। सिस्टम की टेक्स्ट-टू-स्पीच सेटिंग में एक आवाज़ इंस्टॉल करें।', review: 'unreviewed' },
 };

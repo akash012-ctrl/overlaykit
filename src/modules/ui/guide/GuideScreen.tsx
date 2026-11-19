@@ -2,6 +2,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { HighlightLayer } from './HighlightLayer';
 import { RefusalView } from './RefusalView';
+import { SpeakControl } from './SpeakControl';
 import { StepCard } from './StepCard';
 import { CancelledView, CompletionView, LookingView, PausedView } from './StatusViews';
 import { TaskPicker } from './TaskPicker';
@@ -43,7 +44,13 @@ export function GuideScreen({
           <TaskPicker workflows={view.workflows} onPick={actions.start} onDebugInvalid={actions.startDebugInvalid} />
         ) : null}
         {view.kind === 'step' ? (
-          <StepCard step={view} onDone={actions.done} onRetry={actions.retry} onBack={actions.back} />
+          <StepCard
+            step={view}
+            onDone={actions.done}
+            onRetry={actions.retry}
+            onBack={actions.back}
+            speakControl={<SpeakControl key={`${view.stepId}`} text={view.instruction} />}
+          />
         ) : null}
         {view.kind === 'paused' ? <PausedView /> : null}
         {view.kind === 'cancelled' ? <CancelledView onStartAgain={actions.reset} /> : null}

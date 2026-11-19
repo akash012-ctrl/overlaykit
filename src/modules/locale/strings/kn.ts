@@ -100,4 +100,11 @@ export const KN_STRINGS: LocalizedTable = {
   'guide.stepAnnounce': { text: 'ಹಂತ {n} / {total}. {text}', review: 'unreviewed' },
   'guide.highlightLabel': { text: 'ಚಿತ್ರದ ಮೇಲೆ ಗುರುತು: {component}', review: 'unreviewed' },
   'guide.looking': { text: 'ಯಂತ್ರವನ್ನು ಹುಡುಕುತ್ತಿದೆ. ಕ್ಯಾಮೆರಾವನ್ನು ಅದರ ಕಡೆ ತಿರುಗಿಸಿ.', review: 'unreviewed' },
+  // Speech (spec 04). Unreviewed AI draft (D-031).
+  'guide.speak': { text: 'ಓದಿ ಹೇಳಿ', review: 'unreviewed' },
+  'guide.speak.stop': { text: 'ಓದುವುದನ್ನು ನಿಲ್ಲಿಸಿ', review: 'unreviewed' },
+  'speech.failed': { text: 'ಇದನ್ನು ಓದಿ ಹೇಳಲು ಆಗಲಿಲ್ಲ. ಪಠ್ಯ ಇನ್ನೂ ಕಾಣಿಸುತ್ತಿದೆ.', review: 'unreviewed' },
+  'settings.voice.title': { text: 'ಧ್ವನಿ', review: 'unreviewed' },
+  'settings.voice.available': { text: 'ಈ ಭಾಷೆಯ ಧ್ವನಿ ಸ್ಥಾಪಿತವಾಗಿದೆ, ಆದ್ದರಿಂದ ಓದಿ ಹೇಳಿ ಆನ್ ಆಗಿದೆ.', review: 'unreviewed' },
+  'settings.voice.missing': { text: 'ಈ ಭಾಷೆಯ ಯಾವುದೇ ಧ್ವನಿ ಸ್ಥಾಪಿತವಾಗಿಲ್ಲ, ಆದ್ದರಿಂದ ಓದಿ ಹೇಳಿ ಮರೆಯಾಗಿದೆ. ಸಿಸ್ಟಮ್ ಟೆಕ್ಸ್ಟ್-ಟು-ಸ್ಪೀಚ್ ಸೆಟ್ಟಿಂಗ್‌ನಲ್ಲಿ ಒಂದು ಧ್ವನಿಯನ್ನು ಸ್ಥಾಪಿಸಿ.', review: 'unreviewed' },
 };

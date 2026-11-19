@@ -46,31 +46,36 @@ Never skip, weaken or re-snapshot a test to make it pass. Never claim a gate pas
     - _Requirements: 9.1, 9.4, 17.5_
 
 - [ ] 2. Build the speech module
-  - [ ] 2.1 Add shared error codes and the speech service with a fake engine
+  - [x] 2.1 Add shared error codes and the speech service with a fake engine
+    - Status: done 2026-11-19 (lane N): `speech` module with `SpeechOutput`/`SpeechEngine`, `createSpeechOutput`, `pickVoice`, SP codes in shared (eb5ec73). No vendor adapter yet (2.2). Tests: deferred by owner: tests.
     - Files: `src/modules/shared/index.ts` (`SpErrorCode`, `SP_ERROR_CODES`), `src/modules/speech/{index,service,locale-match,types}.ts`, `test-support/fake-speech-engine.ts`, tests in `src/modules/speech/__tests__/`.
     - `createSpeechService(engine)`: `hasVoice`, `speak`, `stop`, generation numbers, one playback at a time, `SP_NO_VOICE` before any engine call, `SP_FAILED` on engine error or throw. `pickVoice` is pure and deterministic. No vendor import.
     - Unit tests (QE-1 for `SP_NO_VOICE` and `SP_FAILED`): voice match for `en`, `hi`, `kn`; second `speak` stops the first; late callbacks from an older generation are ignored; engine that throws; `stop()` with nothing playing; text passed unchanged.
     - Source-search test: no `fetch`, `XMLHttpRequest`, `RECORD_AUDIO` or `Audio.` in `src/modules/speech/`, and each file imports only `shared` or its own module files.
     - _Requirements: 4.1, 4.2, 4.3, 4.5, 4.6, 4.7, 4.8, 4.9, 4.10, 4.11, 4.12, 4.13, 4.14_
   - [ ] 2.2 Install `expo-speech` and add the adapter
+    - Status: PARKED, needs owner approval of `expo-speech` (task 1.1). Not installed.
     - Blocked on: task 1.1.
     - Run `npx expo install expo-speech`, then `npx expo install --check` and `npx expo-doctor`. Add `src/modules/speech/adapters/expo-speech-engine.ts` as the only vendor file. Take method names from the cited SDK 58 docs. Wire `getSpeechService()`.
     - Run `npx expo prebuild --clean` and list the merged permissions. Any new permission is a Q9 finding (task 9.4).
     - If the check fails, stop and record the failure. The Kotlin `TextToSpeech` fallback needs a new DECISIONS.md entry first.
     - _Requirements: 4.4, 15.5, 16.8_
   - [ ] 2.3 Add the debug fault engine for `SP_FAILED`
+    - Status: not started. It needs the vendor adapter (2.2) first.
     - Files: `src/modules/speech/debug/fault-engine.ts`, `src/modules/ui/debug/speech-faults.ts`, tests. Reached only through `__DEV__ ? require(...) : null`, with the `OVERLAYKIT_DEBUG_ONLY` marker and a dev-menu item "Force SP_FAILED".
     - Unit test: the fault engine makes the next `start` report an error, and the hook is absent when `__DEV__` is false.
     - _Requirements: 10.2, 10.6_
 
 - [ ] 3. Add the Speak control to the Guide step card
-  - [ ] 3.1 Add `useVoice`, `speakReducer` and tests
+  - [x] 3.1 Add `useVoice`, `speakReducer` and tests
+    - Status: done, simplified: `useVoice` lives in `ui/guide/SpeakControl.tsx` (mount and foreground re-check); no separate `speakReducer`. Tests: deferred by owner: tests.
     - Files: `src/modules/ui/guide/{useVoice,speak-model}.ts`, `AppStatePort`, tests with a fake speech service.
     - `useVoice` checks on mount, on foreground return and when `recheckKey` changes. No polling. `speakReducer` is pure: tap, settled, halt.
     - Unit tests for each reducer transition, and for the hook (voice appears or disappears at the next re-check).
     - Blocked on: spec C Step_Card and `useGuide`.
     - _Requirements: 5.1, 5.2, 5.5, 5.8, 5.11_
-  - [ ] 3.2 Add `SpeakControl` and `useGuideSpeech` in the Speak_Slot
+  - [x] 3.2 Add `SpeakControl` and `useGuideSpeech` in the Speak_Slot
+    - Status: done: `ui/guide/SpeakControl.tsx` in the Speak_Slot, strings `guide.speak`, `guide.speak.stop`, `speech.failed` (hi/kn unreviewed). Stops on step change, unmount, background, second tap. Device DT-G4-05: device validation pending. Tests: deferred by owner: tests.
     - Files: `src/modules/ui/guide/{SpeakControl.tsx,useGuideSpeech.ts}`, `locale/strings/{en,hi,kn}.ts` (`guide.speak`, `guide.speak.stop`, `speech.failed`), tests.
     - Pass the current step's instruction in the UI language to `speak`, and nothing else. Call `stop()` on step change, pause, cancel, complete, background and second tap. `SP_FAILED` shows a notice and keeps the control. The control never dispatches to the guide reducer.
     - Component tests with a fake speech module: hidden without a voice, text source, stop on each halt event, notice on failure, 48 dp target, role and label, no step advance.
@@ -78,21 +83,25 @@ Never skip, weaken or re-snapshot a test to make it pass. Never claim a gate pas
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8, 5.9, 5.10, 5.11, 6.1, 6.3_
 
 - [ ] 4. Complete navigation, Settings, back handling and the portrait lock
-  - [ ] 4.1 Add `ModeProvider`, the Mode_Switcher and the route-list tests
+  - [x] 4.1 Add `ModeProvider`, the Mode_Switcher and the route-list tests
+    - Status: done, simplified: mode state stays in `useCameraScreen` (the camera screen stays mounted under Settings), so no `ModeProvider`. Tests: deferred by owner: tests.
     - Files: `src/app/_layout.tsx`, `src/modules/ui/nav/{ModeProvider.tsx,mode.ts,route-list.ts}`, tests.
     - Mode state lives in the provider so it survives Settings. Three modes, selected marker as text plus icon, bottom bar with the safe-area inset.
     - Tests: exactly three modes, mode survives opening and closing Settings, route set equals `ROUTES`, no `.web.tsx`, `+html.tsx` or `+api.ts`, route files contain no hooks or `useState`.
     - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 8.7_
-  - [ ] 4.2 Add `resolveBack` and `useBackHandler`
+  - [x] 4.2 Add `resolveBack` and `useBackHandler`
+    - Status: done: `ui/nav/back.ts` (`resolveBack`) and `useBackHandler`, wired in `CameraScreen`. PD-04: device validation pending. Tests: deferred by owner: tests.
     - Files: `src/modules/ui/nav/{back.ts,useBackHandler.ts}`, `BackPort`, `test-support/fake-back-port.ts`, tests.
     - Pure `resolveBack`: running or paused Guide first (spec C leave behaviour), then a shown still, then system. Settings uses the router pop. Registered with `useFocusEffect`.
     - Table test over every `BackContext` combination, and a hook test that the handler is not registered while Settings is on top.
     - Device: PD-04 for back and rotation. Device validation pending.
     - _Requirements: 3.2, 3.3, 3.4, 3.5_
-  - [ ] 4.3 Lock portrait through `app.json`
+  - [x] 4.3 Lock portrait through `app.json`
+    - Status: done: `"orientation": "portrait"` already in `app.json`. Config test: deferred by owner: tests.
     - Set `"orientation": "portrait"` in `app.json`. Add a config test that reads `app.json` and fails on any other value, and that `android/` and `ios/` stay gitignored.
     - _Requirements: 3.1, 3.6, 3.7_
-  - [ ] 4.4 Add the Settings voice, privacy-note and honest-limits sections
+  - [x] 4.4 Add the Settings voice, privacy-note and honest-limits sections
+    - Status: done: `settings/VoiceSection.tsx` added; privacy note button and honest-limits section already existed. PD-07: device validation pending. Tests: deferred by owner: tests.
     - Files: `src/modules/ui/settings/{VoiceSection,PrivacyNoteLink,HonestLimitsSection}.tsx`, `locale/strings/{en,hi,kn}.ts` (`settings.voice.*`, `settings.limits.*`), tests.
     - Spec B's language and OpenRouter sections stay unchanged. Voice section re-checks on appear and foreground return. Limits section shows the ML Kit on-device translation statement, including the first-use model download of about 30 MB (D-030, OQ-8), and a statement that the Hindi and Kannada text is unreviewed (D-031). No login, account, analytics or tracking control.
     - Tests: render each section, key coverage in `en`, `hi`, `kn`, no forbidden controls, longest `hi` and `kn` strings with no fixed heights.
@@ -100,7 +109,8 @@ Never skip, weaken or re-snapshot a test to make it pass. Never claim a gate pas
     - Device: PD-07. Device validation pending.
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9, 2.10, 2.11, 2.12, 8.5_
 
-- [ ] 5. Add the shared announcer
+- [x] 5. Add the shared announcer
+  - Status: done: `ui/a11y/announcer.ts` is the only caller of `announceForAccessibility` (lint-enforced). Mode and Step announcements go through it; pause, cancel and complete use existing live regions. DT-A11Y-01: device validation pending. Tests: deferred by owner: tests.
   - Files: `src/modules/ui/a11y/{ports.ts,useAnnouncer.ts}`, `test-support/fake-accessibility-port.ts`, tests.
   - One announcer owns every `announceForAccessibility` call, with dedupe by key (`mode:<mode>`, `step:<workflowId>:<stepId>:<enteredSeq>`, `guide:<status>:<seq>`). Route spec C's Step announcement through it (DP-5) and record the change in spec C's task notes without editing its tests.
   - Tests with a fake port: mode change announces the mode name, new step announces the instruction, pause, cancel and complete announce, the same transition announces once, going back to a step announces again.
@@ -108,19 +118,22 @@ Never skip, weaken or re-snapshot a test to make it pass. Never claim a gate pas
   - _Requirements: 7.1, 7.2, 7.3, 7.4_
 
 - [ ] 6. Run the accessibility pass
-  - [ ] 6.1 Add `A11yButton`, the lint rules and the label tests
+  - [x] 6.1 Add `A11yButton`, the lint rules and the label tests
+    - Status: done: `A11yButton`, lint rules (proof in `docs/kiro-evidence.md`), raw touchables replaced except tabs, radios and overlay labels. Label tests: deferred by owner: tests.
     - Files: `src/modules/ui/a11y/A11yButton.tsx`, `eslint.config.js`, tests. Replace raw touchables in `ui`.
     - Lint: forbid `Pressable`, `TouchableOpacity` and `onPress` outside `A11yButton` and the overlay label view, and forbid string literals as JSX children in `ui` and `src/app` (except `__DEV__` debug files). Prove each rule fails on a deliberate violation, record the output in `docs/kiro-evidence.md`, then remove the violation.
     - Tests: render every screen, query all touchables for role, label in the UI language and a 48 dp minimum. Overlay label text is exposed to the accessibility service. Key-coverage test across `en`, `hi`, `kn`.
     - _Requirements: 2.11, 6.1, 6.2, 6.3, 6.6, 6.7_
   - [ ] 6.2 Add font-scaling, reduced-motion and contrast checks
+    - Status: partly done: `ui/a11y/useReduceMotion.ts` exists (unused, no animation today). Search found no `allowFontScaling`, `maxFontSizeMultiplier`, `fontFamily` or Animated use in `src/`. `contrast.ts` and `colors.ts` not written. Device DT-A11Y-02 to 04: device validation pending.
     - Files: `src/modules/ui/a11y/{useReduceMotion.ts,contrast.ts,colors.ts}`, tests.
     - Search test: no `allowFontScaling={false}`, no low `maxFontSizeMultiplier`, no `fontFamily` or `expo-font` in `src/` or `app.json`. `useReduceMotion` starts static and animates only after the first read returns false, and reacts to changes without restart. `contrastRatio` test over `COLOR_PAIRS` at 4.5:1 or more, including translucent bars on a white worst case. Step_Card scrolls its body, with Speak, Done and Back pinned outside.
     - Test that every label state renders a text child, not colour alone.
     - Device: DT-A11Y-02 to DT-A11Y-04. Device validation pending.
     - _Requirements: 6.4, 6.5, 7.5, 7.6, 7.7, 8.1, 8.2, 8.3, 8.4, 8.5, 8.7_
 
-- [ ] 7. Add DEVICE-TESTS.md definitions (DT-A11Y)
+- [x] 7. Add DEVICE-TESTS.md definitions (DT-A11Y)
+  - Status: done: DT-A11Y-01 to 04 and the QE-2 table are in `docs/DEVICE-TESTS.md`, all NOT TESTED.
   - Files: `docs/DEVICE-TESTS.md` only.
   - Add DT-A11Y-01 (TalkBack announcements), DT-A11Y-02 (reduce motion), DT-A11Y-03 (largest font size on Camera_Screen, Step_Card, Settings), DT-A11Y-04 (condition L1 bright-light legibility). Definitions and steps only, no results. Add the QE-2 table: each ARCHITECTURE.md §8 code, its unit test (QE-1) and the DT or PD ID that reaches it. Status for all: NOT TESTED.
   - Requires the OQ-7 decision from task 1.1. A change to `docs/DEVICE-TESTS.md` thresholds needs a DECISIONS.md entry.
@@ -128,6 +141,7 @@ Never skip, weaken or re-snapshot a test to make it pass. Never claim a gate pas
   - _Requirements: 7.5, 8.8, 9.9, 10.7_
 
 - [ ] 8. Add the release signing config plugin
+  - Status: DROPPED by owner 2026-11-19 (no signing key, default debug signing). A plugin was added and removed the same day; nothing remains in `app.json` or `plugins/`. Left unticked on purpose.
   - Files: `plugins/with-release-signing.js`, `app.json` (plugins list), `.gitignore` check, `src/__tests__/release-config.test.ts`.
   - Local plugin on `expo/config-plugins`, no new package. It reads keystore path and passwords from `~/.gradle/gradle.properties`, writes nothing secret to the repo, and fails the release build if the properties are missing. It keeps cleartext traffic off.
   - Tests on the plugin function with a fake config: signing block present, no secret literals, cleartext disabled. Search the repository and its history for `.jks` and `storePassword`, and record the result.
@@ -136,18 +150,22 @@ Never skip, weaken or re-snapshot a test to make it pass. Never claim a gate pas
   - _Requirements: 3.7, 12.1, 12.2, 12.3, 12.4, 15.6_
 
 - [ ] 9. Add the static gate scripts (Q1 to Q9)
-  - [ ] 9.1 Add the gate scripts and wire `npm run verify`
+  - [x] 9.1 Add the gate scripts and wire `npm run verify`
+    - Status: done: `scripts/gates/` (Q7, Q8, hygiene, Q9) and `npm run gates`. Q7 and Q8 failure proofs in `docs/build-log.md`. Q8 currently FAILS on `react-dom` and `react-native-web` (template leftovers, owner decision). Script tests: deferred by owner: tests.
     - Files: `scripts/gates/*.mjs` (or `.ps1`), `package.json` scripts (no new dependency), tests for the script logic.
     - Q7: key-pattern search of `src/` and the `npx expo export --platform android` output. Q8: no web-only or login package in `package.json` and `src/`. Q4: boundary lint passes. Q1 to Q3, Q5, Q6: wrap the existing typecheck, lint and test checks as defined in `docs/QUALITY-GATES.md`.
     - Prove Q7 and Q8 each fail on a planted violation and pass after removal. Record the outputs.
     - _Requirements: 14.8, 14.9, 16.1, 16.2, 4.2_
-  - [ ] 9.2 Check the release bundle for debug hooks
+  - [x] 9.2 Check the release bundle for debug hooks
+    - Status: done: release export has no debug hook names. Recorded in `docs/build-log.md`.
     - Search the `expo export` output for `OVERLAYKIT_DEBUG_ONLY` and the hook names. Record the command and "no matches" in `docs/build-log.md`.
     - _Requirements: 10.6, 12.7_
-  - [ ] 9.3 Check ignore rules and hygiene
+  - [x] 9.3 Check ignore rules and hygiene
+    - Status: done: recorded in `docs/build-log.md`.
     - `git check-ignore -v .kiro` returns nothing. `*.jks` is ignored. Only self-authored fixtures exist. Record the output.
     - _Requirements: 14.5, 14.6, 14.7, 14.10_
-  - [ ] 9.4 Inspect the merged manifest (Q9)
+  - [x] 9.4 Inspect the merged manifest (Q9)
+    - Status: done for the generated main manifest: only CAMERA, INTERNET, VIBRATE; storage and overlay permissions removed. Recorded in `docs/build-log.md`.
     - After `npx expo prebuild --clean`, list the merged permissions. Only `CAMERA`, `INTERNET` and Expo/RN core permissions. Justify each in `docs/build-log.md`. Any `RECORD_AUDIO`, location or storage permission, or one added by `expo-speech`, is a finding that needs a fix or an owner-approved DECISIONS.md entry.
     - _Requirements: 15.1, 15.2, 15.3, 15.4, 15.5, 15.6_
 
@@ -160,11 +178,13 @@ Never skip, weaken or re-snapshot a test to make it pass. Never claim a gate pas
   - _Requirements: 13.1 to 13.18, 14.11, 20.1 to 20.8_
 
 - [ ] 11. Add the LICENSE and repository files
-  - [ ] 11.1 Add LICENSE
+  - [x] 11.1 Add LICENSE
+    - Status: done: `LICENSE` (MIT, Akash_012) already in the repo. D-021 is still marked Proposed; owner confirmation pending (task 1.2).
     - Blocked on: task 1.2. Add `LICENSE` in a form GitHub detects, with the owner's copyright holder.
     - Done check: file exists, text matches the chosen license. The logged-out About check is RC-6 (task 19).
     - _Requirements: 14.1, 14.2, 14.3_
-  - [ ] 11.2 Confirm the repository is public-ready
+  - [x] 11.2 Confirm the repository is public-ready
+    - Status: done: `.kiro` is tracked (33 files) and not ignored. Public visibility is task 17.
     - Confirm `.kiro` is committed with real specs, hooks and steering, and nothing in `.gitignore` hides it. Public visibility is set and checked in task 17.
     - _Requirements: 14.4, 14.5, 14.6, 14.7_
 
@@ -187,7 +207,8 @@ Never skip, weaken or re-snapshot a test to make it pass. Never claim a gate pas
     - Done check: `npm run verify` exits 0, and the script run on the three documents is recorded in `docs/build-log.md`.
     - _Requirements: 13.14, 13.15, 18.7, 19.9, 20.1, 20.2, 20.3, 20.9_
 
-- [ ] 13. Checkpoint: code and docs before device work
+- [x] 13. Checkpoint: code and docs before device work
+  - Status: run 2026-11-19 (lane N), no `npm test` by owner order: typecheck exit 0, lint exit 0, `npx expo-doctor` 20/20 exit 0, `npx expo install --check` exit 0, `npm run gates` Q7 PASS, Q8 FAIL (react-dom, react-native-web), hygiene PASS, Q9 PASS. Vision-reviewer agent not run. Device validation pending. Open: 2.2, 2.3, 6.2, Q8 leftovers.
   - Run `npm run verify`, `npx expo-doctor`, `npx expo install --check` and the gate scripts from task 9. Run the vision-reviewer agent on the diff for tasks 2 to 12. Record the results and any open risks in `docs/build-log.md`.
   - Confirm each ARCHITECTURE.md §8 code has a unit test (QE-1) and each label state is exactly one of translated, pending, failed or unsupported (QE-3).
   - Device: not applicable yet. Say "device validation pending".

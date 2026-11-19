@@ -1,11 +1,15 @@
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useCallback } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CameraPreview, StillView } from '../../capture';
 import { t } from '../../locale';
+import { A11yButton } from '../a11y/A11yButton';
 import { ExplorePanel } from '../explore/ExplorePanel';
 import { GuideScreen } from '../guide';
+import { resolveBack } from '../nav/back';
+import { useBackHandler } from '../nav/useBackHandler';
 import { OverlayLayer } from '../overlay/OverlayLayer';
 import { MIN_TOUCH_TARGET_DP } from '../overlay/styles';
 import type { CameraServices } from '../services';
@@ -29,6 +33,12 @@ function Screen() {
   const stillShown =
     shownFrame !== null &&
     (view.kind === 'reading' || view.kind === 'still' || view.kind === 'no-text' || view.kind === 'recognition-failed');
+  const resolve = useCallback(() => resolveBack({ mode: state.mode, stillShown }), [state.mode, stillShown]);
+  const runBack = useCallback(
+    (action: 'leave-guide' | 'close-still') => (action === 'leave-guide' ? actions.setMode('translate') : actions.dismissStill()),
+    [actions],
+  );
+  useBackHandler(resolve, runBack);
 
   return (
     <View style={styles.root} onLayout={(e) => actions.onStillLayout(e.nativeEvent.layout)}>
@@ -67,23 +77,19 @@ function Screen() {
         <Text accessibilityLiveRegion="polite" style={styles.message}>
           {t(view.messageKey)}
         </Text>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t('settings.open')}
+        <A11yButton
+          label={t('settings.open')}
           onPress={() => router.push('/settings')}
           style={styles.actionButton}
-        >
-          <Text style={styles.buttonText}>{t('settings.open')}</Text>
-        </Pressable>
+          textStyle={styles.buttonText}
+        />
         {view.action ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t(view.action.labelKey)}
+          <A11yButton
+            label={t(view.action.labelKey)}
             onPress={() => view.action && actions.runAction(view.action.kind)}
             style={styles.actionButton}
-          >
-            <Text style={styles.buttonText}>{t(view.action.labelKey)}</Text>
-          </Pressable>
+            textStyle={styles.buttonText}
+          />
         ) : null}
       </View>
 
@@ -105,25 +111,20 @@ function Screen() {
         ) : null}
         <ModeSwitcher enabled={view.translateEnabled} mode={state.mode} onChange={actions.setMode} />
         {state.mode === 'guide' ? null : stillShown ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t('action.closeStill')}
+          <A11yButton
+            label={t('action.closeStill')}
             onPress={actions.dismissStill}
             style={styles.primaryButton}
-          >
-            <Text style={styles.buttonText}>{t('action.closeStill')}</Text>
-          </Pressable>
+            textStyle={styles.buttonText}
+          />
         ) : (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t('action.capture')}
-            accessibilityState={{ disabled: !view.captureEnabled }}
+          <A11yButton
+            label={t('action.capture')}
             disabled={!view.captureEnabled}
             onPress={() => void actions.takePhoto()}
             style={[styles.primaryButton, !view.captureEnabled && styles.disabled]}
-          >
-            <Text style={styles.buttonText}>{t('action.capture')}</Text>
-          </Pressable>
+            textStyle={styles.buttonText}
+          />
         )}
       </View>
       {state.privacy.loaded && !state.privacy.acknowledged ? (

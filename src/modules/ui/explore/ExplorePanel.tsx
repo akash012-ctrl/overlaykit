@@ -1,6 +1,7 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { t } from '../../locale';
+import { A11yButton } from '../a11y/A11yButton';
 import { MIN_TOUCH_TARGET_DP } from '../overlay/styles';
 import { TR_UI } from '../translate/error-map';
 import type { LabelContent } from '../translate/label-model';
@@ -67,22 +68,12 @@ export function ExplorePanel({ view, list, prompt, onRequest, onClose }: Props) 
               {t('explore.components')}
             </Text>
             {list.map((c) => (
-              <Pressable
-                key={c.id}
-                accessibilityRole="button"
-                accessibilityLabel={c.name}
-                onPress={() => onRequest(c.id)}
-                style={styles.button}
-              >
-                <Text style={styles.buttonText}>{c.name}</Text>
-              </Pressable>
+              <A11yButton key={c.id} label={c.name} onPress={() => onRequest(c.id)} style={styles.button} textStyle={styles.buttonText} />
             ))}
           </View>
         ) : null}
         {view.kind !== 'nothing' || prompt ? (
-          <Pressable accessibilityRole="button" accessibilityLabel={t('action.closeSheet')} onPress={onClose} style={styles.button}>
-            <Text style={styles.buttonText}>{t('action.closeSheet')}</Text>
-          </Pressable>
+          <A11yButton label={t('action.closeSheet')} onPress={onClose} style={styles.button} textStyle={styles.buttonText} />
         ) : null}
       </ScrollView>
     </View>

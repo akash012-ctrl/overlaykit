@@ -49,6 +49,7 @@
     "typecheck": "tsc --noEmit",
     "test": "jest --ci",
     "verify": "node scripts/quality-gate.mjs",
+    "gates": "node scripts/gates/run-static.mjs",
     "test:e2e": "e2e run --target android"
   },
   "jest": {

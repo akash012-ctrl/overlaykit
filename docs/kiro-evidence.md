@@ -110,3 +110,13 @@ Probes deleted, `npm run lint` → exit 0.
 - `eslint.config.js`: `NETWORK_ALLOWED_FILES` (`locale/http-port.ts`, `locale/adapters/*-route.ts`) switch off the network-global bans. Every other file in every module, `locale` included, still bans `fetch`. The network-package ban (axios and others) is unchanged.
 - Proof: a temporary `src/modules/locale/zz-probe.ts` with `import { x } from '../ui'` made `npx eslint src/modules/locale` report `error  Unexpected path "../ui" imported in restricted zone. locale may not import ui (ARCHITECTURE.md §5)  import/no-restricted-paths`. The probe was removed. (`components` does not exist yet, so `ui` was the forbidden target.)
 - `npm run lint` after removal: 0 errors, 4 warnings, all `no-require-imports` in spec 01 files (`ocr/index.ts`, `CameraScreen.tsx`, `ui/services.tsx`), none in files of this change.
+
+## 2026-11-19: Spec 04 lane N, lint rule failure proofs (task 6.1)
+
+Prompt: spec 04 code lane. A probe file `src/modules/ui/a11y/ViolationProbe.tsx` imported `Pressable`, called `AccessibilityInfo.announceForAccessibility('x')` and had `<Text>Hello</Text>`. `npx eslint` on it (exit 1) reported:
+
+- `1:29 error Use A11yButton (ui/a11y) so every touchable has a role, a label and a 48 dp target (native-ux)  no-restricted-syntax`
+- `4:3 error Announce through announce() in ui/a11y/announcer.ts, so a transition is announced once  no-restricted-syntax`
+- `7:13 error Strings not allowed in JSX files: "Hello"  react/jsx-no-literals`
+
+The probe file was then deleted and `npm run lint` passed (exit 0). Q7 proof: a planted `AKIA...` key in `src/` made `q7-secrets.mjs` exit 1; after removal it exited 0. Device result: device validation pending.

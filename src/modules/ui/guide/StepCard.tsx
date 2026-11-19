@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
-import { AccessibilityInfo, View } from 'react-native';
+import { View } from 'react-native';
 
 import { t } from '../../locale';
+import { announce } from '../a11y/announcer';
 import { CheckpointPrompt } from './CheckpointPrompt';
 import { GuideButton, Message, Note, Panel, guideStyles } from './parts';
 import { SpeakSlot } from './SpeakSlot';
@@ -26,7 +27,8 @@ export function StepCard({
 }) {
   // Each new Step is announced (R13.14).
   useEffect(() => {
-    AccessibilityInfo.announceForAccessibility(
+    announce(
+      `step:${step.stepId}`,
       t('guide.stepAnnounce', { n: step.stepNumber, total: step.stepCount, text: step.instruction }),
     );
   }, [step.stepId, step.stepNumber, step.stepCount, step.instruction]);

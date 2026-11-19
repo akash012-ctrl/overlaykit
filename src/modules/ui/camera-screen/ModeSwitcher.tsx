@@ -1,7 +1,8 @@
-import { AccessibilityInfo, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { t } from '../../locale';
 import type { StringKey } from '../../locale';
+import { announce } from '../a11y/announcer';
 import { GUIDE_MODE_ENTRY } from '../guide';
 import { MIN_TOUCH_TARGET_DP } from '../overlay/styles';
 
@@ -29,7 +30,7 @@ export function ModeSwitcher({ enabled, mode, onChange }: { enabled: boolean; mo
             onPress={() => {
               if (selected) return;
               onChange(tab.id);
-              AccessibilityInfo.announceForAccessibility(t(tab.labelKey));
+              announce(`mode:${tab.id}`, t(tab.labelKey));
             }}
             style={[styles.tab, selected && styles.selected, !enabled && styles.disabled]}
           >

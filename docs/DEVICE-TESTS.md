@@ -107,6 +107,51 @@ Record the commit (`git rev-parse --short HEAD`) and build variant for every ses
 | DT-RC-01 | RC-1 | Release build, fresh install | Run S1 three times in a row | All pass |
 | DT-RC-02 | RC-2, RC-4 | Release build | Run S1-N on 3 negative machines; run S1 in airplane mode | All pass |
 
+### Accessibility (spec 04, task 7). Definitions only. Status: NOT TESTED, device validation pending.
+
+| ID | Gate / AT | Setup | Steps | Expected | Status |
+| --- | --- | --- | --- | --- | --- |
+| DT-A11Y-01 | R7.1 to R7.4 | Release build, TalkBack on | Switch Translate, Explore and Guide; open a Guide step; go Back to the previous step; trigger pause, cancel and complete | Each mode name is announced once. Each new step instruction is announced once. Going back to a step announces it again. Pause, cancel and completion are spoken once | NOT TESTED |
+| DT-A11Y-02 | R7.5 to R7.7 | Release build, system "Remove animations" on, then off | Open Guide on a step with a highlight | On: highlight is a static outline. Off: any animation starts only after the setting is read. Changing the setting needs no restart | NOT TESTED |
+| DT-A11Y-03 | R8.1 to R8.5 | Largest system font size, then the largest display size | Open Camera screen, a Guide step card and Settings in en, hi and kn | No clipped text, no overlap, Speak, Done and Back reachable, no fixed-height container cuts a line | NOT TESTED |
+| DT-A11Y-04 | R8.6, L1 | L1 bright light, Release build | Read the top bar, bottom bar, labels and step card outdoors or under a bright lamp | All text legible without shading the screen by hand. Record the phone brightness setting | NOT TESTED |
+
+### QE-2: error code, unit test and device test (spec 04, task 7)
+
+Unit tests (QE-1) are deferred by the owner. "Unit test" lists where a test exists today or "deferred". Device cases reach the UI state. Status: NOT TESTED for every row.
+
+| Code | Unit test (QE-1) | Device case |
+| --- | --- | --- |
+| CAM_PERMISSION_DENIED | existing (camera-screen) | DT-G1-01 |
+| CAM_PERMISSION_BLOCKED | existing (camera-screen) | DT-G1-01 |
+| CAM_UNAVAILABLE | existing (camera-screen) | DT-ERR-01 |
+| CAM_CAPTURE_FAILED | existing (camera-screen) | DT-ERR-02 |
+| OCR_ENGINE_UNAVAILABLE | existing (camera-screen) | DT-ERR-02 |
+| OCR_RECOGNITION_FAILED | existing (camera-screen) | DT-G1-02 (debug hook) |
+| OCR_NO_TEXT | existing (camera-screen) | DT-G1-08 |
+| OCR_LOW_QUALITY | existing (camera-screen) | DT-ERR-03 |
+| OCR_UNSUPPORTED_SCRIPT | existing (camera-screen) | DT-G1-07 |
+| TR_NOT_CONFIGURED | existing | DT-G2-02 |
+| TR_OFFLINE | existing | DT-G2-02 |
+| TR_TIMEOUT | existing | DT-G2-03 |
+| TR_RATE_LIMITED | existing | DT-G2-03 |
+| TR_PROVIDER_ERROR | existing | DT-G2-03 |
+| TR_UNSUPPORTED_PAIR | existing | DT-ERR-02 |
+| TR_KEY_INVALID | existing | none while the OpenRouter key is deferred (D-030) |
+| TR_NO_CREDITS | existing | none while the OpenRouter key is deferred (D-030) |
+| MCH_NOT_VERIFIED | code list only (error-codes.test) | DT-G3-05, DT-G4-01 |
+| MCH_AMBIGUOUS | code list only (error-codes.test) | DT-G3-03 |
+| CMP_NOT_VISIBLE | code list only (error-codes.test) | DT-ERR-04 |
+| GD_UNSUPPORTED | none today (deferred by owner: tests) | DT-G4-01 |
+| GD_MACHINE_LOST | none today (deferred by owner: tests) | DT-G4-03 |
+| GD_MACHINE_CHANGED | none today (deferred by owner: tests) | DT-G4-04 |
+| GD_CHECKPOINT_NOT_SEEN | none today (deferred by owner: tests) | DT-ERR-05 |
+| GD_FIXTURE_INVALID | none today (deferred by owner: tests) | DT-G4-07 |
+| SP_NO_VOICE | deferred (tests deferred by owner) | DT-G4-05 |
+| SP_FAILED | deferred (tests deferred by owner) | DT-ERR-02 |
+
+Note: "existing" means the code appears in a test file today (found by search, tests not run for this table). "SP_*" rows have no test yet. Guide and device-case mapping for TM-01 wording will change with spec 05 (any-machine Guide). Device IDs above that name TM-01 or NEG fixtures are kept as written until spec 05 revises them.
+
 ## Result log
 
 Copy this block for each session. Keep screenshots under `docs/device-results/<date>/` (create the folder when needed).

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
+import { A11yButton } from '../a11y/A11yButton';
 import { MIN_TOUCH_TARGET_DP } from '../overlay/styles';
 
 export const PANEL_BACKGROUND = 'rgba(11,15,20,0.92)';
@@ -8,14 +9,12 @@ export const PANEL_BACKGROUND = 'rgba(11,15,20,0.92)';
 /** A button with a text label. At least 48 dp (native-ux), wraps long hi and kn labels, no fixed height. */
 export function GuideButton({ label, onPress, primary }: { label: string; onPress: () => void; primary?: boolean }) {
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={label}
+    <A11yButton
+      label={label}
       onPress={onPress}
       style={[styles.button, primary ? styles.primary : styles.secondary]}
-    >
-      <Text style={styles.buttonText}>{label}</Text>
-    </Pressable>
+      textStyle={styles.buttonText}
+    />
   );
 }
 

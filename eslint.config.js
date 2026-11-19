@@ -121,14 +121,23 @@ const networkRules = {
 // Relative require() stays allowed for the __DEV__-only debug accessors (DD-13);
 // import/no-restricted-paths still checks where it points. A package require()
 // or any import() would slip past no-restricted-imports, so both are banned.
-const dynamicImportRule = [
-  'error',
+const touchableImports = "ImportDeclaration[source.value='react-native'] > ImportSpecifier[imported.name=/^(Pressable|TouchableOpacity|TouchableHighlight|TouchableWithoutFeedback)$/]";
+const baseSyntax = [
   { selector: 'ImportExpression', message: 'Use static imports so the boundary rules can check them (ARCHITECTURE.md §5).' },
   {
     selector: "CallExpression[callee.name='require']:not([arguments.0.value=/^\\./])",
     message: 'Only relative require() is allowed, so the package bans can check every import (ARCHITECTURE.md §5).',
   },
 ];
+const touchableSyntax = {
+  selector: touchableImports,
+  message: 'Use A11yButton (ui/a11y) so every touchable has a role, a label and a 48 dp target (native-ux).',
+};
+const announceSyntax = {
+  selector: "CallExpression[callee.property.name='announceForAccessibility']",
+  message: 'Announce through announce() in ui/a11y/announcer.ts, so a transition is announced once.',
+};
+const dynamicImportRule = ['error', ...baseSyntax, touchableSyntax, announceSyntax];
 
 const moduleConfigs = MODULES.flatMap((name) => [
   {
@@ -152,6 +161,26 @@ const moduleConfigs = MODULES.flatMap((name) => [
     },
   },
 ]);
+
+// Where a raw touchable or a direct announce call is the point of the file (tabs, tappable overlay labels, A11yButton, announcer).
+const a11yExceptionConfig = {
+  files: [
+    'src/modules/ui/a11y/A11yButton.tsx',
+    'src/modules/ui/a11y/announcer.ts',
+    'src/modules/ui/overlay/OverlayLayer.tsx',
+    'src/modules/ui/camera-screen/ModeSwitcher.tsx',
+    'src/modules/ui/settings/LanguageSection.tsx',
+    'src/modules/ui/debug/SnapshotExportButton.tsx',
+  ],
+  rules: { 'no-restricted-syntax': ['error', ...baseSyntax] },
+};
+
+// No bare string literals as JSX children in ui and routes: user-facing text goes through t(key) (native-ux).
+const noLiteralTextConfig = {
+  files: ['src/modules/ui/**/*.tsx', 'src/app/**/*.tsx'],
+  ignores: ['**/__tests__/**', 'src/modules/ui/debug/**', 'src/modules/ui/guide/debug/**'],
+  rules: { 'react/jsx-no-literals': ['error', { noStrings: true, ignoreProps: true }] },
+};
 
 const networkAllowedConfig = {
   files: NETWORK_ALLOWED_FILES,
@@ -204,5 +233,7 @@ module.exports = defineConfig([
   ...moduleConfigs,
   ...vendorOwnerConfigs,
   networkAllowedConfig,
+  a11yExceptionConfig,
+  noLiteralTextConfig,
   routeConfig,
 ]);

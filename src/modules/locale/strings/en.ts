@@ -90,6 +90,13 @@ export const EN_STRINGS = {
   'guide.stepAnnounce': 'Step {n} of {total}. {text}',
   'guide.highlightLabel': 'Mark on image: {component}',
   'guide.looking': 'Looking for the machine. Point the camera at it.',
+  // Speech (spec 04).
+  'guide.speak': "Speak",
+  'guide.speak.stop': "Stop speaking",
+  'speech.failed': "Couldn't speak this. The text is still shown.",
+  'settings.voice.title': "Voice",
+  'settings.voice.available': "A voice for this language is installed, so Speak is on.",
+  'settings.voice.missing': "No voice for this language is installed, so Speak is hidden. Install one in the system text-to-speech settings.",
 } as const;
 
 export type StringKey = keyof typeof EN_STRINGS;

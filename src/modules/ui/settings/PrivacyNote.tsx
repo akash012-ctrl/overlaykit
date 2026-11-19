@@ -1,6 +1,7 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { DEFAULT_ROUTE_TABLE, t } from '../../locale';
+import { A11yButton } from '../a11y/A11yButton';
 import { MIN_TOUCH_TARGET_DP } from '../overlay/styles';
 import { privacyBodyKey } from '../translate/gate';
 
@@ -15,9 +16,7 @@ export function PrivacyNote({ onDone }: { onDone: () => void }) {
         {t('privacy.title')}
       </Text>
       <Text style={styles.body}>{t(privacyBodyKey(DEFAULT_ROUTE_TABLE))}</Text>
-      <Pressable accessibilityRole="button" accessibilityLabel={t('privacy.accept')} onPress={onDone} style={styles.button}>
-        <Text style={styles.buttonText}>{t('privacy.accept')}</Text>
-      </Pressable>
+      <A11yButton label={t('privacy.accept')} onPress={onDone} style={styles.button} textStyle={styles.buttonText} />
     </View>
   );
 }
