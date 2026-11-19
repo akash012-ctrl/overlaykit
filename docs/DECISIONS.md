@@ -425,3 +425,71 @@ Sarvam limits input to 1,000 characters per request for `mayura:v1` and 2,000 fo
 **Context:** `src/modules/ocr/thresholds.ts` needs values for the low-quality and unsupported-script rules before any snapshot exists. Design OQ-5 says they must be tuned on recorded TM-01 L3 and CARD-KN snapshots.
 **Decision:** Starting values: minimum 3 characters, mean confidence 0.5, median line height 12 px, garble check below confidence 0.6, symbol fraction 0.5, minority-script fraction 0.3. They are marked PROVISIONAL in code.
 **Consequences:** No G1 measurement may use them. Task 15.1 must record the measured values in a new entry and update the pinned tests. No gate threshold changes.
+
+## D-038 Block storage and system-overlay permissions (gate Q9)
+
+**Status:** Accepted (owner, 2026-11-19: "yes, add android.blockedPermissions ... least privilege").
+**Context:** The release manifest merge listed `READ_EXTERNAL_STORAGE` and `WRITE_EXTERNAL_STORAGE` (max SDK 32) and `SYSTEM_ALERT_WINDOW`, which libraries add. The app writes no shared media and draws no system overlay. Q9 allows only `CAMERA`, `INTERNET` and what Expo and RN core need.
+**Decision:** `app.json` `android.blockedPermissions` lists those three. No gate threshold changes.
+**Consequences:** After `npx expo prebuild --clean --platform android` the release merge (`:app:processReleaseMainManifest`) lists `CAMERA`, `INTERNET`, `VIBRATE`, `ACCESS_NETWORK_STATE` and `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`. Debug-only dev-client permissions are not checked here. An install on the phone still has to confirm the app runs (device validation pending).
+
+## D-038 Guide works on any machine, with AI-planned steps shown as suggestions
+
+**Status:** Accepted (user), 2026-11-19. Package and model choices still need approval (D-039 to D-041).
+**Context:** The owner changed the product. The app opens on the camera. The user points it at any machine, picks a goal, and is guided one step at a time.
+**Replaces in PRODUCT.md:**
+- Rule P6 ("instructions only for verified known machines").
+- The Guide row "Picks a task on a recognized, verified machine" and its "never generates steps" clause.
+- The "Not built" line "AI- or LLM-generated explanations or instructions".
+- D-009 ("Guide only for verified, unambiguously identified machines") is superseded for Guide start. D-008 still holds for authored content (Explore on verified fixtures). The `verified` / `ambiguous` / `none` match is no longer a start gate.
+**Decision:**
+- Guide can start on any machine. Steps are planned at runtime from the goal and the OCR text (D-039).
+- Every planned step is labeled "AI suggestion" in the Step card. The app never says a plan is verified or correct.
+- When the planner cannot plan (no model, model error, bad output, no usable text, text it cannot tie to a recognized line), the app shows `PL_CANNOT_PLAN` with the reason and offers Translate and Explore. It never invents a step or a target.
+- A step may only point at text that OCR found in a frame. A step whose target does not match a recognized line is dropped, not guessed.
+- The user can stop at any time. Guide never presses anything on the machine.
+**Alternatives:** keep verified-only Guide (rejected by the owner); cloud LLM planning (rejected, D-039).
+**Consequences:** New error family `PL_*` in `shared`. README, demo and Devpost text must say plans are AI suggestions that can be wrong.
+
+## D-039 Steps are planned by an on-device model; only text and the goal go in
+
+**Status:** Accepted (user) for the principle. Runtime and model: Proposed, see spec 05 design.md section "Candidate packages".
+**Context:** Owner decision 1. P5 and D-006 forbid image upload. D-028 allows text-only cloud calls for translation only.
+**Replaces:** PRODUCT.md "Not built": "AI- or LLM-generated explanations or instructions. The only LLM use is translating recognized text through OpenRouter".
+**Decision:**
+- Planning runs on the phone. The model input is the user's goal text plus OCR line text (and line ids). No image, no pixels, no coordinates, no text goes to any server for planning. No OpenRouter fallback for planning.
+- The model sits behind a `StepPlanner` interface in its own module. Vendor types never leave that module (ARCHITECTURE.md provider rule).
+- The model file is fetched once from the model host over HTTPS, with a visible progress screen, and checked by SHA-256. This download sends no user data. Or it ships in a side-loaded path for the demo (design.md OQ). If the model is missing the app says so.
+- Translation of step text into the user's language still uses the translation provider (D-027, D-028), text only. It is a separate call.
+**Consequences:** A new native dependency and a model file (hundreds of MB). Adding either needs owner approval under the stack rule and a new `docs/DECISIONS.md` entry on approval. Performance must be measured on the reference phone before any "works" claim.
+
+## D-040 Overlays stay 2D and are anchored to OCR text
+
+**Status:** Accepted (user), 2026-11-19.
+**Context:** Owner decision 2. Confirms the existing rule.
+**Replaces:** nothing. It extends the "Not built" ARCore/ARKit line to the new Guide: the highlight is a 2D box on a recognized text line (or on a region derived from one) in the image. No ARCore, no world tracking, no SLAM. Code, UI and docs must not use "AR", "augmented reality" or "world tracking".
+**Consequences:** A step's target is an OCR line id. A target that is a button without text can only be pointed at by "next to" or "below" text (text-relative), and the app says so. If the target line is not visible, the card says "Not in view" and shows no highlight.
+
+## D-041 Voice input uses Android built-in speech recognition
+
+**Status:** Accepted (user) for the principle. Package: Proposed (`expo-speech-recognition`), needs owner approval.
+**Context:** Owner decision 3.
+**Replaces:** PRODUCT.md "Not built": "Speech recognition or voice commands. Voice is text-to-speech output only."
+**Decision:**
+- Speech input sits behind a `SpeechInput` interface in the `speech` module. The only engine is the Android `SpeechRecognizer` service on the phone.
+- On-device recognition is requested where the phone has the language pack. Where Android would send audio to the recognition service, the app shows that before the first use and lets the user stay on tap-only input. The app itself sends no audio anywhere and keeps no recording.
+- The microphone permission is asked only when the user taps the mic button. D-036 `recordAudioAndroid: false` is for the camera plugin and stays.
+- Voice sets the goal only. Tapping recognized text also sets the goal. Voice never advances a step.
+**Consequences:** A new permission (`RECORD_AUDIO`) enters the manifest check. Hindi and Kannada recognition depend on the phone's language packs; the app shows "not available for this language" when the engine reports it.
+
+## D-042 A step advances on the camera or on Done; TM-01 fixture content is dropped
+
+**Status:** Accepted (user), 2026-11-19.
+**Context:** Owner decisions 4 and 5. D-019 stays the base rule.
+**Replaces in PRODUCT.md:**
+- "Verified machine fixture (TM-01)", scenario S1 and S1-N, and the "verified" definition. They are removed from the contract. Files under `test-fixtures/tm-01/` stay in git history and are not used. Spec 03 task 4 (TM-01 workflow content) is cancelled. Gate G4 as written (AT-G4-01 to 08, which need TM-01) is replaced by the gate in spec 05; changing a threshold still needs its own entry.
+- The owner tests by hand on real machines. Nothing in code or tests relies on TM-01.
+**Decision:**
+- The planner gives each step an expected change: text that should appear or disappear in the next screen. A step advances when the camera sees that change in two consecutive, distinct observations (D-019), or when the user taps Done. A timer never advances a step. A step the planner marks `manual` (nothing visible will change) advances only on Done.
+- The "expected change" is itself an AI suggestion. If the camera never sees it, the app asks the user and offers Done, Retry, Back. It never skips by itself.
+**Consequences:** The pure reducer is adapted to a runtime-built plan (no fixture loader, no `components` screen matcher in the Guide path). `components`/`guide` TM-01 types are not deleted in this spec; a cleanup task removes unused ones after the owner agrees.

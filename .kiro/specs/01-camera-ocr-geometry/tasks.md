@@ -181,7 +181,7 @@ Never skip, weaken or re-snapshot a test to make it pass. Tests that need OCR ou
   - [x] 12.2 Check network calls, keys and log statements
     - Search `src/modules/capture`, `ocr` and `geometry` for `fetch`, `XMLHttpRequest`, `WebSocket` and HTTP libraries. Search `src/modules/locale` for API-key storage and `openrouter`. Check that release builds log no OCR text or image data. Record the results.
     - _Requirements: 17.9, 22.1, 22.2, 22.3_
-  - [~] 12.3 Inspect the merged Android manifest permissions
+  - [x] 12.3 Inspect the merged Android manifest permissions
     - After `npx expo prebuild --clean`, list the merged permissions. Justify each one in `docs/build-log.md`: only `CAMERA`, `INTERNET` and those required by Expo/RN core (gate Q9).
     - _Requirements: 22.5_
 
