@@ -5,7 +5,7 @@ Related: [ARCHITECTURE.md](ARCHITECTURE.md), [DECISIONS.md](DECISIONS.md), [QUAL
 
 ## Purpose
 
-OverlayKit is a camera-first mobile app for someone standing at a machine (first case: a ticket machine) whose labels are in a language they don't read well. The user points the camera at any machine, says what they want to do, and the app guides them one step at a time. It draws translations over the text in the camera image and highlights the text or control to press. The steps are AI suggestions planned on the phone. They can be wrong, and the app says so.
+OverlayKit is a camera-first mobile app for someone standing at a machine (first case: a ticket machine) whose labels are in a language they don't read well. The user points the camera at any machine, says what they want to do, and the app guides them one step at a time. It draws translations over the text in the camera image and highlights the text or control to press. The steps are AI suggestions, planned on the phone by default or, if the user turns it on, by Google Gemini Live. They can be wrong, and the app says so.
 
 ## Platforms
 
@@ -21,7 +21,7 @@ OverlayKit is a camera-first mobile app for someone standing at a machine (first
 | P2 | Camera-first. The app opens to the camera view. |
 | P3 | Languages are English (`en`), Hindi (`hi`) and Kannada (`kn`). Voice output is offered only when the device has a voice for that language. Voice input is offered only when the phone's recognizer supports the language. |
 | P4 | General OCR translation uses a real translation provider. No demo-only glossary or canned translations for arbitrary text. Each language pair uses on-device ML Kit if it passes G2, otherwise OpenRouter (D-027, D-028). Errors and unsupported inputs show a visible fallback. |
-| P5 | OCR and step planning run on the device. Cloud translation may receive **text only**, over HTTPS: through our backend proxy, or directly to OpenRouter when the user has saved their own OpenRouter key (D-028). **No image leaves the device. No text leaves the device for planning** (D-040). The app sends no audio anywhere (D-042). |
+| P5 | OCR runs on the device. Step planning runs on the device by default. Cloud translation may receive **text only**, over HTTPS: through our backend proxy, or directly to OpenRouter when the user has saved their own OpenRouter key (D-028). **No image leaves the phone unless the user turns on Gemini Live** (D-050). With on-device planning, no text leaves the device for planning (D-040) and the app sends no audio anywhere (D-042). Gemini Live is off by default, opt-in after a consent screen, used only in Guide, and shows "Streaming to Google" with a Stop button while it runs. Then camera frames, microphone audio, the goal text and the OCR text lines go to Google. Nothing is recorded or stored on the phone. |
 | P6 | Guide works on any machine, with AI-planned steps (D-039). Every planned step is labeled "AI suggestion". The app never claims a plan is verified or correct, and it says when it cannot plan. It never invents a target: a step may point only at text that OCR found. |
 | P7 | No login and no accounts. An optional OpenRouter API key in Settings is not an OverlayKit account (D-028). |
 | P8 | No UI for browsers or the web. |
@@ -30,7 +30,7 @@ OverlayKit is a camera-first mobile app for someone standing at a machine (first
 
 | Mode | User action | App shows | App never |
 | --- | --- | --- | --- |
-| Translate | Points the camera at text. | The translation in the target language, drawn over the source text's position. Each label carries a status: translated, pending, failed, or unsupported. | Shows a translation that did not come from the translation provider. Uploads the image. |
+| Translate | Points the camera at text. | The translation in the target language, drawn over the source text's position. Each label carries a status: translated, pending, failed, or unsupported. | Shows a translation that did not come from the translation provider. Uploads the image (Gemini Live is Guide-only, D-050). |
 | Explore | Taps a label in the camera view. | The tapped label's translation. | Claims to know what a control does. Explore gives no authored explanation (the TM-01 content is dropped, D-043). |
 | Guide | Picks a goal by tapping recognized text or by voice, on any machine. | The goal as the app understood it, then one AI-suggested step at a time: step text in the user's language, a 2D highlight on the text or control to use (or what to enter), and Done. When the camera sees the expected change twice in a row, or the user taps Done, the next step shows. At the end, "Goal done". | Presses anything on the machine. Advances on a timer. Shows a step as verified. Guesses a target that OCR did not find. Hides that it cannot plan. |
 
@@ -77,9 +77,9 @@ From the Kiroween 2026 rules (kiroween.devpost.com/rules, checked 2026-11-17):
 ## Primary end-to-end scenario (S2)
 
 **Actor:** a user at a ticket machine whose labels are in English or Hindi, who reads Kannada.
-**Device:** the reference Android phone. **Network:** needed only for cloud translation (if the chosen provider is cloud) and for the one-time model download. OCR and planning work offline.
+**Device:** the reference Android phone. **Network:** needed only for cloud translation (if the chosen provider is cloud) and for the one-time model download (about 2.6 GB for Gemma 4 E2B). OCR and on-device planning work offline. Gemini Live needs the network and the user's own Google API key.
 
-1. The user opens OverlayKit. The camera view appears, no login. First run only: camera permission and a privacy note (images stay on the phone; planning stays on the phone; recognized text may be sent for translation only).
+1. The user opens OverlayKit. The camera view appears, no login. First run only: camera permission and a privacy note (images stay on the phone; planning stays on the phone; recognized text may be sent for translation only). Gemini Live, if the user later turns it on, has its own consent screen (D-050).
 2. The user sets the target language to Kannada.
 3. **Translate** works as before.
 4. The user switches to Guide and points the phone at the machine. The app reads the screen text.
@@ -93,13 +93,13 @@ From the Kiroween 2026 rules (kiroween.devpost.com/rules, checked 2026-11-17):
 
 - Any web app, web dashboard, admin UI, desktop app, or generic agent platform.
 - Login, accounts, profiles, sync, or cloud history.
-- Cloud image upload or cloud OCR. Cloud or server-side step planning.
+- Cloud OCR. Image upload of any kind except the opt-in Gemini Live stream in Guide (D-050). Cloud step planning except Gemini Live. Our own server-side planning.
 - Reading Kannada-script text from the camera (unless D-005 changes).
 - Authored or verified machine content: no fixtures, no TM-01, no remote catalogue, no user-submitted machines.
 - Claiming that a plan is correct, or that the app "knows" the machine.
 - ARCore/ARKit, "AR", world tracking, 3D anchors, or plane detection. Overlays are 2D and anchored to text in the image (D-041).
 - Pressing, tapping, or connecting to the machine. Payment or ticket purchase by the app.
-- Keeping or uploading audio recordings. Always-on listening or a wake word.
+- Keeping audio recordings. Uploading audio except the microphone stream of Gemini Live while the user has it on (D-050). Always-on listening or a wake word.
 - Analytics, ads, tracking, push notifications, or third-party crash reporting.
 - iOS builds and iOS device validation. App Store and Play Store release.
 - Languages other than `en`, `hi`, `kn`. Landscape orientation (the app is portrait-only).

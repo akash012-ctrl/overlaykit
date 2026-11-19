@@ -1,6 +1,6 @@
 # Requirements Document
 
-Status: **draft, written 2026-11-19 without a review pause; revised the same day for the Gemma route.** Based on owner decisions 1 to 6 of 2026-11-19, recorded as D-039 to D-043 in `docs/DECISIONS.md`, on the Gemma, speech and model decisions recorded as D-045 to D-048, and on the updated `docs/PRODUCT.md`. Open questions OQ-1 to OQ-8 use their recommended defaults until the owner decides them. The runtime is LiteRT-LM through a local Kotlin Expo Module (D-045, no npm package). The model is Gemma 3 1B IT int4, pushed to the phone by the owner and sideload only (D-048). `expo-speech-recognition` is approved (D-046), but nothing is installed by writing this document.
+Status: **draft, written 2026-11-19 without a review pause; revised the same day for the Gemma route.** Based on owner decisions 1 to 6 of 2026-11-19, recorded as D-039 to D-043 in `docs/DECISIONS.md`, on the Gemma, speech and model decisions recorded as D-045 to D-048, and on the updated `docs/PRODUCT.md`. Open questions OQ-1 to OQ-8 use their recommended defaults until the owner decides them. The runtime is LiteRT-LM through a local Kotlin Expo Module (D-045, no npm package). The default on-device model is Gemma 4 E2B, downloaded in the app on the user's tap (D-049); Gemma 3 1B IT int4, sideload only, is the small fallback (D-048). The user can instead choose Google Gemini Live, a cloud planner that is off by default and opt-in (D-049, D-050). `expo-speech-recognition` is approved (D-046). Nothing is installed by writing this document; `expo-secure-store` for the Gemini Live key is proposed and waits for the owner.
 
 ## Introduction
 
@@ -8,14 +8,14 @@ This spec replaces the verified-machine Guide of spec 03 (`.kiro/specs/03-guided
 
 1. The app opens on the camera (unchanged, P2).
 2. The user points it at a machine and picks a goal by tapping recognized text, or by voice.
-3. An on-device model plans one step at a time from the goal and the OCR text (D-040).
+3. A planner plans one step at a time from the goal and the OCR text. The user chooses the planner: the on-device model (default, D-040) or Gemini Live (cloud, opt-in, D-050).
 4. The app draws a 2D highlight on the text or control to use, or shows what to enter, and labels the step "AI suggestion" (D-039, D-041).
 5. A step advances when the camera sees the expected change in two consecutive, distinct observations, or when the user taps Done (D-043, D-019).
 6. When the app cannot plan, it says so (`PL_CANNOT_PLAN`) and offers Translate and Explore.
 
 What this spec adds:
 
-- A `StepPlanner` provider interface and its adapter, in a new `planner` module. Vendor types never leave it.
+- A `StepPlanner` provider interface and two adapters, in a new `planner` module: LiteRT-LM with Gemma (on-device) and Gemini Live (cloud). A setting picks one. Vendor types never leave the module.
 - A `SpeechInput` provider interface and its adapter, in the `speech` module.
 - Pure functions in `guide` for grounding a planned step on OCR text, building and checking the expected change, and a reducer for AI-planned steps (adapted from the spec 03 reducer).
 - `ui` views for goal picking, planning, the AI-suggestion Step card, and the "can't plan" state.
@@ -25,7 +25,7 @@ What this spec adds:
 
 **Dropped:** TM-01 and all fixture content (D-043). Spec 03 task 4 is cancelled. Spec 03's `components` fixture types and `guide` workflow loader stay in the tree until task 16 removes the unused ones with the owner's agreement. The new Guide path does not import them.
 
-**Out of scope:** pressing anything on the machine, any cloud planning, image upload, audio upload by the app, ARCore/ARKit or any "AR" wording, iOS, a second Expo app, accounts, analytics, a machine catalogue, reading Kannada script from the camera (D-005), and text-to-speech output (spec D owns it; the Speak slot stays hidden until then).
+**Out of scope:** pressing anything on the machine, cloud planning other than the opt-in Gemini Live (D-050), image or audio upload except while Gemini Live is on, ARCore/ARKit or any "AR" wording, iOS, a second Expo app, accounts, analytics, a machine catalogue, reading Kannada script from the camera (D-005), and text-to-speech output (spec D owns it; the Speak slot stays hidden until then).
 
 **Library-neutral requirements.** Requirements below name no vendor. The candidates are in `design.md`.
 
@@ -41,7 +41,11 @@ What this spec adds:
 - **Camera_Screen**: the `ui` screen at the index route.
 - **Overlay_Layer**: the part of the Camera_Screen that draws 2D overlays over the shown still, anchored to OCR text.
 - **Goal**: what the user wants to do at the machine, as short text (for example "Buy 2 tickets"). It has a source: `tap` (a recognized line was tapped, the Goal is that line's text), or `voice` (the recognizer's transcript, which the user can edit or reject).
-- **StepPlanner**: the provider interface in the `planner` module. Its input is a PlanRequest. Its output is a PlannerOutput. The adapter behind it runs an on-device model.
+- **StepPlanner**: the provider interface in the `planner` module. Its input is a PlanRequest. Its output is a PlannerOutput. One adapter runs an on-device model. Another talks to Gemini Live.
+- **Planner_Choice**: the saved setting `on-device` (default) or `gemini-live`.
+- **Live_Session**: one WebSocket session with Gemini Live, from "Start Gemini Live" to Stop or an error. It exists only while the Live_Banner is shown.
+- **Live_Banner**: the persistent on-screen strip "Streaming to Google" with a red dot and a Stop control.
+- **Live_Consent**: the stored answer to the Gemini Live consent screen, with the consent text version.
 - **PlanRequest**: Goal text, the OCR lines of the current frame (id and text only), the steps done so far (their text only), and the frame id. No image, no coordinates.
 - **PlannerOutput**: one of: a proposed next step; "goal looks done"; "cannot plan" with a reason. It is unchecked model output.
 - **ProposedStep**: instruction text, an action (`press`, `enter`, `read`, `wait`), target text, and an expected change.
@@ -83,25 +87,24 @@ What this spec adds:
 
 1. WHEN a Goal is confirmed, or a step is accepted, THE OverlayKit_App SHALL build a PlanRequest from the Goal, the lines of the latest usable frame, and the done steps, and call `StepPlanner.planNext`.
 2. THE PlanRequest SHALL contain only text and ids. It SHALL NOT contain image data, file paths of images, quads, or device identifiers.
-3. THE StepPlanner adapter SHALL run the model on the phone. THE OverlayKit_App SHALL NOT send the PlanRequest, the Goal, OCR text or the output to any server for planning. A source search for network calls under `planner` SHALL find none (the model download, R4, is the only network use, and sends no user data).
+3. WHEN Planner_Choice is `on-device`, THE StepPlanner adapter SHALL run the model on the phone, and THE OverlayKit_App SHALL NOT send the PlanRequest, the Goal, OCR text or the output to any server for planning. A source search for network calls under `planner` SHALL find them only in `model-store` / the model download (R4, no user data) and in `adapters/gemini-live.ts` (R16, reachable only after consent).
 4. WHILE planning, THE Guide_Screen SHALL show a "Planning" state with a Cancel control. Cancel SHALL stop the model call and return to the Goal.
 5. THE StepPlanner SHALL return a `Result` with a `PL_*` code on failure. It SHALL NOT throw across the module boundary.
 6. IF planning does not finish within `PLAN_TIMEOUT_MS` (Named threshold, unset until measured), THEN THE StepPlanner SHALL stop it and return `PL_TIMEOUT`.
 7. THE planner SHALL ask for one next step, not a whole plan. After each accepted step, THE OverlayKit_App SHALL plan again from the new frame.
 8. Model output SHALL be constrained to a fixed JSON shape (design.md). Output that does not parse or does not match the shape SHALL return `PL_BAD_OUTPUT`. The app SHALL NOT repair or guess missing fields.
 
-### Requirement 4: Model availability
+### Requirement 4: Model availability (on-device planner)
 
-**User Story:** As a user, I want to know whether the planner is ready, and what it costs me to get it.
+**User Story:** As a user, I want to know whether the on-device planner is ready, and what it costs me to get it.
 
-1. THE OverlayKit_App SHALL show the planner state in Guide: `missing`, `ready`, `loading`, `failed`. There is no downloading state (D-048).
-2. IF the model file is missing, THEN Guide SHALL show `PL_NO_MODEL` with the setup steps (log in to Hugging Face, accept the Gemma terms, download the file, `adb push` to the shown path) and the file size. THE OverlayKit_App SHALL NOT download the model and SHALL NOT ask for or hold a Hugging Face token.
-3. THE OverlayKit_App SHALL look for the pushed file at the path named in `design.md`, SHALL check it against the pinned size (584,417,280 bytes) and SHA-256 before first use, and SHALL make no network call for it. A file that fails the check gives `PL_NO_MODEL`; the app SHALL NOT delete the owner's file. The model SHALL NOT be bundled in the APK or redistributed with it (D-048).
-4. THE OverlayKit_App SHALL load the model only after the user opened Guide, and SHALL release it when the app is backgrounded for longer than `MODEL_IDLE_RELEASE_MS` (Named threshold, unset).
-5. IF the phone cannot load the model (not enough memory, unsupported chip), THEN Guide SHALL show `PL_UNSUPPORTED_DEVICE`, not retry in a loop, and offer Translate and Explore.
-6. Device: model size on disk, load time, peak memory and time to the first token SHALL be measured on the Reference phone and recorded in `docs/DEVICE-TESTS.md`.
-7. THE OverlayKit_App SHALL name the model, its source and its licence on the model setup screen and in the app's licence notices (D-047, D-048). The model is under the Gemma Terms of Use, so before any build or link is given to other people THE OverlayKit_App SHALL carry a Notice text file with the sentence "Gemma is provided under and subject to the Gemma Terms of Use found at gemma.ai/resources/terms", SHALL carry the Prohibited Use Policy restrictions in its own terms or README and tell users the model is subject to them, and SHALL give recipients a copy of the terms or a link to it.
-
+1. THE OverlayKit_App SHALL show the on-device planner state in Guide: `missing`, `downloading` (with progress), `ready`, `loading`, `failed`.
+2. IF the default model (Gemma 4 E2B, D-049) is missing, THEN Guide SHALL show `PL_NO_MODEL` with its size (about 2.6 GB), a Wi-Fi advice line, the free space needed, and a **Download** button. THE OverlayKit_App SHALL download only after the user taps Download. The download SHALL show progress, SHALL be cancellable, SHALL resume after an interruption, and SHALL write to a temporary file that is renamed only after the size and SHA-256 match the pinned values. THE download SHALL send no user data, and no token or login SHALL be needed (the file is public, Apache-2.0).
+3. THE OverlayKit_App SHALL check the model file against its pinned size and SHA-256 before first use. A file that fails the check gives `PL_NO_MODEL`. The app SHALL delete only its own failed temporary download and SHALL NOT delete a file the owner pushed. The model SHALL NOT be bundled in the APK.
+4. THE OverlayKit_App SHALL load the model only after the user opened Guide with Planner_Choice `on-device`, and SHALL release it when the app is backgrounded for longer than `MODEL_IDLE_RELEASE_MS` (Named threshold, unset).
+5. IF the phone cannot load the model (not enough memory, unsupported chip), THEN Guide SHALL show `PL_UNSUPPORTED_DEVICE`, not retry in a loop, and offer Translate, Explore, and (when the owner pushed it) the Gemma 3 1B fallback. It SHALL name Gemini Live as a choice only as an opt-in in Settings and SHALL NOT switch to it by itself.
+6. Device: model size on disk, download time, load time, peak memory and time to the first token SHALL be measured on the Reference phone and recorded in `docs/DEVICE-TESTS.md` for Gemma 4 E2B, and for Gemma 3 1B if it is used.
+7. THE OverlayKit_App SHALL name the model, its source and its licence on the model setup screen and in the app's licence notices. Gemma 4 E2B is Apache-2.0: keep the licence text and an attribution line. Gemma 3 1B (fallback) is under the Gemma Terms of Use (D-047, D-048): only if it is used or shared, THE OverlayKit_App SHALL carry the Notice text file with the sentence "Gemma is provided under and subject to the Gemma Terms of Use found at gemma.ai/resources/terms", the Prohibited Use Policy restrictions, and a copy or link of the terms, before any build or link is given to other people.
 ### Requirement 5: Grounding and honesty
 
 **User Story:** As a user, I want a highlight only where the app really saw the text, and I want to know the step is a suggestion.
@@ -157,11 +160,11 @@ What this spec adds:
 
 ### Requirement 10: Privacy and boundaries
 
-1. NO image, no pixel data, and no text SHALL leave the phone for planning (D-040). A source search of `planner`, `guide` and `speech` SHALL find no `fetch`, `XMLHttpRequest`, `WebSocket`, `Linking`, or Bluetooth use. The only network code in the Guide path is the model download in `planner/model-store`, and it is listed.
+1. **No image leaves the phone unless the user turns on Gemini Live** (D-050). WITH Planner_Choice `on-device`, no image, no pixel data and no text SHALL leave the phone for planning (D-040). A source search of `guide` and `speech` SHALL find no `fetch`, `XMLHttpRequest`, `WebSocket`, `Linking`, or Bluetooth use. The only network code under `planner` is the model download in `planner/model-store` (no user data) and `planner/adapters/gemini-live.ts` plus its live session helper (R16). Both are listed in the review.
 2. THE only text that leaves the phone in Guide SHALL be text sent to the translation provider under D-027 and D-028, as in Translate. Guide SHALL show the same privacy note.
-3. THE OverlayKit_App SHALL NOT upload, store or log audio. Transcripts SHALL NOT be stored beyond the current Goal and SHALL NOT be logged.
-4. THE microphone permission SHALL be requested only on the first tap of the microphone. The manifest SHALL contain `RECORD_AUDIO` because the owner approved the speech package (D-046). The camera config (`recordAudioAndroid: false`, D-036) SHALL stay.
-5. THE OverlayKit_App SHALL have no login, accounts, analytics, ads or tracking. Telemetry of any dependency SHALL be off. A dependency that sends telemetry by default SHALL be configured off before first use, and the build SHALL be checked for it.
+3. THE OverlayKit_App SHALL NOT store or log audio, frames or transcripts, and SHALL NOT upload audio or frames except in a Live_Session (R16). Transcripts SHALL NOT be stored beyond the current Goal and SHALL NOT be logged.
+4. THE microphone permission SHALL be requested only on the first tap of a microphone control (voice goal or Start Gemini Live). The manifest SHALL contain `RECORD_AUDIO` because the owner approved the speech package (D-046). The camera config (`recordAudioAndroid: false`, D-036) SHALL stay.
+5. THE Google API key SHALL NOT be in the repository, the bundle, logs, error text or crash text. THE OverlayKit_App SHALL have no login, accounts, analytics, ads or tracking. Telemetry of any dependency SHALL be off. A dependency that sends telemetry by default SHALL be configured off before first use, and the build SHALL be checked for it.
 6. No fixture state SHALL reach the app except through the camera. No Bluetooth, network, shared storage, deep link or timer carries machine state.
 
 ### Requirement 11: Languages
@@ -173,7 +176,7 @@ What this spec adds:
 
 ### Requirement 12: Error states
 
-1. THE shared module SHALL define `PL_*` and `SP_*` codes (append only). `GD_UNSUPPORTED`, `GD_MACHINE_CHANGED` and `GD_FIXTURE_INVALID` SHALL stay defined but SHALL NOT be emitted by the new path. `GD_MACHINE_LOST` and `GD_CHECKPOINT_NOT_SEEN` stay in use.
+1. THE shared module SHALL define `PL_*` (including `PL_LIVE_NO_KEY`, `PL_LIVE_AUTH`, `PL_LIVE_QUOTA`, `PL_LIVE_NETWORK`, `PL_LIVE_SESSION_ENDED`, `PL_LIVE_MIC_DENIED`) and `SP_*` codes, and the `PlannerChoice` type (append only). `GD_UNSUPPORTED`, `GD_MACHINE_CHANGED` and `GD_FIXTURE_INVALID` SHALL stay defined but SHALL NOT be emitted by the new path. `GD_MACHINE_LOST` and `GD_CHECKPOINT_NOT_SEEN` stay in use.
 2. EVERY code SHALL map to one UI state with text, an action and a next step (design.md table).
 3. Failures SHALL be `Result` values. No exception SHALL cross a module boundary.
 
@@ -183,8 +186,9 @@ What this spec adds:
 2. THE `speech` module SHALL depend only on `shared`. The `SpeechInput` adapter SHALL be the only file that imports the vendor package.
 3. THE `guide` module SHALL NOT import `planner`, `speech`, `ui`, `capture`, `ocr` or `locale`. It SHALL import React nowhere.
 4. `ui` SHALL be the only place where `planner`, `speech`, `guide`, `geometry`, `ocr` and `capture` are wired together.
-5. THE StepPlanner and SpeechInput vendor packages SHALL be added to the lint `VENDOR_OWNERS` list, each limited to its adapter file.
+5. THE StepPlanner and SpeechInput vendor packages SHALL be added to the lint `VENDOR_OWNERS` list, each limited to its adapter file. `expo-secure-store` SHALL be limited to `planner/live-key-store.ts`, and `modules/overlaykit-live` to `planner/adapters/gemini-live.ts` and its live session helper.
 6. Swapping a runtime or model SHALL change one adapter and add a DECISIONS.md entry.
+7. THE Gemini Live adapter SHALL implement the same `StepPlanner` interface. `ui` SHALL choose the adapter from Planner_Choice. `guide` SHALL NOT know which planner ran.
 
 ### Requirement 14: Quality gate (G5, proposed)
 
@@ -196,17 +200,65 @@ What this spec adds:
 6. AT-G5-05 (Device): voice Goal in English and in Hindi, if the phone supports them; unsupported languages show `SP_LANGUAGE_UNSUPPORTED`.
 7. AT-G5-06 (Device): pushed model file missing, wrong size or wrong checksum: each is rejected with `PL_NO_MODEL`; the right file loads.
 8. AT-G5-07 (Device): load time, time per step, peak memory and battery use are measured on a release build and recorded. Thresholds are set from these numbers in a DECISIONS.md entry before they gate anything.
-9. AT-G5-08 (Review): the vision-safety review finds no claim of "verified", "correct", "AR" or "world tracking", and no image or text leaving the phone for planning.
+9. AT-G5-08 (Review): the vision-safety review finds no claim of "verified", "correct", "AR" or "world tracking", and no image or text leaving the phone for planning with Planner_Choice `on-device`. With `gemini-live`, it finds the consent screen, banner, Stop and send gate as in R16.
+10. AT-G5-09 (Device): with Gemini Live never turned on, a network trace of a full Guide run shows no connection to Google AI endpoints. After declining consent, still none. Record how it was observed.
+11. AT-G5-10 (Device): with Gemini Live on, the banner is visible for the whole session, Stop ends the stream within a second, backgrounding ends it, and no file, gallery item or log line holds a frame, audio or the key.
+12. AT-G5-11 (Device): one real goal on a real machine with Gemini Live: the step is grounded on an exact OCR line, or `PL_TARGET_NOT_FOUND` shows. A bad key shows `PL_LIVE_AUTH`. Airplane mode shows `PL_LIVE_NETWORK` and Guide keeps on-device available.
+13. AT-G5-12 (Device): Gemma 4 E2B download on the phone: progress, cancel, resume, SHA-256 mismatch rejected, enough-space check, and the planner loads or shows `PL_UNSUPPORTED_DEVICE`.
+
+### Requirement 15: Planner choice
+
+**User Story:** As a user, I want to choose between a planner that stays on my phone and a cloud planner, and keep the private one unless I decide otherwise.
+
+1. THE Settings screen SHALL show a "Planner" choice with two values: "On this phone" (`on-device`) and "Gemini Live (Google, cloud)" (`gemini-live`). The saved default SHALL be `on-device`, also after an app update and after a failed or declined attempt to turn Gemini Live on.
+2. THE StepPlanner used by Guide SHALL be chosen from Planner_Choice in `ui` only. Guide logic (grounding, expectation, reducer) SHALL be the same for both.
+3. THE OverlayKit_App SHALL NOT change Planner_Choice to `gemini-live` by itself, after any error, timeout, missing model or low memory. A change from `gemini-live` to `on-device` MAY happen by itself after a Live_Session error and SHALL be shown to the user.
+4. `gemini-live` SHALL be selectable only after a valid key is saved (R17) and Live_Consent is stored (R16.2). Otherwise the row opens the consent or key screen, and Planner_Choice stays `on-device`.
+5. The Guide planner state line SHALL name the active planner ("On this phone: Gemma 4" or "Gemini Live (Google)").
+6. Both planners SHALL give the same step label "AI suggestion" and the note "This may be wrong. Check the machine."
+
+### Requirement 16: Gemini Live planner (opt-in)
+
+**User Story:** As a user who chooses it, I want Google's live model to watch the camera and listen to me, while I can always see that it is streaming and stop it.
+
+1. THE `gemini-live` adapter SHALL open one WebSocket Live_Session to Google (`generativelanguage.googleapis.com`, WSS only) with the user's key, with the model id constant `gemini-3.8-live` (D-050), response modality audio, output transcription on, and function declarations for `show_step`, `goal_finished` and `cannot_plan`.
+2. BEFORE the first Live_Session, THE OverlayKit_App SHALL show the Live_Consent screen (R16.3). THE consent SHALL be stored with a text version. A new version asks again. Declining SHALL leave Planner_Choice `on-device` and send nothing.
+3. THE consent screen SHALL: name Google; list what is sent (camera frames about once a second and scaled down, microphone audio, the goal text, and the text lines the camera read); list what comes back; say the app cannot see or delete the data at Google; say a free-tier key may let Google use the content to improve its products; say the on-device planner sends none of this; and offer "Agree and turn on" and "No, keep on-device". It SHALL be written in plain words and shown in the user's language (`en`, `hi`, `kn`, unreviewed drafts, D-031).
+4. EVERY Live_Session SHALL start only after the user taps "Start Gemini Live" in Guide. Opening the app, opening Guide or picking a Goal SHALL NOT start one.
+5. WHILE a Live_Session is connecting or open, THE Live_Banner SHALL be on screen with a Stop control. THE ui send gate SHALL pass frames and audio to the adapter only while the banner is shown. Stop SHALL close the socket, stop the camera frame feed and the microphone, and clear the session handle. Stop SHALL work while connecting.
+6. A Live_Session SHALL end on Stop, on leaving Guide, on backgrounding, on goal done, on any connection error, on `GoAway` without a successful resume, and after `LIVE_IDLE_STOP_MS` (Named threshold, unset).
+7. THE adapter SHALL send each camera frame as a JPEG scaled so its long edge is at most 768 px (Google's recommended size), at most once per `LIVE_FRAME_INTERVAL_MS` (Named threshold; Google's limit is 1 frame per second, so it SHALL NOT be below 1000). The frame sent SHALL be the same still OCR read, so the frame id ties the model's answer to one OcrResult. Alongside each new frame, THE adapter SHALL send a text message with the frame id and the OCR lines (id and text) and the Goal.
+8. THE model SHALL answer with a function call: `show_step` carries the English instruction, the action, the target text (copied from one listed line), an optional enter hint, and the expected appear and disappear text. THE adapter SHALL turn it into a `PlannerOutput` and run `parseOutput`'s strict checks. It SHALL send the function response with the matching call id and a status. Anything else (free text, malformed call) SHALL give `PL_BAD_OUTPUT`. The model SHALL NOT supply coordinates, and the app SHALL NOT use any it supplies.
+9. GROUNDING SHALL be the same as for Gemma (R5): the target text must match exactly one OCR line of the frame, else `PL_TARGET_NOT_FOUND`. A step older than `LIVE_STEP_MAX_AGE_MS` (Named threshold, unset) or tied to a frame the user moved away from SHALL NOT be highlighted.
+10. THE adapter SHALL ask for context window compression and session resumption, and handle `GoAway` (connection about 10 minutes; audio plus video sessions about 2 minutes without compression). WHEN resumption fails, THE session SHALL end with `PL_LIVE_SESSION_ENDED`.
+11. THE model's audio reply SHALL NOT be played in v1 (OQ-9). THE app SHALL use the function call and the transcript text only, and SHALL show the transcript text only as a caption labelled "AI suggestion".
+12. NO frame, audio chunk, transcript, key or URL SHALL be written to disk or to logs. A Live_Session SHALL leave no file behind.
+13. Failures SHALL be `Result` values with `PL_LIVE_*` codes (R12): `PL_LIVE_NO_KEY`, `PL_LIVE_AUTH` (key rejected), `PL_LIVE_QUOTA` (quota or billing), `PL_LIVE_NETWORK`, `PL_LIVE_SESSION_ENDED`, `PL_LIVE_MIC_DENIED`. Each maps to one UI state with an action.
+14. Device: the first frame, the first function call, the round trip per step, battery and data use SHALL be measured on the Reference phone and recorded. Kannada and Hindi quality with Gemini Live is unmeasured until recorded.
+
+### Requirement 17: Google API key
+
+**User Story:** As a user, I want to use my own Google key and be sure it stays on my phone.
+
+1. THE Settings screen SHALL let the user paste, replace and remove a Google API key, shown masked after saving (last four characters).
+2. THE key SHALL be stored only in Android Keystore-backed secure storage. It SHALL NOT be in the repo, `app.json`, the bundle, AsyncStorage, files, logs, error text or analytics (none exist).
+3. THE key SHALL be sent only to `generativelanguage.googleapis.com` over WSS. Because the documented WebSocket form puts it in the URL query, no code SHALL log, show or attach the URL to an error.
+4. Removing the key SHALL end any Live_Session, and set Planner_Choice to `on-device`.
+5. THE key check SHALL happen by opening a session when the user starts one. THE app SHALL NOT call any Google endpoint when the user only saves a key.
 
 ## Open Questions
 
 | ID | Question | Recommended default |
 | --- | --- | --- |
-| OQ-1 | Which model? (decided, D-048) | Gemma 3 1B IT int4 `gemma3-1b-it-int4.litertlm` (584 MB, gated, Gemma terms). Fallback only: Gemma 4 E2B (Apache-2.0). |
-| OQ-2 | Where does the model file come from? | The owner logs in to Hugging Face, accepts the terms and runs `adb push` (decided, D-048). No in-app download, no token in the app. No authorised public mirror was found. |
+| OQ-1 | Which model? (decided, D-049, replaces D-048) | Default: Gemma 4 E2B `gemma-4-E2B-it.litertlm` (2.59 GB, Apache-2.0, public). Fallback: Gemma 3 1B IT int4 (584 MB, gated, sideload only, Gemma terms). |
+| OQ-2 | Where does the model file come from? | Gemma 4 E2B: in-app download on the user's tap from the public Hugging Face file, SHA-256 checked (D-049). Gemma 3 1B: owner `adb push` only (D-048); no token in the app. |
 | OQ-3 | Plan one step or the whole route at once? | One step at a time (R3.7): it is simpler for a small model and uses the current screen. |
 | OQ-4 | Should the planner see Hindi text directly? | Yes, as read. Quality is measured in task 14 and reported. |
 | OQ-5 | Speech engine on-device only, or also the phone's default (may use network)? | Request on-device when the language pack is present. Otherwise tell the user, and let them choose tap input. |
 | OQ-6 | Remove unused TM-01 and fixture code? | Yes, in task 16, after the owner agrees. Existing tests that cover it stay until then. |
 | OQ-7 | Where is the capture cadence for Guide set? | Reuse the spec 03 constant, unset until measured on the phone. |
 | OQ-8 | May `hi` and `kn` Step text be machine-translated and shown without a reviewer? | Yes, labeled unreviewed (D-031). |
+| OQ-9 | Should the app play Gemini Live's spoken reply? | Not in v1: it needs 24 kHz PCM playback (a second native piece) and the app is built around highlights and text. Decide after the first device run. |
+| OQ-10 | How does the user give the goal in Gemini Live mode? | By tap or typed text, as today. Spoken follow-up questions go straight to Gemini Live through the open microphone. The on-device voice goal (xpo-speech-recognition) is not used while a Live_Session holds the microphone. Confirm with the owner. |
+| OQ-11 | Does the owner accept xpo-secure-store for the key, and the local Kotlin module modules/overlaykit-live for microphone PCM and JPEG scaling? | Recommended yes (D-050). Waiting for the owner. |
+| OQ-12 | Does the owner have a Google API key, and is a free-tier key acceptable given that Google may use free-tier content to improve products? | Recommended: a paid-tier key for any real machine. Waiting for the owner. |
