@@ -1,0 +1,161 @@
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { AppState, PixelRatio } from 'react-native';
+
+import type { CameraState, PreviewHandle } from '../../capture';
+import type { ControlBars, Insets } from '../../geometry';
+import { getTargetLocale } from '../../locale';
+import type { Size } from '../../shared';
+import type { OverlayLayout } from '../overlay/build-items';
+import { buildOverlayItems } from '../overlay/build-items';
+import { EMPTY_FREEZE_OVERLAY, freezeOverlayReducer, translationRequestFor } from '../overlay/freeze-overlay';
+import type { CameraServices } from '../services';
+import { INITIAL_SCREEN_MODEL, previewActive, screenReducer, toScreenView } from './screen-model';
+
+const NO_SIZE: Size = { width: 0, height: 0 };
+const NO_BARS: ControlBars = { top: 0, bottom: 0 };
+
+/**
+ * Wires capture → ocr → locale → geometry for the freeze-frame flow (design.md,
+ * "Freeze-frame flow"). Async work runs in event handlers, not effects, so
+ * StrictMode can't send a request twice. View positions are derived from the
+ * current layout on every render (DD-6), so any layout change moves them (R14).
+ */
+export function useCameraScreen(services: CameraServices, insets: Insets) {
+  const [model, dispatch] = useReducer(screenReducer, INITIAL_SCREEN_MODEL);
+  const [overlay, dispatchOverlay] = useReducer(freezeOverlayReducer, EMPTY_FREEZE_OVERLAY);
+  const [viewSize, setViewSize] = useState<Size>(NO_SIZE);
+  const [bars, setBars] = useState<ControlBars>(NO_BARS);
+  const [fontScale, setFontScale] = useState(() => PixelRatio.getFontScale());
+  const previewRef = useRef<PreviewHandle | null>(null);
+  // Latest state for async handlers. Synced after each commit, never during render.
+  const modelRef = useRef(model);
+  const overlayRef = useRef(overlay);
+  useEffect(() => {
+    modelRef.current = model;
+    overlayRef.current = overlay;
+  }, [model, overlay]);
+
+  const { capture, ocr, translation } = services;
+
+  const refreshPermission = useCallback(async () => {
+    let state = await capture.readPermission();
+    if (state.kind === 'undetermined') state = await capture.requestPermission(); // R1.1
+    dispatch({ type: 'permission-changed', state });
+  }, [capture]);
+
+  // On mount: leftovers from earlier sessions (R4.5), the engine check (R8.6), permission (R1.1).
+  useEffect(() => {
+    void capture.purgeStills();
+    void ocr.checkEngine().then((result) => dispatch({ type: 'engine-checked', result }));
+    void refreshPermission();
+  }, [capture, ocr, refreshPermission]);
+
+  // Background releases the camera, deletes stills and clears overlays (R2.7, R4.4, R4.7).
+  // Foreground re-reads the permission (R1.9) and the font scale.
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        if (!modelRef.current.appActive) {
+          dispatch({ type: 'app-foreground' });
+          setFontScale(PixelRatio.getFontScale());
+          void refreshPermission();
+        }
+      } else if (state === 'background') {
+        dispatch({ type: 'app-background' });
+        dispatchOverlay({ type: 'cleared' });
+        void capture.purgeStills();
+      }
+    });
+    return () => subscription.remove();
+  }, [capture, refreshPermission]);
+
+  const onCameraState = useCallback((state: CameraState) => dispatch({ type: 'camera-changed', state }), []);
+
+  const dismissStill = useCallback(() => {
+    const shown = overlayRef.current.shown;
+    dispatch({ type: 'still-dismissed' });
+    dispatchOverlay({ type: 'still-dismissed' });
+    if (shown) void capture.releaseStill(shown);
+  }, [capture]);
+
+  const takePhoto = useCallback(async () => {
+    const current = modelRef.current;
+    if (!toScreenView(current).captureEnabled) return;
+    dispatch({ type: 'capture-started' });
+    const result = await capture.captureStill(previewRef.current);
+    // A capture that finishes after the flow moved on is released (screenReducer contract).
+    if (modelRef.current.flow.kind !== 'capturing') {
+      if (result.ok) void capture.releaseStill(result.value);
+      return;
+    }
+    dispatch({ type: 'capture-finished', result });
+    if (!result.ok) return;
+    const frame = result.value;
+    const replaced = overlayRef.current.shown;
+    dispatchOverlay({ type: 'still-shown', frame });
+    if (replaced) void capture.releaseStill(replaced); // R4.3
+
+    const ocrResult = await ocr.recognize(frame);
+    dispatch({ type: 'ocr-finished', frameId: frame.frameId, result: ocrResult });
+    if (!ocrResult.ok) return;
+    dispatchOverlay({ type: 'result-applied', result: ocrResult.value });
+
+    const request = translationRequestFor(ocrResult.value);
+    if (request.texts.length === 0) return;
+    const outcomes = await translation.translate({ texts: request.texts, source: 'auto', target: getTargetLocale() });
+    dispatchOverlay({
+      type: 'translation-settled',
+      frameId: frame.frameId,
+      outcomes: request.ids.map((id, i) => ({ id, outcome: outcomes[i] ?? { ok: false, error: 'TR_NOT_CONFIGURED' } })),
+    });
+  }, [capture, ocr, translation]);
+
+  const runAction = useCallback(
+    (kind: string) => {
+      switch (kind) {
+        case 'request-permission':
+          void capture.requestPermission().then((state) => dispatch({ type: 'permission-changed', state }));
+          return;
+        case 'open-settings':
+          void capture.openAppSettings();
+          return;
+        case 'retry-camera':
+          dispatch({ type: 'retry-camera' });
+          return;
+        case 'retry-capture':
+          void takePhoto();
+          return;
+        case 'back-to-preview':
+          dismissStill();
+          return;
+      }
+    },
+    [capture, dismissStill, takePhoto],
+  );
+
+  const layout: OverlayLayout = useMemo(() => ({ view: viewSize, insets, bars, fontScale }), [viewSize, insets, bars, fontScale]);
+  const built = useMemo(() => buildOverlayItems(overlay, layout), [overlay, layout]);
+
+  const onTopBarHeight = useCallback((top: number) => setBars((b) => (b.top === top ? b : { ...b, top })), []);
+  const onBottomBarHeight = useCallback((bottom: number) => setBars((b) => (b.bottom === bottom ? b : { ...b, bottom })), []);
+
+  return {
+    state: {
+      view: toScreenView(model),
+      previewActive: previewActive(model),
+      shownFrame: overlay.shown,
+      items: built.ok ? built.value.items : [],
+      region: built.ok ? built.value.region : null,
+    },
+    previewRef,
+    actions: {
+      onCameraState,
+      onStillLayout: setViewSize,
+      onTopBarHeight,
+      onBottomBarHeight,
+      takePhoto,
+      dismissStill,
+      runAction,
+    },
+  };
+}
