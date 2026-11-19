@@ -50,7 +50,7 @@ Device tasks end with a PASSED, FAILED or NOT TESTED record in `docs/DEVICE-TEST
   - [ ] 1.4 Update the CAPABILITY-MAP.md status table
     - Only after the owner approves requirements and design, with the date. Generating a document is not approval.
 
-- [ ] 2. Add shared types and error codes
+- [x] 2. Add shared types and error codes
   - Files: `src/modules/shared/index.ts`, `src/modules/shared/__tests__/translation-types.test.ts`.
   - Add `TrErrorCode` (all eight codes), `MchErrorCode`, `CmpErrorCode`, the exhaustive `TR_ERROR_CODES`, `MCH_ERROR_CODES` and `CMP_ERROR_CODES` arrays, `SourceLocale`, `LanguagePair`, `Translation`, `TranslationOutcome`, `MachineFit`, `MachineStatus`, `MachineMatch`, `ComponentKind` and `LocatedComponent`, as in the design's shared section.
   - If spec A defined `TrErrorCode` with only `TR_NOT_CONFIGURED`, widen it without changing any spec A test.
@@ -58,23 +58,23 @@ Device tasks end with a PASSED, FAILED or NOT TESTED record in `docs/DEVICE-TEST
   - Unit tests: each code array lists every member of its union, and a `MachineMatch` value of each status type-checks.
   - _Requirements: 1.2, 26.1_
 
-- [ ] 3. Add the locale service core and the not-configured adapter
-  - [ ] 3.1 Confirm or add the `TranslationProvider` interface, `notConfiguredProvider` and `t(key)`
+- [x] 3. Add the locale service core and the not-configured adapter
+  - [x] 3.1 Confirm or add the `TranslationProvider` interface, `notConfiguredProvider` and `t(key)`
     - Files: `src/modules/locale/translation.ts`, `t.ts`, `index.ts`, tests.
     - Skip this sub-task if spec A shipped them. If not, add them as in spec A's design. The not-configured adapter returns `TR_NOT_CONFIGURED` for every string and never calls the network.
     - _Requirements: 1.4, 1.6, 1.7, 9.1, 14.1_
-  - [ ] 3.2 Add the pure service helpers
+  - [x] 3.2 Add the pure service helpers
     - Files: `src/modules/locale/plan.ts`, `cache.ts`, `batching.ts`, `collapse.ts`, `rate-gate.ts`, `route-table.ts`, `thresholds.ts`, and one test file per helper.
     - `planTranslation(lines, target, digitRunMin)` with the design's four rules in order, `splitBatches`, `collapseUniformFailure`, the memory cache keyed by source, target and exact text (successes only, oldest evicted past the cap), the rate gate, and `routeFor` with the key and proxy checks.
     - Take every threshold (`digitRunMin`, batch caps, cache cap, timeouts) as a parameter. `thresholds.ts` gets values only after task 4.
     - Unit tests on example inputs, using recorded OCR snapshots for `planTranslation` once they exist (until then, hand-built `OcrLine` values, re-run on snapshots in task 24.2).
     - _Requirements: 1.3, 1.8, 2.5, 5.1, 5.2, 5.3, 7.16, 10.1, 10.2, 10.6, 10.7, 10.9, 12.1, 12.3_
-  - [ ] 3.3 Add `createTranslationService` with fake adapters
+  - [x] 3.3 Add `createTranslationService` with fake adapters
     - Files: `src/modules/locale/service.ts`, `test-support/fakes.ts` (fake `HttpPort`, `KeyStore`, `SettingsStore`, `OnDeviceEngine`, `Clock`), tests.
     - Implements the ten `translate` steps from the design. Never throws. A rejecting adapter becomes `TR_PROVIDER_ERROR`. A timeout becomes `TR_TIMEOUT`. A closed rate gate returns `TR_RATE_LIMITED` with no call. `clearCache` is exposed.
     - Tests: one per step, order and count of outcomes, a random string absent from every fixture comes back from the fake provider and not from storage, and the service never reads the TM-01 fixture.
     - _Requirements: 1.1, 1.2, 1.3, 1.6, 1.7, 1.8, 1.9, 4.6, 5.14, 9.5, 10.9, 11.1, 11.2, 11.3, 12.3, 26.2, 26.7_
-  - [ ] 3.4 Update the boundary lint rule for `locale`
+  - [x] 3.4 Update the boundary lint rule for `locale`
     - Files: `eslint.config.js`.
     - Remove `locale` from `NETWORK_FREE` and allow `fetch` only in `locale/adapters/*-route.ts` and the `HttpPort` file, by a per-file override. `components`, `geometry` and `ui` stay network-free. `locale` and `components` may not import each other. No new dependency.
     - Prove the rule: add a deliberate forbidden import (`locale` importing `components`), run `npm run lint`, record the failing output in `docs/kiro-evidence.md`, remove the import, and run `npm run lint` to exit 0.
@@ -152,7 +152,7 @@ Device tasks end with a PASSED, FAILED or NOT TESTED record in `docs/DEVICE-TEST
     - _Requirements: 5.12, 6.2, 6.3, 6.7, 7.10, 7.11_
 
 - [ ] 8. Add Settings, target language and the OpenRouter key (key part DEFERRED by D-030; build the settings store and language setting only)
-  - [ ] 8.1 Add the settings store and `useLocaleSettings`
+  - [x] 8.1 Add the settings store and `useLocaleSettings`
     - Files: `src/modules/locale/settings-store.ts`, `settings-file-adapter.ts` (the only file-system import in `locale`), tests with a fake file port.
     - `LocaleSettings` holds `targetLocale` (default `en`, OQ-1) and `privacyAcknowledged`. Atomic write through a temp file and rename. A missing or unparsable file returns defaults. The store holds no key and no image data.
     - Ask the owner before adding a file-system package if spec A has not.
@@ -175,7 +175,7 @@ Device tasks end with a PASSED, FAILED or NOT TESTED record in `docs/DEVICE-TEST
   - Tests: no `translate` call before acknowledgement (fake service call count is 0), the call happens after, and the note text follows the route table.
   - _Requirements: 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 15.7, 15.8_
 
-- [ ] 10. Add the strings for this spec
+- [x] 10. Add the strings for this spec
   - Files: `src/modules/locale/strings/en.ts`, `hi.ts`, `kn.ts`, tests.
   - Add keys for: every `TR_*` marker, "Downloading language data", "Not a verified machine", "Move to show more of the panel", "Point the camera at the [component]" (with a placeholder), the key-rejected and no-credit texts, Settings, the privacy note, the key note, and the authored-explanation label. One key per sentence, with placeholders.
   - Each `hi` and `kn` value carries the status `unreviewed` (D-031), or a reviewer and date if one ever exists. No value is marked `reviewed` without both. A runtime lookup of a missing key returns the `en` value.
