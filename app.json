@@ -41,6 +41,13 @@
           "cameraPermission": "OverlayKit uses the camera to read text on signs and machines.",
           "recordAudioAndroid": false
         }
+      ],
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "OverlayKit uses the microphone only when you tap the voice button, to hear the goal you say.",
+          "speechRecognitionPermission": "OverlayKit uses speech recognition to turn the goal you say into text."
+        }
       ]
     ],
     "experiments": {

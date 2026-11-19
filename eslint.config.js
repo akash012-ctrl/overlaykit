@@ -43,6 +43,7 @@ const VENDOR_OWNERS = [
   { module: 'capture', file: 'src/modules/capture/file-system-port.ts', packages: ['expo-file-system'] },
   { module: 'locale', file: 'src/modules/locale/settings-file-adapter.ts', packages: ['expo-file-system'] },
   { module: 'speech', file: 'src/modules/speech/adapters/expo-speech-engine.ts', packages: ['expo-speech'] },
+  { module: 'speech', file: 'src/modules/speech/adapters/android-recognizer.ts', packages: ['expo-speech-recognition'] },
 ];
 
 /**

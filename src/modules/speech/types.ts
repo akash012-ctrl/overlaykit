@@ -13,6 +13,14 @@ export type SpeechEngine = {
   stop(): void;
 };
 
+/** Vendor-neutral speech-to-text (spec 05). Audio is never stored. */
+export type SpeechInput = {
+  /** True when a recognizer exists and the phone reports this language as supported. Never throws. */
+  isAvailable(language: LocaleCode): Promise<boolean>;
+  /** Asks for the microphone on first use. Resolves with the final transcript or an SP_* code. Stops on abort or background. */
+  listen(language: LocaleCode, signal: AbortSignal): Promise<Result<string, SpErrorCode>>;
+};
+
 /** What the app uses. Text-to-speech only. */
 export type SpeechOutput = {
   /** True when the device has a voice for this language. Never throws. */

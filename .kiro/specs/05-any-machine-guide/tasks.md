@@ -56,7 +56,7 @@ Rules for every worker:
   - _Requirements: 12.1, 13.1_
 
 - [ ] 3. Install the speech package and prove the native build (lane X; 3.1 needs no further approval, D-046)
-  - [ ] 3.1 Install `expo-speech-recognition`
+  - [x] 3.1 Install `expo-speech-recognition`
     - `npx expo install expo-speech-recognition`. Then `npx expo install --check` and `npx expo-doctor`. Remove anything unused. No other package is installed in this spec.
     - Add the config plugin settings in `app.json` (microphone text). Make sure `RECORD_AUDIO` is not in `blockedPermissions` (D-038) and no other new permission appears. Keep `recordAudioAndroid: false` for the camera plugin.
     - Add `expo-speech-recognition` to `VENDOR_OWNERS` in the lint config, only in `speech/adapters/android-recognizer.ts`. Add `modules/overlaykit-llm` to `VENDOR_OWNERS`, only in `planner/adapters/litert.ts`.
@@ -116,10 +116,10 @@ Rules for every worker:
   - _Requirements: 10.1_
 
 - [ ] 7. Lane V: speech module
-  - [ ] 7.1 Interface
+  - [x] 7.1 Interface
     - Files: `speech/index.ts`, `types.ts`. `SpeechInput`, `createSpeechInput`. No vendor import here.
     - _Requirements: 2.1, 13.2_
-  - [ ] 7.2 Android recognizer adapter
+  - [x] 7.2 Android recognizer adapter
     - Files: `speech/adapters/android-recognizer.ts`. Blocked by 3.1.
     - `isAvailable(language)` through the vendor's supported-locale call. `listen` asks permission on first use, prefers on-device recognition when the pack exists, never persists audio, aborts on signal, background and `LISTEN_MAX_MS` (unset). Maps errors to `SP_*`.
     - _Requirements: 2.3 to 2.6, 10.3, 10.4_
