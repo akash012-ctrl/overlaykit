@@ -235,4 +235,5 @@ export const HI_STRINGS: LocalizedTable = {
   'guide.planner.live': { text: 'Gemini Live (Google)', review: 'unreviewed' },
   'live.mic.off': { text: 'मेरी आवाज़ भेजना बंद करें', review: 'unreviewed' },
   'settings.limits.body2': { text: 'कैमरा सिर्फ़ अंग्रेज़ी और हिंदी पढ़ता है। निशान फ़ोटो पर 2D में बनते हैं और दृश्य को ट्रैक नहीं करते। चरण-दर-चरण मदद किसी भी मशीन पर चलती है, पर यह AI का सुझाव है और गलत हो सकता है। इस ऐप में हिंदी और कन्नड़ के अनुवाद अनिरीक्षित हैं।', review: 'unreviewed' },
+  'explore.translationOnly': { text: 'केवल अनुवाद। यह ऐप नहीं बताता कि यह पुर्ज़ा क्या करता है।', review: 'unreviewed' },
 };

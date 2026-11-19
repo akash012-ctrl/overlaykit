@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { t } from '../../locale';
 import { A11yButton } from '../a11y/A11yButton';
 import { MIN_TOUCH_TARGET_DP } from '../overlay/styles';
+import { colors } from '../theme';
 import { TR_UI } from '../translate/error-map';
 import type { LabelContent } from '../translate/label-model';
 import { ComponentPrompt } from './ComponentPrompt';
@@ -32,7 +33,7 @@ function labelLines(content: LabelContent | null): readonly string[] {
 /**
  * Explore answers in a bottom panel, within one tap and with no navigation (R22.5). An authored
  * explanation is labelled as written by the OverlayKit team. Anything else shows the label's own
- * state and "Not a verified machine" (R23).
+ * translation and state, and says the app does not explain what a part does (R23).
  */
 export function ExplorePanel({ view, list, prompt, onRequest, onClose }: Props) {
   const showsSomething = view.kind !== 'nothing' || prompt !== null || list.length > 0;
@@ -57,7 +58,7 @@ export function ExplorePanel({ view, list, prompt, onRequest, onClose }: Props) 
                 {line}
               </Text>
             ))}
-            {view.note ? <Text style={styles.note}>{t('explore.notVerified')}</Text> : null}
+            {view.note ? <Text style={styles.note}>{t('explore.translationOnly')}</Text> : null}
             {view.hint ? <Text style={styles.note}>{t('explore.moveToShow')}</Text> : null}
           </>
         ) : null}
@@ -81,11 +82,11 @@ export function ExplorePanel({ view, list, prompt, onRequest, onClose }: Props) 
 }
 
 const styles = StyleSheet.create({
-  panel: { backgroundColor: '#11161C', borderRadius: 12, maxHeight: 280 },
+  panel: { backgroundColor: colors.surface, borderRadius: 12, maxHeight: 280 },
   content: { padding: 16, gap: 8 },
-  title: { color: '#FFFFFF', fontSize: 18, fontWeight: '700', lineHeight: 26 },
-  body: { color: '#FFFFFF', fontSize: 16, lineHeight: 24 },
-  note: { color: '#D9E3EE', fontSize: 14, lineHeight: 22 },
+  title: { color: colors.text, fontSize: 18, fontWeight: '700', lineHeight: 26 },
+  body: { color: colors.text, fontSize: 16, lineHeight: 24 },
+  note: { color: colors.textSoft, fontSize: 14, lineHeight: 22 },
   list: { gap: 8 },
   button: {
     minHeight: MIN_TOUCH_TARGET_DP,
@@ -93,7 +94,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     justifyContent: 'center',
     borderRadius: 8,
-    backgroundColor: '#37474F',
+    backgroundColor: colors.neutral,
   },
-  buttonText: { color: '#FFFFFF', fontSize: 16, fontWeight: '600', lineHeight: 22 },
+  buttonText: { color: colors.text, fontSize: 16, fontWeight: '600', lineHeight: 22 },
 });

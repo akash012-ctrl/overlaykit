@@ -227,6 +227,7 @@ export const EN_STRINGS = {
   'guide.planner.live': 'Gemini Live (Google)',
   'live.mic.off': 'Stop sending my voice',
   'settings.limits.body2': 'The camera reads English and Hindi only. Marks are drawn on the photo in 2D and do not follow the scene. Step-by-step help works on any machine, but it is an AI suggestion and may be wrong. Translations in Hindi and Kannada in this app are unreviewed.',
+  'explore.translationOnly': 'Translation only. This app does not explain what the part does.',
 } as const;
 
 export type StringKey = keyof typeof EN_STRINGS;

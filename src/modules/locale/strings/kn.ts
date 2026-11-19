@@ -237,4 +237,5 @@ export const KN_STRINGS: LocalizedTable = {
   'guide.planner.live': { text: 'Gemini Live (Google)', review: 'unreviewed' },
   'live.mic.off': { text: 'ನನ್ನ ಧ್ವನಿ ಕಳುಹಿಸುವುದನ್ನು ನಿಲ್ಲಿಸಿ', review: 'unreviewed' },
   'settings.limits.body2': { text: 'ಕ್ಯಾಮೆರಾ ಇಂಗ್ಲಿಷ್ ಮತ್ತು ಹಿಂದಿಯನ್ನು ಮಾತ್ರ ಓದುತ್ತದೆ. ಗುರುತುಗಳನ್ನು ಫೋಟೋ ಮೇಲೆ 2D ಯಲ್ಲಿ ಬರೆಯಲಾಗುತ್ತದೆ, ದೃಶ್ಯವನ್ನು ಹಿಂಬಾಲಿಸುವುದಿಲ್ಲ. ಹಂತ ಹಂತದ ಸಹಾಯ ಯಾವುದೇ ಯಂತ್ರದಲ್ಲಿ ಕೆಲಸ ಮಾಡುತ್ತದೆ, ಆದರೆ ಇದು AI ಸಲಹೆ ಮತ್ತು ತಪ್ಪಾಗಿರಬಹುದು. ಈ ಆ್ಯಪ್‌ನಲ್ಲಿರುವ ಹಿಂದಿ ಮತ್ತು ಕನ್ನಡ ಅನುವಾದಗಳು ಪರಿಶೀಲಿಸಲಾಗಿಲ್ಲ.', review: 'unreviewed' },
+  'explore.translationOnly': { text: 'ಅನುವಾದ ಮಾತ್ರ. ಈ ಭಾಗ ಏನು ಮಾಡುತ್ತದೆ ಎಂದು ಈ ಆ್ಯಪ್ ವಿವರಿಸುವುದಿಲ್ಲ.', review: 'unreviewed' },
 };
