@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { t } from '../../locale';
 import type { LocaleCode } from '../../shared';
 import { MIN_TOUCH_TARGET_DP } from '../overlay/styles';
+import { colors } from '../theme';
 
 const OPTIONS = [
   { code: 'en', labelKey: 'settings.language.en' },
@@ -43,16 +44,16 @@ export function LanguageSection({ selected, onSelect }: { selected: LocaleCode; 
 
 const styles = StyleSheet.create({
   section: { gap: 8 },
-  title: { color: '#FFFFFF', fontSize: 18, fontWeight: '700', lineHeight: 26 },
-  hint: { color: '#B8C2CF', fontSize: 14, lineHeight: 20 },
+  title: { color: colors.text, fontSize: 18, fontWeight: '700', lineHeight: 26 },
+  hint: { color: colors.textHint, fontSize: 14, lineHeight: 20 },
   row: {
     minHeight: MIN_TOUCH_TARGET_DP,
     minWidth: MIN_TOUCH_TARGET_DP,
     paddingHorizontal: 16,
     justifyContent: 'center',
     borderRadius: 12,
-    backgroundColor: '#1C2530',
+    backgroundColor: colors.surfaceRaised,
   },
-  rowSelected: { borderWidth: 2, borderColor: '#2F6FEB' },
-  rowText: { color: '#FFFFFF', fontSize: 16, lineHeight: 24 },
+  rowSelected: { borderWidth: 2, borderColor: colors.accent },
+  rowText: { color: colors.text, fontSize: 16, lineHeight: 24 },
 });
