@@ -5,6 +5,7 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 import { CameraPreview, StillView } from '../../capture';
 import { t } from '../../locale';
 import { ExplorePanel } from '../explore/ExplorePanel';
+import { GuideScreen } from '../guide';
 import { OverlayLayer } from '../overlay/OverlayLayer';
 import { MIN_TOUCH_TARGET_DP } from '../overlay/styles';
 import type { CameraServices } from '../services';
@@ -30,7 +31,7 @@ function Screen() {
     (view.kind === 'reading' || view.kind === 'still' || view.kind === 'no-text' || view.kind === 'recognition-failed');
 
   return (
-    <View style={styles.root}>
+    <View style={styles.root} onLayout={(e) => actions.onStillLayout(e.nativeEvent.layout)}>
       <CameraPreview ref={previewRef} active={state.previewActive} onStateChange={actions.onCameraState} />
       {stillShown && shownFrame ? (
         <>
@@ -42,6 +43,21 @@ function Screen() {
             onRetry={actions.retryLabel}
           />
         </>
+      ) : null}
+
+      {state.mode === 'guide' ? (
+        <View pointerEvents="box-none" style={[styles.guideHost, { bottom: state.layout.bars.bottom }]}>
+          <GuideScreen
+            deps={{
+              capture: services.capture,
+              ocr: services.ocr,
+              getPreview: () => previewRef.current,
+              viewSize: state.layout.view.width > 0 ? state.layout.view : null,
+              region: state.region,
+            }}
+            onSwitchMode={actions.setMode}
+          />
+        </View>
       ) : null}
 
       <View
@@ -88,7 +104,7 @@ function Screen() {
           />
         ) : null}
         <ModeSwitcher enabled={view.translateEnabled} mode={state.mode} onChange={actions.setMode} />
-        {stillShown ? (
+        {state.mode === 'guide' ? null : stillShown ? (
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={t('action.closeStill')}
@@ -132,6 +148,7 @@ export function CameraScreen({ services }: { services?: CameraServices }) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#0B0F14' },
+  guideHost: { position: 'absolute', left: 0, right: 0, top: 0 },
   privacy: { ...StyleSheet.absoluteFill, backgroundColor: '#0B0F14', justifyContent: 'center', padding: 16 },
   topBar: { position: 'absolute', top: 0, left: 0, right: 0, backgroundColor: BAR_BACKGROUND, paddingBottom: 10, gap: 8 },
   bottomBar: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: BAR_BACKGROUND, paddingTop: 10, gap: 10 },

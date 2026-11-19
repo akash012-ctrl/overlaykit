@@ -2,31 +2,33 @@ import { AccessibilityInfo, Pressable, StyleSheet, Text, View } from 'react-nati
 
 import { t } from '../../locale';
 import type { StringKey } from '../../locale';
+import { GUIDE_MODE_ENTRY } from '../guide';
 import { MIN_TOUCH_TARGET_DP } from '../overlay/styles';
 
-export type Mode = 'translate' | 'explore';
+export type Mode = 'translate' | 'explore' | 'guide';
 
-const TABS: readonly { readonly mode: Mode; readonly labelKey: StringKey }[] = [
-  { mode: 'translate', labelKey: 'mode.translate' },
-  { mode: 'explore', labelKey: 'mode.explore' },
+const MODES: readonly { readonly id: Mode; readonly labelKey: StringKey }[] = [
+  { id: 'translate', labelKey: 'mode.translate' },
+  { id: 'explore', labelKey: 'mode.explore' },
+  GUIDE_MODE_ENTRY,
 ];
 
-/** Translate and Explore. Guide is added by spec 03. Both are disabled when the OCR engine is unavailable (R8.8). */
+/** Translate, Explore and Guide. All are disabled when the OCR engine is unavailable (R8.8). */
 export function ModeSwitcher({ enabled, mode, onChange }: { enabled: boolean; mode: Mode; onChange: (mode: Mode) => void }) {
   return (
     <View style={styles.row} accessibilityRole="tablist">
-      {TABS.map((tab) => {
-        const selected = tab.mode === mode;
+      {MODES.map((tab) => {
+        const selected = tab.id === mode;
         return (
           <Pressable
-            key={tab.mode}
+            key={tab.id}
             accessibilityRole="tab"
             accessibilityLabel={t(tab.labelKey)}
             accessibilityState={{ selected, disabled: !enabled }}
             disabled={!enabled}
             onPress={() => {
               if (selected) return;
-              onChange(tab.mode);
+              onChange(tab.id);
               AccessibilityInfo.announceForAccessibility(t(tab.labelKey));
             }}
             style={[styles.tab, selected && styles.selected, !enabled && styles.disabled]}

@@ -174,7 +174,11 @@ export function useCameraScreen(services: CameraServices, insets: Insets) {
       takePhoto,
       dismissStill,
       runAction,
-      setMode,
+      // Guide works on the live preview, so a shown still is closed first.
+      setMode: (next: Mode) => {
+        if (next === 'guide') dismissStill();
+        setMode(next);
+      },
       retryLabel: (id: string) => retry([id]),
       acknowledgePrivacy: settings.acknowledgePrivacy,
     },
