@@ -6,4 +6,5 @@ export type { StringKey } from './strings/en';
 export type { StringReview } from './strings/types';
 
 export { getTranslationProvider, notConfiguredProvider } from './translation';
-export type { Translation, TranslationOutcome, TranslationProvider, TranslationRequest } from './translation';
+export type { TranslationProvider, TranslationRequest } from './translation';
+export type { Translation, TranslationOutcome } from '../shared';

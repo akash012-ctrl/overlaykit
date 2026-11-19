@@ -139,9 +139,82 @@ export const OCR_ERROR_CODES = [
 ] as const;
 export type OcrErrorCode = (typeof OCR_ERROR_CODES)[number];
 
-/** Spec A adds only TR_NOT_CONFIGURED. Spec B adds the other TR_* codes. */
-export const TR_ERROR_CODES = ['TR_NOT_CONFIGURED'] as const;
+/** Every TR_* code once (docs/ARCHITECTURE.md 8). Spec A had only TR_NOT_CONFIGURED. */
+export const TR_ERROR_CODES = [
+  'TR_NOT_CONFIGURED',
+  'TR_OFFLINE',
+  'TR_TIMEOUT',
+  'TR_RATE_LIMITED',
+  'TR_PROVIDER_ERROR',
+  'TR_UNSUPPORTED_PAIR',
+  'TR_KEY_INVALID',
+  'TR_NO_CREDITS',
+] as const;
 export type TrErrorCode = (typeof TR_ERROR_CODES)[number];
+
+export const MCH_ERROR_CODES = ['MCH_NOT_VERIFIED', 'MCH_AMBIGUOUS'] as const;
+export type MchErrorCode = (typeof MCH_ERROR_CODES)[number];
+
+export const CMP_ERROR_CODES = ['CMP_NOT_VISIBLE'] as const;
+export type CmpErrorCode = (typeof CMP_ERROR_CODES)[number];
+
+/** Languages the camera reads (D-005). */
+export type SourceLocale = 'en' | 'hi';
+export type LanguagePair = { readonly source: SourceLocale; readonly target: LocaleCode };
+
+/** detectedSource is null or absent when the provider reports none (optional so spec A values still type-check). */
+export type Translation = {
+  readonly text: string;
+  readonly providerId: string;
+  readonly detectedSource?: LocaleCode | null;
+};
+export type TranslationOutcome = Result<Translation, TrErrorCode>;
+
+/** Similarity from Machine space to Image space: uniform scale, rotation, translation (ARCHITECTURE.md 7). */
+export type MachineFit = {
+  /** Finite and above zero. */
+  readonly scale: number;
+  /** Finite. */
+  readonly rotationRad: number;
+  /** Finite. */
+  readonly translation: Point;
+};
+
+export type MachineStatus = 'verified' | 'ambiguous' | 'none';
+export type MachineMatch =
+  | {
+      readonly status: 'verified';
+      readonly machineId: 'TM-01';
+      readonly frameId: FrameId;
+      readonly fit: MachineFit;
+      readonly score: number;
+      readonly matchedAnchors: number;
+    }
+  | {
+      readonly status: 'ambiguous';
+      readonly frameId: FrameId;
+      readonly code: 'MCH_AMBIGUOUS';
+      readonly matchedAnchors: number;
+    }
+  | { readonly status: 'none'; readonly frameId: FrameId; readonly code: 'MCH_NOT_VERIFIED' };
+
+export type ComponentKind =
+  | 'card-reader'
+  | 'coin-slot'
+  | 'note-slot'
+  | 'touchscreen'
+  | 'button'
+  | 'ticket-tray'
+  | 'other';
+
+/** A fixture component mapped into the frame. frameId is the OcrResult's. */
+export type LocatedComponent = {
+  readonly id: string;
+  readonly kind: ComponentKind;
+  readonly frameId: FrameId;
+  /** Image space, finite. */
+  readonly quad: Quad;
+};
 
 /** A monotonic clock in milliseconds. capture provides the app's clock. */
 export type MonotonicClock = () => number;

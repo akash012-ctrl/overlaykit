@@ -1,4 +1,4 @@
-import type { LocaleCode, Result, TrErrorCode } from '../shared';
+import type { LocaleCode, TranslationOutcome } from '../shared';
 
 export type TranslationRequest = {
   readonly texts: readonly string[];
@@ -6,9 +6,6 @@ export type TranslationRequest = {
   readonly source: 'auto';
   readonly target: LocaleCode;
 };
-
-export type Translation = { readonly text: string; readonly providerId: string };
-export type TranslationOutcome = Result<Translation, TrErrorCode>;
 
 /** Every translation engine sits behind this interface (architecture steering, Provider adapters). */
 export interface TranslationProvider {
