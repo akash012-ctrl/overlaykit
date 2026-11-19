@@ -1,5 +1,6 @@
 import type { ModelStore } from './model-store';
-import type { PlanRequest, PlannerOutput, PlErrorCode, Result } from '../shared';
+import type { PlanRequest, PlannerChoice, PlannerOutput, PlErrorCode, Result } from '../shared';
+import type { LiveStepPlannerOptions } from './adapters/gemini-live';
 
 /** Planner state. Same shape as design.md section "Interfaces". */
 export type PlannerState =
@@ -43,8 +44,12 @@ export interface PlannerEngine {
 
 export type StepPlannerOptions = {
   readonly engine?: PlannerEngine;
-  /** Where the sideloaded model is checked. Without it, or without the native module, the stub engine is used. */
+  /** Where the models are found and downloaded. Without it the store is built from the native module; without that, the stub engine is used. */
   readonly store?: ModelStore;
   /** Cap on model output tokens. */
   readonly maxOutputTokens?: number;
+  /** Which planner to build. Default 'on-device'. */
+  readonly choice?: PlannerChoice;
+  /** Needed for 'gemini-live'. The ui passes the consent callback here. Without it the Live choice stays inert. */
+  readonly live?: LiveStepPlannerOptions;
 };

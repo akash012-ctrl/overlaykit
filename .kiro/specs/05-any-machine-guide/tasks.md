@@ -126,7 +126,7 @@ Rules for every worker:
     - Files: `planner/adapters/litert.ts`. Needs the typed JS surface from lane K (`design.md`, "Local Kotlin module"); can be coded against it before the native side builds, real calls blocked by task 12.
     - Load the model path from `model-store`, call `generate` with the prompt, the schema string and the output-token cap, call `cancel` on abort, `PL_TIMEOUT` after `PLAN_TIMEOUT_MS`, map module codes to `PL_*` (table in `design.md`), call `release()` on `release()`. The only file that imports `modules/overlaykit-llm`.
     - _Requirements: 3.3 to 3.6, 4.5_
-  - [ ] 5.6 Two-model manifest and in-app download state (lane M; D-049; needs 12.4 for real downloads)
+  - [x] 5.6 Two-model manifest and in-app download state (lane M; D-049; needs 12.4 for real downloads)
     - Files: `planner/model-manifest.ts`, `planner/model-store.ts`, `planner/types.ts` (existing lane M files).
     - Manifest entries `gemma-4-e2b` (default, public URL, 2,588,147,712 bytes, SHA-256 `181938105e0eefd105961417e8da75903eacda102c4fce9ce90f50b97139a63c`) and `gemma-3-1b` (fallback, no URL, 584,417,280 bytes, SHA-256 `1325ae366d31950f137c9c357b9fa89448b176d76998180c08ceaca78bba98be`). Re-read size and SHA-256 from the Hugging Face API before pinning and record the date.
     - Store order: valid Gemma 4 file, else valid Gemma 3 file, else `PL_NO_MODEL` with a download offer. The state `downloading` carries received and total bytes. A failed `.part` file is deleted by the app; a pushed file never is. `litert.ts` tries Gemma 3 when Gemma 4 returns `OUT_OF_MEMORY` and the 1B file is present.

@@ -4,7 +4,9 @@
 import { requireOptionalNativeModule } from 'expo';
 
 import type { PlErrorCode, Result } from '../../shared';
-import type { ModelStore } from '../model-store';
+import type { ModelId } from '../model-manifest';
+import { createModelStore } from '../model-store';
+import type { DownloadFailure, ModelFilePort, ModelStore } from '../model-store';
 import type { PlannerEngine, PlannerState, PromptText } from '../types';
 
 type LlmLoadResult = { ok: true } | { ok: false; code: 'NO_FILE' | 'OUT_OF_MEMORY' | 'UNSUPPORTED' | 'FAILED' };
@@ -22,6 +24,57 @@ export interface LlmNative {
   ): Promise<LlmGenerateResult>;
   cancel(requestId: string): void;
   release(): Promise<void>;
+  /** Mirror of modules/overlaykit-llm/index.ts: files and download (design.md Gemma 4 E2B in-app download). */
+  filesDirectory(): string;
+  fileSize(path: string): Promise<number | null>;
+  sha256File(path: string): Promise<string | null>;
+  downloadModel(url: string, destPath: string, expectedSize: number, expectedSha256: string): Promise<LlmDownloadResult>;
+  cancelDownload(): void;
+  addListener(
+    event: 'onDownloadProgress',
+    cb: (p: { receivedBytes: number; totalBytes: number }) => void,
+  ): { remove(): void };
+}
+
+type LlmDownloadResult = { ok: true; path: string } | { ok: false; code: DownloadFailure };
+
+/** The store's file port over the native module. Never throws. */
+export function createNativeModelPort(native: LlmNative): ModelFilePort {
+  return {
+    filesDirectory: () => native.filesDirectory(),
+    fileSize: async (uri) => {
+      try {
+        return await native.fileSize(uri);
+      } catch {
+        return null;
+      }
+    },
+    sha256: async (uri) => {
+      try {
+        return await native.sha256File(uri);
+      } catch {
+        return null;
+      }
+    },
+    download: async (url, dest, size, sha) => {
+      try {
+        const r = await native.downloadModel(url, dest, size, sha);
+        return r.ok ? { ok: true, value: true } : { ok: false, error: r.code };
+      } catch {
+        return { ok: false, error: 'FAILED' };
+      }
+    },
+    cancelDownload: () => native.cancelDownload(),
+    onProgress(cb) {
+      const sub = native.addListener('onDownloadProgress', (p) => cb(p.receivedBytes, p.totalBytes));
+      return () => sub.remove();
+    },
+  };
+}
+
+/** The store for this phone, or null when the native module is not built in. */
+export function createDeviceModelStore(native: LlmNative | null = loadLlmNative()): ModelStore | null {
+  return native === null ? null : createModelStore(createNativeModelPort(native));
 }
 
 // shortcut: provisional values, replaced by measurements on the reference phone in task 14 (DQ-2).
@@ -66,23 +119,37 @@ export function createLitertEngine(opts: LitertEngineOptions): PlannerEngine {
   async function ensureLoaded(): Promise<Result<true, PlErrorCode>> {
     if (native === null) return { ok: false, error: 'PL_NO_MODEL' };
     if (loaded) return { ok: true, value: true };
-    const check = await opts.store.check();
-    if (check.kind !== 'ready') {
-      set(check.kind === 'missing' ? { kind: 'missing' } : { kind: 'failed', code: check.code });
-      return { ok: false, error: check.code };
-    }
-    set({ kind: 'loading' });
-    const res = await native.load(check.path, { backend: BACKEND, maxTokens: CONTEXT_TOKENS });
-    if (!res.ok) {
+    const skip: ModelId[] = [];
+    let lastOom = false;
+    for (;;) {
+      const check = await opts.store.check(skip);
+      if (check.kind !== 'ready') {
+        // Gemma 4 ran out of memory and no 1B file is present: this phone can't run the model.
+        if (lastOom) {
+          set({ kind: 'failed', code: 'PL_UNSUPPORTED_DEVICE' });
+          return { ok: false, error: 'PL_UNSUPPORTED_DEVICE' };
+        }
+        set(check.kind === 'missing' ? { kind: 'missing' } : { kind: 'failed', code: check.code });
+        return { ok: false, error: check.code };
+      }
+      set({ kind: 'loading' });
+      const res = await native.load(check.path, { backend: BACKEND, maxTokens: CONTEXT_TOKENS });
+      if (res.ok) {
+        loaded = true;
+        set({ kind: 'ready' });
+        return { ok: true, value: true };
+      }
+      // Out of memory with the big model: try the next one in the manifest, when it is there.
+      if (res.code === 'OUT_OF_MEMORY' && check.modelId === 'gemma-4-e2b') {
+        skip.push(check.modelId);
+        lastOom = true;
+        continue;
+      }
       const code = loadCode(res.code);
       set(code === 'PL_NO_MODEL' ? { kind: 'missing' } : { kind: 'failed', code });
       return { ok: false, error: code };
     }
-    loaded = true;
-    set({ kind: 'ready' });
-    return { ok: true, value: true };
   }
-
   return {
     status: () => state,
     subscribe(cb) {
