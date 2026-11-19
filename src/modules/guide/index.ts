@@ -22,3 +22,4 @@ export type {
   TransitionProof,
   ValidatedWorkflow,
 } from './types';
+export * from './plan';

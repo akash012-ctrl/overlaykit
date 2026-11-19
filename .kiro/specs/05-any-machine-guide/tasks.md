@@ -62,21 +62,21 @@ Rules for every worker:
     - No phone: report "device validation pending" and what ran (prebuild, Gradle assemble).
     - _Requirements: 4.6, 10.5_
 
-- [ ] 4. Lane P: pure Guide plan modules
-  - [ ] 4.1 Text normalization and grounding
+- [x] 4. Lane P: pure Guide plan modules
+  - [x] 4.1 Text normalization and grounding
     - Files: `src/modules/guide/plan/normalize.ts`, `ground.ts`, `types.ts`, `index.ts`.
     - `normalizeText`, `groundStep(output, ocr)`. Exact match to exactly one line, otherwise `PL_TARGET_NOT_FOUND`. Dropped: fuzzy matching.
     - Imports only `shared` and `geometry` types. No React.
     - _Requirements: 5.1, 5.2_
-  - [ ] 4.2 Expectation
+  - [x] 4.2 Expectation
     - Files: `guide/plan/expectation.ts`, `constants.ts`.
     - `buildExpectation`, `evaluateExpectation`, `sceneOverlap`. Named constants `SCENE_OVERLAP_MIN`, `SCENE_LOST_TIMEOUT_MS`, `GOAL_NOT_SEEN_LIMIT`, `MAX_STEPS_PER_GOAL` exist but are unset (`NaN`); unset means `cannot-tell` / never fires, as in spec 03.
     - _Requirements: 7.1, 7.2, 7.7, 8.4, 9.1_
-  - [ ] 4.3 Reducer
+  - [x] 4.3 Reducer
     - Files: `guide/plan/reducer.ts`, `guide/plan/types.ts`.
     - `planReducer` and `initialPlanGuideState`, adapted from `guide/reducer.ts` (copy, do not edit the old file). One `advance` function, one proof per advance. Events and states as in `design.md`.
     - _Requirements: 7.3 to 7.9, 8.1 to 8.3, 9.2, 9.3_
-  - [ ] 4.4 Public API
+  - [x] 4.4 Public API
     - Append the exports to `src/modules/guide/index.ts` (append only).
   - [ ]* 4.5 Unit tests for 4.1 to 4.3
     - Optional, last. Files: `guide/plan/__tests__/*.test.ts`. Do not run until the owner asks.
