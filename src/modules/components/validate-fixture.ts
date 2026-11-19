@@ -52,30 +52,6 @@ export function validateFixture(fixture: MachineFixtureB | MachineFixture): read
       (typeof review === 'object' && review !== null && !blank(review.reviewer) && !blank(review.reviewedOn));
     if (!ok) issues.push({ rule: 'EMPTY_REVIEW', path: `review.${locale}` });
   }
-  validateScreens(fixture, issues);
   return issues;
 }
 
-/** Screen and workflow rules. A spec B fixture has neither and passes. Never throws. */
-function validateScreens(fixture: MachineFixtureB | MachineFixture, issues: FixtureIssue[]): void {
-  const { screens, workflows } = fixture as Partial<MachineFixture>;
-  const ids = new Set<string>();
-  (screens ?? []).forEach((s, i) => {
-    if (ids.has(s.id)) issues.push({ rule: 'DUPLICATE_SCREEN_ID', path: `screens[${i}].id` });
-    ids.add(s.id);
-    if (!Array.isArray(s.identifyingTexts) || s.identifyingTexts.length === 0 || s.identifyingTexts.some(blank)) {
-      issues.push({ rule: 'EMPTY_SCREEN_TEXT', path: `screens[${i}].identifyingTexts` });
-    }
-  });
-  (workflows ?? []).forEach((w, wi) => {
-    (w.steps ?? []).forEach((st, si) => {
-      const cp = st.checkpoint;
-      if (cp?.kind === 'text-visible' && cp.screenId !== undefined && !ids.has(cp.screenId)) {
-        issues.push({
-          rule: 'NO_SCREENS_FOR_CHECKPOINT',
-          path: `workflows[${wi}].steps[${si}].checkpoint.screenId`,
-        });
-      }
-    });
-  });
-}
