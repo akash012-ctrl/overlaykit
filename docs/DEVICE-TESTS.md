@@ -1,22 +1,23 @@
 # OverlayKit: real-device tests
 
-Status: **no device tests run yet.** The reference phone (Q4) will be connected later (D-031). No phone has been connected (`adb devices` listed none on 2026-11-17).
+Status: **DT-G0-01 PASSED on 2026-11-19 (session 2). No other case has run.** The reference phone is a Redmi Note 12 Pro 5G, confirmed by the owner on 2026-11-19 (Q4). In session 1 the debug build (B1) failed on the Windows host. In session 2, after the long-path fix, it installed and launched, and the owner confirmed the home screen.
 
 Acceptance test IDs (AT-xx) are defined in [QUALITY-GATES.md](QUALITY-GATES.md). This file defines how to run them on a phone and where to record results. The cross-cutting phone protocol (PD-01 to PD-09) and the result rules live in the Kiro skill `.kiro/skills/physical-device-qa/SKILL.md`.
 
 ## Reference device
 
-Fill this in before G0. All gate measurements use this phone.
+All gate measurements use this phone. The owner confirmed it as the reference phone on 2026-11-19 (Q4). Values below were read with `adb shell` on 2026-11-19 (agent-observed).
 
 | Field | Value |
 | --- | --- |
-| Model | TBD |
-| Android version / security patch | TBD |
-| RAM | TBD |
-| Google Play services version | TBD |
-| Rear camera resolution | TBD |
-| Text-to-speech engine, and voices installed for en / hi / kn | TBD |
-| System fonts render Devanagari and Kannada (check in any app) | TBD |
+| Model | Xiaomi Redmi Note 12 Pro 5G (`ro.product.model` 22101316I, device `ruby`), arm64-v8a |
+| Android version / security patch | Android 14 (API 34), HyperOS `OS2.0.16.0.UMOINXM`, security patch 2026-10-01 |
+| RAM | `MemTotal` 5,668,324 kB |
+| Google Play services version | 26.45.31 (190400-1020418964) |
+| Rear camera resolution | Camera2 pixel array of the first back camera: 4096 × 3072. Two more back cameras report 3264 × 2448 and 1600 × 1200. The capture size the app uses is set in G1a. |
+| Screen | 1080 × 2400 px at 440 dpi (about 393 × 873 dp), system font scale 1.0, system locale en-US |
+| Text-to-speech engine, and voices installed for en / hi / kn | Default engine `com.google.android.tts`. Installed voices not checked yet. |
+| System fonts render Devanagari and Kannada (check in any app) | Not checked yet (needs a tester). |
 
 ## Setup (Windows host)
 
@@ -116,4 +117,28 @@ Copy this block for each session. Keep screenshots under `docs/device-results/<d
 
 ## Results
 
-None yet.
+### 2026-11-19 session 1
+- Commit: `fd6ac5e` plus uncommitted spec 01 work (tasks 2 to 8)   Variant: debug
+- Device: Xiaomi Redmi Note 12 Pro 5G (22101316I), Android 14, connected over USB, adb state `device`
+- Tester: none. Agent only, no one watched the screen.
+- Conditions: none (no camera case in scope)
+
+| Test ID | Result (PASSED / FAILED / NOT TESTED) | Observed by | Measurement | Notes / evidence path |
+| --- | --- | --- | --- | --- |
+| DT-G0-01 | NOT TESTED | Agent: `npx expo run:android --device 22101316I` output | — | The app was never installed: gate B1 failed on the Windows host with `ninja: error: Stat(...): Filename longer than 260 characters` in `:app:buildCMakeDebug[arm64-v8a]`. Details in `docs/build-log.md`, 2026-11-19. `adb shell pm list packages com.overlaykit.app` returned nothing afterwards. |
+| DT-G0-02 | NOT TESTED | — | — | Release build not attempted; B1 must pass first. |
+
+Summary: 0 PASSED, 0 FAILED, 2 NOT TESTED. The phone is connected and authorized for adb, but no OverlayKit build has reached it. G0 (AT-G0-01, AT-G0-02) and every later device gate stay blocked until the host build path problem is fixed. Next action: fix the CMake/Ninja path limit on the host (see build-log), then re-run B1.
+
+### 2026-11-19 session 2
+- Commit: `fd6ac5e` plus uncommitted spec 01 work (tasks 2 to 8)   Variant: debug (JS from Metro over `adb reverse tcp:8081`)
+- Device: Xiaomi Redmi Note 12 Pro 5G (22101316I), Android 14, USB
+- Tester: owner (reported in chat)
+- Conditions: none (no camera case in scope)
+
+| Test ID | Result (PASSED / FAILED / NOT TESTED) | Observed by | Measurement | Notes / evidence path |
+| --- | --- | --- | --- | --- |
+| DT-G0-01 | PASSED | Tester: owner, who reported in chat seeing "OverlayKit" with the Translate, Explore and Guide chips on a dark background and no error. Agent: `pm list packages`, `pidof`, `dumpsys activity`, `uiautomator dump`, `logcat *:E`. | Installed, process 30691 running, `MainActivity` resumed. Accessibility text: "OverlayKit", "Camera language assistant (placeholder)", "Translate", "Explore", "Guide". No React Native error in logcat. | No screenshot kept: the agent's `screencap` caught the phone's launcher, not the app, so it was deleted unsaved. Build details in `docs/build-log.md`, 2026-11-19 "B1 after the long-path fix". |
+| DT-G0-02 | NOT TESTED | — | — | Release build (B2) not attempted yet. |
+
+Summary: 1 PASSED, 0 FAILED, 1 NOT TESTED. AT-G0-01 is met on this phone. AT-G0-02 (release build, B2) is still open. Later on 2026-11-19 the app was rebuilt with the new launcher icon and splash (build-log, "App icon and splash"), with no JavaScript change. The owner still has to look at the new icon on the launcher.

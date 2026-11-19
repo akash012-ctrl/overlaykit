@@ -7,7 +7,7 @@ Status: **blocked on P0 approval.** Items are listed in order. Gate IDs refer to
 - [ ] Q1 Approve the architecture (module boundaries, dependency map) and scope, including the "Not built" list and the Kiro evidence track in plan.md.
 - [x] Q2 TM-01 fixture: option (b), printed panel plus screen images, shown on an iPad as a passive display (D-029). Decided 2026-11-18.
 - [ ] Q3 Accept D-005: Kannada works as a target, UI, content, and voice language, but Kannada-script text in the camera image is unsupported for the hackathon.
-- [ ] Q4 Reference phone: owner will plug it in later. Until then every device test is "device validation pending".
+- [x] Q4 Reference phone: Xiaomi Redmi Note 12 Pro 5G (22101316I, Android 14), confirmed by the owner on 2026-11-19. Details in `docs/DEVICE-TESTS.md`.
 - [x] Q5 Reviewers removed from the plan (D-031). Hindi and Kannada text ships marked unreviewed. Translation: ML Kit only (D-030).
 - [ ] Q6 Confirm the 3 Dec submission target (deadline 4 Dec, 2:00 pm Pacific).
 - [ ] Q7 Accept D-003: iOS isn't built or validated during the hackathon (Windows host, no EAS).
@@ -19,8 +19,8 @@ Status: **blocked on P0 approval.** Items are listed in order. Gate IDs refer to
 
 - [x] Add `LICENSE` at the repo root (D-021). MIT, copyright holder "Akash_012" (git author name; owner to confirm the legal name). Added 2026-11-18.
 - [ ] Set `JAVA_HOME` to the Android Studio JBR and connect the reference phone (`adb devices`).
-- [ ] Confirm `npx expo run:android` flags with `--help` (`--device`, `--variant release`).
-- [ ] B1: debug build on the phone (DT-G0-01).
+- [x] Confirm `npx expo run:android` flags with `--help` (`--device`, `--variant release`). Confirmed 2026-11-19 (build-log).
+- [x] B1: debug build on the phone (DT-G0-01). First attempt 2026-11-19 failed on the host (Ninja path limit). After CMake 3.31.6 and Windows long paths, it installs and launches, and the owner confirmed the screen: DT-G0-01 PASSED 2026-11-19.
 - [ ] B2: release build on the phone (DT-G0-02).
 - [ ] Remove `react-native-web` and `react-dom` if doctor and the Android build pass without them (D-016). Review the other unused template packages.
 - [ ] Add the unit test runner (candidate `jest-expo`, via `npx expo install`) and an `npm test` script.
