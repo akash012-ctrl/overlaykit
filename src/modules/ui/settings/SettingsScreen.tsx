@@ -4,12 +4,16 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { t } from '../../locale';
+import { createLiveKeyStore } from '../../planner';
 import { A11yButton } from '../a11y/A11yButton';
+import { PlannerSettings } from '../guide';
 import { MIN_TOUCH_TARGET_DP } from '../overlay/styles';
 import { LanguageSection } from './LanguageSection';
 import { PrivacyNote } from './PrivacyNote';
 import { useSettings } from './useSettings';
 import { VoiceSection } from './VoiceSection';
+
+const liveKeys = createLiveKeyStore();
 
 // shortcut: no OpenRouter key section. Key storage is DEFERRED by D-030. Add OpenRouterKeySection when it is reversed.
 function Screen() {
@@ -38,6 +42,9 @@ function Screen() {
         <LanguageSection selected={settings.targetLocale} onSelect={(code) => void settings.setTargetLocale(code)} />
 
         <VoiceSection />
+
+        {/* Settings is its own route, so no Live session is open here to end when the key is deleted (R17.4). */}
+        <PlannerSettings keys={liveKeys} onKeyDeleted={() => undefined} />
 
         {privacyOpen ? (
           <PrivacyNote onDone={() => setPrivacyOpen(false)} />

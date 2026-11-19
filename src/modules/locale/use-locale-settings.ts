@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useSyncExternalStore } from 'react';
 
-import type { LocaleCode } from '../shared';
+import type { LocaleCode, PlannerChoice } from '../shared';
 import { getSettingsSnapshot, setSettingsSnapshot, subscribeSettings } from './current-settings';
 import { createExpoSettingsFilePort } from './settings-file-adapter';
-import type { LocaleSettings, SettingsStore } from './settings-store';
+import type { LiveConsent, LocaleSettings, SettingsStore } from './settings-store';
 import { createSettingsStore } from './settings-store';
 
 let store: SettingsStore | undefined;
@@ -39,6 +39,10 @@ export function useLocaleSettings(): {
   readonly privacyAcknowledged: boolean;
   readonly setTargetLocale: (locale: LocaleCode) => Promise<void>;
   readonly acknowledgePrivacy: () => Promise<void>;
+  readonly plannerChoice: PlannerChoice;
+  readonly liveConsent: LiveConsent | null;
+  readonly setPlannerChoice: (choice: PlannerChoice) => Promise<void>;
+  readonly setLiveConsent: (consent: LiveConsent | null) => Promise<void>;
 } {
   const { loaded, settings } = useSyncExternalStore(subscribeSettings, getSettingsSnapshot, getSettingsSnapshot);
   useEffect(() => {
@@ -46,6 +50,8 @@ export function useLocaleSettings(): {
   }, []);
   const setTargetLocale = useCallback((targetLocale: LocaleCode) => update({ targetLocale }), []);
   const acknowledgePrivacy = useCallback(() => update({ privacyAcknowledged: true }), []);
+  const setPlannerChoice = useCallback((plannerChoice: PlannerChoice) => update({ plannerChoice }), []);
+  const setLiveConsent = useCallback((liveConsent: LiveConsent | null) => update({ liveConsent }), []);
   return {
     loaded,
     targetLocale: settings.targetLocale,
@@ -53,5 +59,9 @@ export function useLocaleSettings(): {
     privacyAcknowledged: settings.privacyAcknowledged,
     setTargetLocale,
     acknowledgePrivacy,
+    plannerChoice: settings.plannerChoice,
+    liveConsent: settings.liveConsent,
+    setPlannerChoice,
+    setLiveConsent,
   };
 }

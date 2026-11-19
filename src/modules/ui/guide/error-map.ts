@@ -1,7 +1,7 @@
 import type { StringKey } from '../../locale';
 import type { PlErrorCode, SpErrorCode } from '../../shared';
 
-export type PlanAct = 'retry' | 'translate' | 'explore' | 'stop' | 'setup';
+export type PlanAct = 'retry' | 'translate' | 'explore' | 'stop' | 'setup' | 'key';
 
 /** The one UI state each planner code maps to (design.md, Error handling). */
 export type PlanUiState = {
@@ -21,6 +21,13 @@ export const PLAN_ERROR_UI: Readonly<Record<PlErrorCode, PlanUiState>> = {
   PL_BAD_OUTPUT: { messageKey: 'guide.plan.err.PL_BAD_OUTPUT', actions: ['retry', 'translate', 'explore'], liveRegion: 'polite' },
   PL_TARGET_NOT_FOUND: { messageKey: 'guide.plan.err.PL_TARGET_NOT_FOUND', actions: ['retry', 'translate', 'explore'], liveRegion: 'polite' },
   PL_TIMEOUT: { messageKey: 'guide.plan.err.PL_TIMEOUT', actions: ['retry', 'translate'], liveRegion: 'polite' },
+  // Gemini Live (R16.13). Retry means the user taps Start Gemini Live again. Nothing restarts by itself.
+  PL_LIVE_NO_KEY: { messageKey: 'guide.plan.err.PL_LIVE_NO_KEY', actions: ['key', 'translate', 'explore'], liveRegion: 'polite' },
+  PL_LIVE_AUTH: { messageKey: 'guide.plan.err.PL_LIVE_AUTH', actions: ['key', 'translate', 'explore'], liveRegion: 'polite' },
+  PL_LIVE_QUOTA: { messageKey: 'guide.plan.err.PL_LIVE_QUOTA', actions: ['translate', 'explore', 'stop'], liveRegion: 'polite' },
+  PL_LIVE_NETWORK: { messageKey: 'guide.plan.err.PL_LIVE_NETWORK', actions: ['retry', 'translate', 'explore'], liveRegion: 'polite' },
+  PL_LIVE_SESSION_ENDED: { messageKey: 'guide.plan.err.PL_LIVE_SESSION_ENDED', actions: ['retry', 'translate', 'explore'], liveRegion: 'polite' },
+  PL_LIVE_MIC_DENIED: { messageKey: 'guide.plan.err.PL_LIVE_MIC_DENIED', actions: ['retry', 'translate', 'explore'], liveRegion: 'polite' },
 };
 
 export type VoiceAct = 'tap' | 'retry' | 'openSettings';

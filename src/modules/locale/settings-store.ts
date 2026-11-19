@@ -1,13 +1,19 @@
-import type { LocaleCode, Result } from '../shared';
+import type { LocaleCode, PlannerChoice, Result } from '../shared';
 import type { SettingsFilePort } from './settings-file-adapter';
 
 export type LocaleSettings = {
   /** Also the UI language and the Explanation language (OQ-1). */
   readonly targetLocale: LocaleCode;
   readonly privacyAcknowledged: boolean;
+  /** Spec 05 (R15). Default 'on-device'. Only ui sets 'gemini-live', and only after a key and consent exist. */
+  readonly plannerChoice: PlannerChoice;
+  /** Spec 05 (R16.2). The consent text version the user accepted, or null (never accepted or declined). */
+  readonly liveConsent: LiveConsent | null;
 };
 
-export const DEFAULT_SETTINGS: LocaleSettings = Object.freeze({ targetLocale: 'en', privacyAcknowledged: false });
+export type LiveConsent = { readonly version: number };
+
+export const DEFAULT_SETTINGS: LocaleSettings = Object.freeze({ targetLocale: 'en', privacyAcknowledged: false, plannerChoice: 'on-device', liveConsent: null });
 
 export interface SettingsStore {
   /** Defaults when the file is missing or unparsable, so a bad file never blocks start-up. */
@@ -23,10 +29,12 @@ export function parseSettings(text: string | null): LocaleSettings {
   try {
     const raw: unknown = JSON.parse(text);
     if (typeof raw !== 'object' || raw === null) return DEFAULT_SETTINGS;
-    const { targetLocale, privacyAcknowledged } = raw as Record<string, unknown>;
+    const { targetLocale, privacyAcknowledged, plannerChoice, liveConsent } = raw as Record<string, unknown>;
     return {
       targetLocale: LOCALES.includes(targetLocale as LocaleCode) ? (targetLocale as LocaleCode) : DEFAULT_SETTINGS.targetLocale,
       privacyAcknowledged: privacyAcknowledged === true,
+      plannerChoice: plannerChoice === 'gemini-live' ? 'gemini-live' : 'on-device',
+      liveConsent: parseLiveConsent(liveConsent),
     };
   } catch {
     return DEFAULT_SETTINGS;
@@ -50,4 +58,11 @@ export function createSettingsStore(port: SettingsFilePort): SettingsStore {
       return result;
     },
   };
+}
+
+/** A bad or missing value means no consent. */
+function parseLiveConsent(raw: unknown): LiveConsent | null {
+  if (typeof raw !== 'object' || raw === null) return null;
+  const { version } = raw as Record<string, unknown>;
+  return typeof version === 'number' && Number.isInteger(version) && version > 0 ? { version } : null;
 }

@@ -260,20 +260,20 @@ Rules for every worker:
     - _Requirements: 16.5, 16.7_
 
 - [ ] 21. Lane U: planner choice, consent, key, banner (new, needs 1.5, 2.2, 3.4, 19.3)
-  - [ ] 21.1 Settings fields and strings
+  - [x] 21.1 Settings fields and strings
     - Append `plannerChoice: 'on-device'` and `liveConsent: null` (with a version number) to the settings store in `locale/settings-store.ts`, append-only, defaults safe. Append strings to `locale/strings/{en,hi,kn}.ts` for: planner names, consent text (R16.3), banner, Stop, Start Gemini Live, key screen, mic toggle, and the six `PL_LIVE_*` states. `hi` and `kn` are unreviewed drafts (D-031).
     - _Requirements: 15.1, 16.3, 11.4_
-  - [ ] 21.2 Planner settings and key screens
+  - [x] 21.2 Planner settings and key screens
     - Files: `ui/guide/PlannerSettings.tsx`, `LiveKeyScreen.tsx`. The choice row opens the key screen when no key and the consent screen when no consent. Paste, replace, remove, masked display. Removing the key ends any session and sets `on-device`.
     - _Requirements: 15.1 to 15.5, 17.1, 17.4, 17.5_
-  - [ ] 21.3 Consent screen
+  - [x] 21.3 Consent screen
     - File: `ui/guide/LiveConsentScreen.tsx`. Plain words per R16.3, "Agree and turn on" and "No, keep on-device". Stores the consent with the text version. Declining changes nothing and sends nothing.
     - _Requirements: 16.2, 16.3_
   - [ ] 21.4 Banner, start button and send gate
     - Files: `ui/guide/LiveBanner.tsx`, `LiveStartButton.tsx`, `live-view-model.ts`, and the changes in `usePlanGuide.ts` and `GuideScreen.tsx`. "Start Gemini Live" on every session. The banner is rendered from `sessionState()` ("Streaming to Google", red dot, Stop, mic toggle default off). `usePlanGuide` passes frames and mic to the adapter only when the banner state is connecting or open. Stop, leaving Guide, backgrounding, goal done and any error call `stopSession()`. The Guide planner line names the active planner. Both planners show "AI suggestion" and "This may be wrong".
     - Supplies `LiveFrameSource` from `capture` stills through `scaleJpegBase64`, and the mic from the module.
     - _Requirements: 15.2 to 15.6, 16.4 to 16.7, 16.11_
-  - [ ] 21.5 Error map rows
+  - [x] 21.5 Error map rows
     - `ui/guide/error-map.ts` (append rows): the six `PL_LIVE_*` codes with the texts and actions in `design.md`. Rows are added to the existing error-map test only under the owner's rows-only approval.
     - _Requirements: 12.2, 16.13_
 

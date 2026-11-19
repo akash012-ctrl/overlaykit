@@ -14,6 +14,7 @@ export function CannotPlanView({
   onTranslate,
   onExplore,
   onStop,
+  onOpenKey,
 }: {
   code: PlErrorCode;
   reason: string | null;
@@ -21,12 +22,14 @@ export function CannotPlanView({
   onTranslate: () => void;
   onExplore: () => void;
   onStop: () => void;
+  /** Opens the Google key screen. Without it the key button is not shown. */
+  onOpenKey?: () => void;
 }) {
   const ui = PLAN_ERROR_UI[code];
   const hasReason = code === 'PL_CANNOT_PLAN' && reason !== null && reason.trim() !== '';
   const key = code === 'PL_CANNOT_PLAN' && !hasReason ? 'guide.plan.err.PL_CANNOT_PLAN_NO_REASON' : ui.messageKey;
-  const run = { retry: onRetry, translate: onTranslate, explore: onExplore, stop: onStop } as const;
-  const label = { retry: 'guide.retry', translate: 'guide.translate', explore: 'guide.explore', stop: 'guide.plan.stop' } as const;
+  const run = { retry: onRetry, translate: onTranslate, explore: onExplore, stop: onStop, key: onOpenKey } as const;
+  const label = { retry: 'guide.retry', translate: 'guide.translate', explore: 'guide.explore', stop: 'guide.plan.stop', key: 'guide.plan.openKey' } as const;
   return (
     <Panel>
       {ui.actions.includes('setup') ? (
@@ -39,7 +42,9 @@ export function CannotPlanView({
       )}
       <View style={guideStyles.row}>
         {ui.actions.map((a, i) =>
-          a === 'setup' ? null : <GuideButton key={a} primary={i === 0} label={t(label[a])} onPress={run[a]} />,
+          a === 'setup' || (a === 'key' && onOpenKey === undefined) ? null : (
+            <GuideButton key={a} primary={i === 0} label={t(label[a])} onPress={run[a] ?? onStop} />
+          ),
         )}
       </View>
     </Panel>
