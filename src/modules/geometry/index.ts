@@ -19,3 +19,10 @@ export { placeLabels } from './placement';
 export type { LabelPlacement, LabelRequest } from './placement';
 
 export { LABEL_GAP_DP, ROUND_TRIP_TOLERANCE_PX } from './thresholds';
+
+export { applyFit, matchLayout } from './layout-match';
+export type { AnchorTemplate, LayoutMatch, ObservedAnchor } from './layout-match';
+
+export { hitTest } from './hit-test';
+export type { HitItem, HitResult } from './hit-test';
+export { HIT_MIN_TARGET_DP } from './thresholds';

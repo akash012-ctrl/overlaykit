@@ -17,3 +17,10 @@ export const LABEL_GAP_DP = 4;
  * wrong scale or offset fails.
  */
 export const ROUND_TRIP_TOLERANCE_PX = 1e-6;
+
+/**
+ * Minimum touch target for hitTest, in dp. 48 from Android and Material
+ * touch-target guidance and spec 01 MIN_TOUCH_TARGET_DP (R16.7).
+ * Not a recognition threshold. Each item's margin is derived from it (DP-4).
+ */
+export const HIT_MIN_TARGET_DP = 48;

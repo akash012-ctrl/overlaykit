@@ -206,43 +206,43 @@ Device tasks end with a PASSED, FAILED or NOT TESTED record in `docs/DEVICE-TEST
     - Tests: the anchor texts and component ids equal the FIXTURE.md lists, every box is marked DRAFT, no recognition assertion depends on a DRAFT box (R17.14), and the validator accepts `'unreviewed'`.
     - _Requirements: 17.2, 17.3, 17.5, 17.13, 17.14_
 
-- [ ] 13. Add `matchLayout` and `applyFit` to geometry
+- [x] 13. Add `matchLayout` and `applyFit` to geometry
   - Files: `src/modules/geometry/layout-match.ts`, `similarity.ts`, `thresholds.ts` (rotation tolerance name only, value after task 25.2), `index.ts`, tests.
   - Closed-form similarity fit (centroids, then scale and rotation from the 2×2 cross-covariance). Score is `1 − min(1, rmsResidual / observedExtent)`. Non-finite observed points are ignored. `no-fit` when fewer than `minPoints` keys match, `scale ≤ 0`, a non-finite field, zero extent, or rotation beyond the tolerance. `minPoints` and the tolerance are parameters.
   - `applyFit` maps a Machine-space quad into Image space with the same corner order.
   - Unit tests with example anchor sets (exact fit, noisy fit, a wrong anchor, too few points, non-finite point, rotation beyond tolerance). Imports only `shared`, no React Native, no I/O.
   - _Requirements: 19.1, 19.2, 19.4, 19.5, 19.6, 19.7, 20.2, 26.4_
 
-- [ ] 14. Add `hitTest` to geometry
+- [x] 14. Add `hitTest` to geometry
   - Files: `src/modules/geometry/hit-test.ts`, `thresholds.ts` (`HIT_MIN_TARGET_DP = 48` with its source), `index.ts`, tests.
   - Even-odd containment on the quad. Margin derived per item so each target is at least `minTargetDp` × `minTargetDp`. Inside beats margin. Among containing items a component beats a label (OQ-7), then the smaller area, then the smaller id. Within the margin and containing nothing: nearest edge distance, ties by kind then id. Non-finite point or `minTargetDp` returns `none`.
   - Unit tests for each priority rule, margin hits at 48 dp, ties, non-finite input, and the same result for the same input. Add DP-4 (margin derived from the 48 dp target) to the DECISIONS.md entry if the owner accepts it.
   - _Requirements: 21.1, 21.2, 21.3, 21.4, 21.5, 21.6, 21.7, 21.9, 25.5, 26.4_
 
-- [ ] 15. Add the components service
-  - [ ] 15.1 Add `identifyMachine`
+- [x] 15. Add the components service
+  - [x] 15.1 Add `identifyMachine`
     - Files: `src/modules/components/identify.ts`, `anchor-text.ts`, `thresholds.ts` (names only), tests.
     - Steps from the design: validator gate, script filter (Latin and Devanagari only), NFC, trim, whitespace and case normalization, deterministic tie-break between lines matching one anchor, `matchLayout`, then `verified`, `ambiguous` or `none`. `OCR_LOW_QUALITY` never gives `verified`. A single text never gives `verified`. No network, no translation. `minAnchors` and `minScore` come from the fixture.
     - Tests on recorded snapshots once they exist (TM-01, partial views, NEG-01 to NEG-10). Until then, tests use a test-built fixture and hand-built `OcrResult` values, and the snapshot tests wait for task 24.1.
     - _Requirements: 18.1, 18.2, 18.3, 18.4, 18.5, 18.6, 18.7, 18.8, 18.9, 18.10, 18.11, 18.12, 24.1_
-  - [ ] 15.2 Add `locateComponents`
+  - [x] 15.2 Add `locateComponents`
     - Files: `src/modules/components/locate.ts`, tests.
     - For a `verified` match, map each region with `applyFit`. Omit non-finite results silently. A region entirely outside the frame goes to `notVisible` with `CMP_NOT_VISIBLE`. A non-`verified` match returns empty lists. Each located component carries the frameId of the `OcrResult`.
     - _Requirements: 20.1, 20.2, 20.3, 20.4, 20.8, 24.1_
-  - [ ] 15.3 Add `explain`, `componentName`, `listComponents` and `createMachineService`
+  - [x] 15.3 Add `explain`, `componentName`, `listComponents` and `createMachineService`
     - Files: `src/modules/components/explain.ts`, `index.ts`, tests.
     - Authored text only, with no fallback to another locale and no generation. A missing id, locale or an empty string returns `EXPLANATION_MISSING`. The module does not import `locale`.
     - _Requirements: 11.3, 17.11, 22.2, 22.3, 26.3, 26.7_
 
-- [ ] 16. Add the property tests
-  - [ ] 16.1 Install fast-check if not present
+- [ ]* 16. Add the property tests
+  - [x] 16.1 Install fast-check if not present
     - Skip if spec A installed it. Otherwise confirm owner approval (task 1.2), run `npm install -D fast-check` (dev-only), then `npx expo install --check` and `npx expo-doctor`. Record the decision in DECISIONS.md.
-  - [ ] 16.2 Write the geometry property tests
+  - [ ]* 16.2 Write the geometry property tests
     - Files: `src/modules/geometry/__tests__/layout-match.property.test.ts`, `hit-test.property.test.ts`. At least 100 runs each.
     - `matchLayout`: the score is unchanged under random uniform scale, translation and small rotation. Non-finite points never produce a non-finite score. Fewer than `minPoints` gives `no-fit`.
     - `hitTest`: a returned item contains the point or is the nearest within the margin, non-finite input returns `none`, and the same input gives the same output.
     - _Requirements: 19.3, 19.4, 19.5, 21.1, 21.3, 21.5, 21.6, 27.4_
-  - [ ] 16.3 Write the identification and translation property tests
+  - [ ]* 16.3 Write the identification and translation property tests
     - A random subset of fewer than `minAnchors` anchors never gives `verified`. For the service: output count and order equal input count and order for random texts and random adapter outcomes, and no call is made for a random cached text.
     - _Requirements: 1.3, 12.3, 18.2, 18.3, 27.4_
 
@@ -275,7 +275,7 @@ Device tasks end with a PASSED, FAILED or NOT TESTED record in `docs/DEVICE-TEST
     - Tests with fake services: verified tap, unverified tap, ambiguous tap, replaced frame, prompt text.
     - _Requirements: 20.6, 20.7, 21.8, 21.9, 22.1, 22.4, 22.5, 22.6, 22.7, 24.2, 24.3, 26.5, 26.6_
 
-- [ ] 19. Add the error-to-UI tests
+- [ ]* 19. Add the error-to-UI tests
   - Files: `src/modules/ui/translate/__tests__/error-map.test.ts`, `src/modules/ui/explore/__tests__/error-map.test.ts`, tests in `locale` and `components`.
   - For each `TR_*` code, a test that `locale` produces it (a code path exists) and a test that `ui` maps it to its ARCHITECTURE.md §8 marker and state. Same for `MCH_NOT_VERIFIED`, `MCH_AMBIGUOUS` and `CMP_NOT_VISIBLE`, with `components` as the only producer. Add `TR_KEY_INVALID` and `TR_NO_CREDITS` texts, and the `PRIVACY_NOT_ACKNOWLEDGED` marker. Tests check both sides of every Named threshold constant that has a value by now.
   - Add the debug fault wrappers for timeout, 429, 5xx and unsupported pair (`locale/debug/fault-wrappers.ts`, `ui/debug/translation-faults.ts`) behind `__DEV__` with the marker `OVERLAYKIT_DEBUG_ONLY`, with dev-menu items and tests.
@@ -435,3 +435,4 @@ Tasks 12 to 14 can run in parallel with tasks 3 to 11 once task 2 is done. Tasks
 - Owner approvals gate tasks 1, 4.1, 6.4, 7.1, 7.3, 8.1, 8.2, 16.1 and 25.1. Ask before installing or recording anything.
 - Hindi and Kannada text (strings, fixture explanations) must not ship unreviewed (Q5).
 - Device results without a `docs/DEVICE-TESTS.md` record count as "device validation pending".
+
