@@ -167,6 +167,9 @@ export const GD_ERROR_CODES = [
 ] as const;
 export type GdErrorCode = (typeof GD_ERROR_CODES)[number];
 
+export const SP_ERROR_CODES = ['SP_NO_VOICE', 'SP_FAILED'] as const;
+export type SpErrorCode = (typeof SP_ERROR_CODES)[number];
+
 /** Languages the camera reads (D-005). */
 export type SourceLocale = 'en' | 'hi';
 export type LanguagePair = { readonly source: SourceLocale; readonly target: LocaleCode };
