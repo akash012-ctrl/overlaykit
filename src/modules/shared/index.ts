@@ -158,6 +158,15 @@ export type MchErrorCode = (typeof MCH_ERROR_CODES)[number];
 export const CMP_ERROR_CODES = ['CMP_NOT_VISIBLE'] as const;
 export type CmpErrorCode = (typeof CMP_ERROR_CODES)[number];
 
+export const GD_ERROR_CODES = [
+  'GD_UNSUPPORTED',
+  'GD_MACHINE_LOST',
+  'GD_MACHINE_CHANGED',
+  'GD_CHECKPOINT_NOT_SEEN',
+  'GD_FIXTURE_INVALID',
+] as const;
+export type GdErrorCode = (typeof GD_ERROR_CODES)[number];
+
 /** Languages the camera reads (D-005). */
 export type SourceLocale = 'en' | 'hi';
 export type LanguagePair = { readonly source: SourceLocale; readonly target: LocaleCode };
