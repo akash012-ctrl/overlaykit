@@ -209,3 +209,26 @@ Added by spec 03 lane G. Every row is NOT TESTED. No Guide gate is claimed. Resu
 | DT-G4-07 | NOT TESTED | Debug build only |
 | DT-ERR-04 | NOT TESTED | TM-01, G4 thresholds set |
 | DT-ERR-05 | NOT TESTED | TM-01, G4 thresholds set |
+
+## Any-machine Guide (spec 05, gate G5): rows waiting for a phone run
+
+Added by spec 05 lane D. Every row is NOT TESTED. No G5 gate is claimed. Machines are real machines the owner chooses and describes in the record. No fixture, no TM-01 (D-043). Results go in a dated block under Results, from a real phone run. Thresholds are unset and are set at task 14 from the DT-G5-07 numbers (DECISIONS.md entry first). The old TM-01 and NEG rows above (DT-G3-*, DT-G4-*, DT-ERR-04, DT-ERR-05, DT-RC-*) are not run for the new product.
+
+AT-G5-08 is a review item, not a phone test. Its record is the vision-safety review. DT-G5-08 below is the device check for pausing and backgrounding from spec 05 task 13.
+
+| Test ID | Gate / AT | Setup | Steps | Expected | Result |
+| --- | --- | --- | --- | --- | --- |
+| DT-G5-01 | AT-G5-01 | Release build, planner `on-device`, three different real machines chosen by the owner, L2 | On each machine pick a Goal by tap. Follow the first step. | A first step is planned, a grounded target is highlighted, the owner can follow it. Record machine, commit, variant, date per run. | NOT TESTED |
+| DT-G5-02 | AT-G5-02 | One real machine, planner `on-device` | Do a step and watch the next one show. Do a second step and tap Done instead. Then leave the phone pointed at the machine for 60 s without acting. | Advance only after two consecutive `met` observations, or on Done. No advance on the idle run. | NOT TESTED |
+| DT-G5-03 | AT-G5-03 | One real machine. Debug hook or a Goal whose plan names text not on screen | Trigger a plan with an off-screen target | `PL_TARGET_NOT_FOUND` shows, no highlight | NOT TESTED |
+| DT-G5-04 | AT-G5-04 | Model present, NET-OFF (airplane mode) | Plan a step. Record how network use was observed (for example `adb shell dumpsys netstats` or a firewall log). | Planning works. No network request during planning. | NOT TESTED |
+| DT-G5-05 | AT-G5-05 | Phone with and without the English and Hindi recognisers | Set a Goal by voice in English, then in Hindi. Try one unsupported language. | Works where the phone supports it. Otherwise `SP_LANGUAGE_UNSUPPORTED`. | NOT TESTED |
+| DT-G5-06 | AT-G5-06 | Pushed model file: missing, wrong size, wrong SHA-256, then the right file | Open Guide after each | Each bad file gives `PL_NO_MODEL`. The right file loads. | NOT TESTED |
+| DT-G5-07 | AT-G5-07 | **Release** build, model present | Measure model load time, time to first token, time per step, peak memory, and battery over 10 minutes. For Gemini Live also the first frame, first function call, round trip per step, battery and data use over 5 minutes (R16.14). | Numbers recorded. Thresholds are set at task 14 from them, in DECISIONS.md. Hindi and Kannada planning quality: unmeasured until recorded here. | NOT TESTED |
+| DT-G5-08 | Task 13 (not AT-G5-08) | Guide mid-plan on one real machine | Point away, then back. Background the app for 30 s, then return. | Paused on screen loss and on backgrounding. Resumes only on a newer observation. Camera and microphone released. No skipped step. | NOT TESTED |
+| DT-G5-09 | AT-G5-09 | Gemini Live never turned on; then the consent screen declined | Run a full Guide session each time with a network trace. Record how it was observed. | No connection to Google AI endpoints in either case | NOT TESTED |
+| DT-G5-10 | AT-G5-10 | Gemini Live on, own Google key saved by the owner | Run a session. Tap Stop. Start another and background the app. Then check the phone for files, gallery items and logs. | Banner shown for the whole session. Stop ends the stream within a second. Backgrounding ends it. No file, gallery item or log line holds a frame, audio or the key. | NOT TESTED |
+| DT-G5-11 | AT-G5-11 | Gemini Live on, one real machine; then a bad key; then NET-OFF | Run one real goal. Save a bad key and start. Turn on airplane mode and start. | Step grounded on an exact OCR line, or `PL_TARGET_NOT_FOUND`. Bad key: `PL_LIVE_AUTH`. Airplane mode: `PL_LIVE_NETWORK`, on-device stays available. | NOT TESTED |
+| DT-G5-12 | AT-G5-12 | Fresh install, no model, Wi-Fi, then low free space | Start the Gemma 4 E2B download. Cancel. Resume. Use a corrupted copy to force a SHA-256 mismatch. Try with too little free space. | Progress shows, cancel and resume work, mismatch is rejected, low space is refused. The planner loads or shows `PL_UNSUPPORTED_DEVICE`. | NOT TESTED |
+
+Summary: 0 PASSED, 0 FAILED, 12 NOT TESTED. Device validation pending.

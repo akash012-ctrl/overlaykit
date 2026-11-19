@@ -4,7 +4,7 @@ Status: **draft, awaiting approval** (2026-11-17)
 
 A gate passes only with evidence: command output in the build log, or a device test record in [DEVICE-TESTS.md](DEVICE-TESTS.md) with build commit, device, and date. Thresholds marked *(proposed)* get confirmed or adjusted once, after the G1 spike measures a baseline. After that they don't change silently. Any change is logged in DECISIONS.md.
 
-Gate order: **G0 → G1 → G2 → G3 → G4 → RC.** Work on a later gate may start early (for example, fixture authoring), but a later gate can't pass before the earlier ones.
+Gate order: **G0 → G1 → G2 → G3 → G5 → RC.** G4 was replaced by G5 (D-043). Work on a later gate may start early (for example, fixture authoring), but a later gate can't pass before the earlier ones.
 
 ## Static gates (every commit from G0 on)
 
@@ -18,7 +18,7 @@ Gate order: **G0 → G1 → G2 → G3 → G4 → RC.** Work on a later gate may 
 | Q6 | SDK-compatible versions | `npx expo install --check` | Up to date |
 | Q7 | No secrets in app | Search `src/` and the output of `npx expo export --platform android` for key patterns | No matches |
 | Q8 | No web or login code | Search dependencies and `src/` for web-only and auth packages | None present |
-| Q9 | Permissions | After `npx expo prebuild`, inspect the merged Android manifest | Only `CAMERA`, `INTERNET`, and permissions required by Expo/RN core, each one listed and justified |
+| Q9 | Permissions | After `npx expo prebuild`, inspect the merged Android manifest | Only `CAMERA`, `INTERNET`, `RECORD_AUDIO` (D-046, asked only on the first mic tap), and permissions required by Expo/RN core, each one listed and justified |
 
 ## Build gates
 
@@ -110,26 +110,35 @@ Fixtures: TM-01 panel (or its replica), an English text card, a Hindi text card,
 - **False matches.** If AT-G3-02 fails, raise the match thresholds. If true matches then drop below 80%, stop and choose with the user. One option is a printed marker on the TM-01 fixture to help identification.
 - **No reviewers (D-031).** G3 can pass without reviewers. Hindi and Kannada content ships marked `unreviewed` and is disclosed as such. Nothing is described as reviewed.
 
-## G4: guided workflow (Guide)
+## G5: any-machine Guide (replaces G4, D-043)
 
-| ID | Acceptance test | Pass |
-| --- | --- | --- |
-| AT-G4-01 | Refusal | Unverified and ambiguous machines show `GD_UNSUPPORTED` and offer Translate and Explore. Tested on the whole negative set. |
-| AT-G4-02 | End to end | The TM-01 workflow completes on the phone with each step's target highlighted on the correct component |
-| AT-G4-03 | Checkpoints | `text-visible` steps advance exactly once, after two consecutive distinct matching observations. Duplicate or out-of-order observations never advance or rewind (property-based unit tests plus device test). `manual` steps advance only on Done. No step advances on a timer. |
-| AT-G4-04 | Machine lost | Pointing away for longer than the timeout pauses the workflow. It resumes only after TM-01 is re-identified. |
-| AT-G4-05 | Machine changed | Identifying a different machine cancels the workflow |
-| AT-G4-06 | Content integrity | Workflow loader rejects fixtures missing a locale, a review status, or a valid component reference (unit test). No step text is generated or translated at runtime (code review). |
-| AT-G4-07 | Voice | With a voice installed for the locale, Speak reads the step. Without one, the control is hidden. No crash either way. |
-| AT-G4-08 | Interruption | Backgrounding and returning resumes at the same step or resets safely, without skipping a step |
+G4 needed the TM-01 fixture, which the owner dropped (D-043). Its tests AT-G4-01 to 08 are retired with it. G5 is defined by [spec 05 R14](../.kiro/specs/05-any-machine-guide/requirements.md). Status: **proposed, not approved, nothing has run.** Numeric thresholds are unset. Where an item names one, it says "set at task 14", and a DECISIONS.md entry comes before it gates anything. G5 is Passed only with records in [DEVICE-TESTS.md](DEVICE-TESTS.md) (rows DT-G5-01 to DT-G5-12). Machines are chosen by the owner. No fixture, no TM-01.
 
-**Stop condition:** Any step shown for a machine that isn't `verified` blocks release until fixed.
+| ID | Kind | Acceptance test | Pass | Device row |
+| --- | --- | --- | --- | --- |
+| AT-G5-01 | Device | Three different real machines, Goal picked by tap | The app plans a first step, highlights a grounded target, and the owner can follow it. Each run recorded PASSED, FAILED or NOT TESTED, machine described by the owner. | DT-G5-01 |
+| AT-G5-02 | Device | Advance rules on a real machine | A step advances on two consecutive `met` observations, and on Done. No advance on a timer over a 60 s idle run. | DT-G5-02 |
+| AT-G5-03 | Device | Plan names text not on screen | `PL_TARGET_NOT_FOUND` shows, not a highlight. | DT-G5-03 |
+| AT-G5-04 | Device | Airplane mode, model present | Planning works and no network request occurs during planning. The record says how this was observed. | DT-G5-04 |
+| AT-G5-05 | Device | Voice Goal in English and in Hindi, if the phone supports them | Works where supported. An unsupported language shows `SP_LANGUAGE_UNSUPPORTED`. | DT-G5-05 |
+| AT-G5-06 | Device | Pushed model file missing, wrong size, wrong checksum | Each is rejected with `PL_NO_MODEL`. The right file loads. | DT-G5-06 |
+| AT-G5-07 | Device | Load time, time per step, peak memory, battery, on a **release** build | Measured and recorded. Thresholds: set at task 14, from these numbers, in a DECISIONS.md entry before they gate anything. | DT-G5-07 |
+| AT-G5-08 | Review | Vision-safety review of code and text | No claim of "verified", "correct", "AR" or "world tracking". With Planner_Choice `on-device`, no image or text leaves the phone for planning. With `gemini-live`: the consent screen, banner, Stop and send gate as in R16 are present. | none (review record) |
+| AT-G5-09 | Device | Gemini Live never turned on, then consent declined | A network trace of a full Guide run shows no connection to Google AI endpoints in either case. The record says how it was observed. | DT-G5-09 |
+| AT-G5-10 | Device | Gemini Live on | Banner visible for the whole session. Stop ends the stream within a second. Backgrounding ends it. No file, gallery item or log line holds a frame, audio or the key. | DT-G5-10 |
+| AT-G5-11 | Device | One real goal on a real machine with Gemini Live | The step is grounded on an exact OCR line, or `PL_TARGET_NOT_FOUND` shows. A bad key shows `PL_LIVE_AUTH`. Airplane mode shows `PL_LIVE_NETWORK` and Guide keeps on-device available. | DT-G5-11 |
+| AT-G5-12 | Device | Gemma 4 E2B download on the phone | Progress, cancel, resume, SHA-256 mismatch rejected, enough-space check. The planner loads or shows `PL_UNSUPPORTED_DEVICE`. | DT-G5-12 |
 
+**Unset thresholds (set at task 14, none invented here):** `PLAN_TIMEOUT_MS`, `MODEL_IDLE_RELEASE_MS`, `SCENE_OVERLAP_MIN`, `SCENE_LOST_TIMEOUT_MS`, `GOAL_NOT_SEEN_LIMIT`, `MAX_STEPS_PER_GOAL`, `LISTEN_MAX_MS`, capture cadence, backend (CPU or GPU), context size, output-token cap, `LIVE_IDLE_STOP_MS`, `LIVE_STEP_MAX_AGE_MS`. `LIVE_FRAME_INTERVAL_MS` is also set at task 14 and must not be below 1000 (R16.7).
+
+**Not measured yet:** Hindi and Kannada planning quality, with either planner. Kannada text cannot be read from the camera (D-005), so Kannada is a UI, step-text and voice language only.
+
+**Stop condition:** Any claim that a plan is verified or correct, any highlight on text OCR did not find, or any frame, audio or key sent or stored outside the D-050 rules blocks release until fixed.
 ## RC: demo release candidate
 
-- **RC-1:** S1 (PRODUCT.md) passes 3 times in a row on the reference phone, release build, from a fresh install.
-- **RC-2:** S1-N passes on at least 3 negative-set machines.
+- **RC-1:** S2 (PRODUCT.md) passes 3 times in a row on the reference phone, release build, from a fresh install (S1 was removed with TM-01, D-043).
+- **RC-2:** S2-N passes on at least 3 machines chosen by the owner.
 - **RC-3:** All static, build, and error-state gates pass on the RC commit. The commit hash is recorded in `docs/build-log.md`.
-- **RC-4:** G1, G3, and G4 behaviour passes in airplane mode. G2 shows `TR_OFFLINE` in airplane mode if the provider is cloud-based.
-- **RC-5:** Someone outside the team installs the signed release APK from the GitHub Release on their own Android phone by following the README, and completes S1.
+- **RC-4:** G1, G3, and G5 on-device behaviour passes in airplane mode (Gemini Live needs the network). G2 shows `TR_OFFLINE` in airplane mode if the provider is cloud-based.
+- **RC-5:** Someone outside the team installs the release APK (debug-signed, D-044) from the GitHub Release on their own Android phone by following the README, and completes S2.
 - **RC-6:** Submission checks: repo is public with a LICENSE shown in its About section, `/.kiro` is committed at the root, no secrets, and the demo video is under 3 minutes and shows the app on a real phone. Everything is checked while logged out.

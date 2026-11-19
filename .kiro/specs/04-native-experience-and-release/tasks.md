@@ -169,7 +169,8 @@ Never skip, weaken or re-snapshot a test to make it pass. Never claim a gate pas
     - After `npx expo prebuild --clean`, list the merged permissions. Only `CAMERA`, `INTERNET` and Expo/RN core permissions. Justify each in `docs/build-log.md`. Any `RECORD_AUDIO`, location or storage permission, or one added by `expo-speech`, is a finding that needs a fix or an owner-approved DECISIONS.md entry.
     - _Requirements: 15.1, 15.2, 15.3, 15.4, 15.5, 15.6_
 
-- [ ] 10. Write the README
+- [x] 10. Write the README
+  - Status: written 2026-11-19 (lane D, docs only) for the any-machine product (D-039 to D-051). The done check (`npm run verify` and the build-log checklist) was not run. Every capability is labelled device validation pending. TM-01 print steps, the APK steps and the release URL are not in it.
   - Files: `README.md`.
   - Cover the three modes, Android-only scope, English/Hindi/Kannada, TM-01 as a first-party simulated machine shown as images on an iPad (how judges display the images from `test-fixtures/tm-01` or print them), AI-generated artwork with our own text (D-032), Hindi and Kannada text unreviewed (D-031), iOS not built, camera reads English and Hindi only, ML Kit on-device translation with a network needed on first use of a pair to download its model of about 30 MB (D-030), OpenRouter and the proxy deferred, `TR_NOT_CONFIGURED` only for a pair that fails G2, 2D overlays (no world tracking, SLAM, ARCore, ARKit), no image leaves the phone, Speak only with a voice, APK install steps and Android version, TM-01 print steps with real size, build and test commands that were actually run, PASSED and pending device tests with a link to `docs/DEVICE-TESTS.md`.
   - The Translate section waits for spec B's G2 result (OQ-8). Until then it says "translation routes not yet decided". Every capability without a PASSED record is labelled "device validation pending". No secret, key or token. Release URL is added in task 17.
@@ -189,15 +190,15 @@ Never skip, weaken or re-snapshot a test to make it pass. Never claim a gate pas
     - _Requirements: 14.4, 14.5, 14.6, 14.7_
 
 - [ ] 12. Write the release-claims, demo-script and Devpost documents
-  - [ ] 12.1 Create the claims ledger
+  - [x] 12.1 Create the claims ledger
     - Files: `docs/release-claims.md`.
     - One row per public capability claim, with its evidence (a PASSED DT or PD ID, or a code or doc fact) and its status. Rows without a PASSED record are marked "device validation pending" and are not usable in public text.
     - _Requirements: 13.14, 13.16, 18.4, 20.7, 20.8_
-  - [ ] 12.2 Write the demo script
+  - [x] 12.2 Write the demo script
     - Files: `docs/demo-script.md`.
     - Under 3 minutes. A table lists each shown capability with its DT or PD ID. Label TM-01 as a first-party simulated machine shown as images on an iPad. Show `TR_NOT_CONFIGURED` as it appears if a pair fails G2. No third-party trademark or music, no iOS, real-machine, Kannada-camera or world-tracking claim.
     - _Requirements: 18.1, 18.4, 18.5, 18.6, 18.7, 18.8, 18.9_
-  - [ ] 12.3 Write the Devpost text
+  - [x] 12.3 Write the Devpost text
     - Files: `docs/devpost.md`.
     - English description, category Frankenstein, Kiro write-up listing only features in the evidence log, TM-01 form (images on an iPad), Translate limits, a statement that Hindi and Kannada text is unreviewed (D-031), disclosure of the AI-generated artwork with our own text (D-032), disclosure that the app started from the `create-expo-app` SDK 58 template, and placeholders for the repository, release and video links.
     - _Requirements: 14.11, 19.1, 19.2, 19.3, 19.4, 19.8, 19.9, 19.11, 19.13, 20.1 to 20.8_
