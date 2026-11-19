@@ -493,3 +493,48 @@ Sarvam limits input to 1,000 characters per request for `mayura:v1` and 2,000 fo
 - The planner gives each step an expected change: text that should appear or disappear in the next screen. A step advances when the camera sees that change in two consecutive, distinct observations (D-019), or when the user taps Done. A timer never advances a step. A step the planner marks `manual` (nothing visible will change) advances only on Done.
 - The "expected change" is itself an AI suggestion. If the camera never sees it, the app asks the user and offers Done, Retry, Back. It never skips by itself.
 **Consequences:** The pure reducer is adapted to a runtime-built plan (no fixture loader, no `components` screen matcher in the Guide path). `components`/`guide` TM-01 types are not deleted in this spec; a cleanup task removes unused ones after the owner agrees.
+
+## D-044 Owner decisions for spec 04: expo-speech, license holder, no release signing
+**Status:** Accepted (owner, 2026-11-19). Settles the proposed D-021 license choice.
+**Context:** Spec 04 tasks 1.1, 1.2 and 1.3 needed three owner answers.
+**Decision:**
+- `expo-speech` is approved for text-to-speech (gate task AT-G4-07). Source checked: [Expo SDK 58 Speech docs](https://docs.expo.dev/versions/v58.0.0/sdk/speech/) (recommended version ~58.0.4, Android and iOS, `getAvailableVoicesAsync`, `speak` with `onDone`, `onError`, `onStopped`, `stop`). Installed with `npx expo install expo-speech`. It is imported only by `src/modules/speech/adapters/expo-speech-engine.ts`, behind the `SpeechOutput` interface.
+- The license is MIT. The copyright holder is "Akash Singh", year 2026. This settles D-021.
+- No release signing key. Task 8 (release signing plugin) is dropped by owner: no signing key. Local builds use the default debug signing. No keystore config is added.
+**Consequences:** Release builds are debug-signed, so they are for the owner's own phone and are not store-ready. A published APK would need a real key and a new decision.
+
+## D-045 Step planning uses Google on-device AI with Gemma models, run by LiteRT-LM in a local Kotlin module
+
+**Status:** Accepted (owner, 2026-11-19) for the route. The exact model is Proposed (OQ-1 in spec 05).
+**Context:** D-040 left runtime and model open and proposed `llama.rn` with Qwen3-1.7B. The owner chose Google's on-device AI with Gemma models instead. Evidence is in `.scratch/reports/spec-05-gemma-redesign.md`.
+**Decision:**
+- Replaces the `llama.rn` and Qwen proposal in spec 05 (never approved, never installed). D-040's other rules stay: planning is on the phone, only goal text and OCR line text go in, no image leaves the phone.
+- Runtime: LiteRT-LM (Google AI Edge), Kotlin API `com.google.ai.edge.litertlm:litertlm-android`, inside a local Expo Module `modules/overlaykit-llm/` (D-005 and D-036 pattern). It sits behind the existing `StepPlanner` interface; only `planner/adapters/litert.ts` imports it. No LiteRT-LM type crosses into TypeScript. No new npm package.
+- MediaPipe LLM Inference is not used: Google lists it as maintenance-only. ML Kit GenAI Prompt API (Gemini Nano through AICore) is not the main path: it runs a different model and works only on phones on Google's device list, which did not include the reference phone in the sources read.
+- Default model: Gemma 4 E2B `gemma-4-E2B-it.litertlm` (2,588,147,712 bytes, Apache-2.0, not gated). Small fallback: Gemma 3 1B IT int4 (584 MB, gated, Gemma Terms of Use). The owner confirms the model before task 1.3 finishes.
+- Output: ask for a JSON response format if the pinned LiteRT-LM version supports it; always parse strictly and ground the result (spec 05 DD-2). Speculative decoding, thinking mode and tools stay off.
+**Alternatives:** `llama.rn` with Qwen (dropped by the owner); `react-native-executorch` (SDK 58 and RN 0.88 not listed in its compatibility table); MediaPipe LLM Inference (maintenance-only).
+**Consequences:** We write and maintain Kotlin code. The Kotlin version in the Expo SDK 58 build (2.2 or 2.3+) decides which `litertlm-android` version we can pin, and is checked at task 3.3. A 2.6 GB model file and about 1.7 GB peak memory (Google's number on another phone) are unproven on the reference phone (5.67 GB RAM). Performance must be measured on a release build before any "works" claim (task 14). Hindi and Kannada planning quality is unmeasured.
+
+## D-046 `expo-speech-recognition` approved for voice goals, with an audio disclosure
+
+**Status:** Accepted (owner, 2026-11-19).
+**Context:** D-042 accepted the principle and left the package Proposed. The owner approved `expo-speech-recognition` for the gate task "voice goal" in spec 05 (tasks 3.1, 7.2, 8.2).
+**Decision:**
+- Package: `expo-speech-recognition`, version from `npx expo install` (58.0.1 was current when checked). Source checked: [github.com/jamsch/expo-speech-recognition](https://github.com/jamsch/expo-speech-recognition). Maintained, version number follows the Expo SDK. SDK 58 and New Architecture support are confirmed by `npx expo install --check`, `npx expo-doctor` and a build (task 3), not assumed.
+- Imported only by `src/modules/speech/adapters/android-recognizer.ts`, behind `SpeechInput`.
+- Audio disclosure, shown before the first microphone use: on-device recognition is requested when the phone has the language pack (Android 13 and later). Otherwise Android's recognition service may send the audio to Google's servers. The app itself records nothing, stores no audio and sends none. The user can use tap input instead.
+- `RECORD_AUDIO` enters the manifest and must not be in `blockedPermissions` (D-038). The permission is asked only on the first microphone tap. `recordAudioAndroid: false` for the camera plugin stays (D-036).
+- Voice sets the goal only, never advances a step (D-042).
+**Consequences:** One new permission in the release manifest check. Hindi and Kannada recognition depend on the phone's installed packs and are unverified on the reference phone. The privacy note and README must carry the disclosure.
+
+## D-047 Model licence note: Gemma 4 is Apache-2.0, Gemma 3 and 3n use the Gemma Terms of Use
+
+**Status:** Accepted (owner informed, 2026-11-19). Applies to whichever model the owner confirms (D-045).
+**Context:** The Gemma Terms of Use (last modified 2026-04-01) are not an OSI licence. Gemma 4 is released under Apache-2.0 instead (Hugging Face model card). Sources: [Gemma Terms of Use](https://gemma.ai/resources/terms/), [Gemma 4 E2B card](https://huggingface.co/google/gemma-4-E2B-it), [LiteRT repo card](https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm) (`license:apache-2.0`).
+**Decision:**
+- Gemma 4 E2B (default): Apache-2.0. Keep the licence text and an attribution line (model name, source, licence) in the app's licence notices. The app downloads the file from Hugging Face; it does not bundle it.
+- Gemma 3 or 3n (only if the owner picks them): the Gemma Terms of Use apply. Obligations that matter for a distributed app, from the terms text: (1) any agreement that governs use or distribution of the model must include the Prohibited Use Policy restrictions, and recipients must be told the model is subject to them; (2) give every third-party recipient a copy of the terms; (3) mark modified files as modified (we do not modify the weights); (4) a distribution other than a hosted service must carry a notice file with the sentence "Gemma is provided under and subject to the Gemma Terms of Use found at gemma.ai/resources/terms"; (5) Google may restrict use it believes breaches the terms; (6) no use of Google trademarks to suggest endorsement; (7) outputs are the user's responsibility and the model is provided as-is. Not using the model against the Prohibited Use Policy or the law is a condition of use.
+- The owner's own copy by `adb push` for testing is not a distribution. Publishing an APK, or a download link that serves the file, is a distribution.
+- Gemma 3 files on Hugging Face need the owner's login and a licence click (credentials item for the owner). The app never carries a token.
+**Consequences:** Task 17.4 adds the notice text and licence line before any public build. This is a summary for planning, not legal advice; the owner reads the linked terms before publishing.

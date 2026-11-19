@@ -53,15 +53,15 @@ Never skip, weaken or re-snapshot a test to make it pass. Never claim a gate pas
     - Unit tests (QE-1 for `SP_NO_VOICE` and `SP_FAILED`): voice match for `en`, `hi`, `kn`; second `speak` stops the first; late callbacks from an older generation are ignored; engine that throws; `stop()` with nothing playing; text passed unchanged.
     - Source-search test: no `fetch`, `XMLHttpRequest`, `RECORD_AUDIO` or `Audio.` in `src/modules/speech/`, and each file imports only `shared` or its own module files.
     - _Requirements: 4.1, 4.2, 4.3, 4.5, 4.6, 4.7, 4.8, 4.9, 4.10, 4.11, 4.12, 4.13, 4.14_
-  - [ ] 2.2 Install `expo-speech` and add the adapter
-    - Status: PARKED, needs owner approval of `expo-speech` (task 1.1). Not installed.
+  - [x] 2.2 Install `expo-speech` and add the adapter
+    - Status: done 2026-11-19: owner approved (D-044). `npx expo install expo-speech` -> `~58.0.4`; `npx expo install --check` exit 0; `npx expo-doctor` 20/20. Adapter `src/modules/speech/adapters/expo-speech-engine.ts`; `getSpeechOutput()` wired. Prebuild --clean exit 0; Q9 PASS, no permission added (library manifest only adds the TTS_SERVICE `<queries>` intent). Device: device validation pending.
     - Blocked on: task 1.1.
     - Run `npx expo install expo-speech`, then `npx expo install --check` and `npx expo-doctor`. Add `src/modules/speech/adapters/expo-speech-engine.ts` as the only vendor file. Take method names from the cited SDK 58 docs. Wire `getSpeechService()`.
     - Run `npx expo prebuild --clean` and list the merged permissions. Any new permission is a Q9 finding (task 9.4).
     - If the check fails, stop and record the failure. The Kotlin `TextToSpeech` fallback needs a new DECISIONS.md entry first.
     - _Requirements: 4.4, 15.5, 16.8_
   - [ ] 2.3 Add the debug fault engine for `SP_FAILED`
-    - Status: not started. It needs the vendor adapter (2.2) first.
+    - Status: not started. Debug-only hook for `SP_FAILED` (DT-ERR-02); optional, left for the owner to ask for.
     - Files: `src/modules/speech/debug/fault-engine.ts`, `src/modules/ui/debug/speech-faults.ts`, tests. Reached only through `__DEV__ ? require(...) : null`, with the `OVERLAYKIT_DEBUG_ONLY` marker and a dev-menu item "Force SP_FAILED".
     - Unit test: the fault engine makes the next `start` report an error, and the hook is absent when `__DEV__` is false.
     - _Requirements: 10.2, 10.6_
@@ -124,8 +124,8 @@ Never skip, weaken or re-snapshot a test to make it pass. Never claim a gate pas
     - Lint: forbid `Pressable`, `TouchableOpacity` and `onPress` outside `A11yButton` and the overlay label view, and forbid string literals as JSX children in `ui` and `src/app` (except `__DEV__` debug files). Prove each rule fails on a deliberate violation, record the output in `docs/kiro-evidence.md`, then remove the violation.
     - Tests: render every screen, query all touchables for role, label in the UI language and a 48 dp minimum. Overlay label text is exposed to the accessibility service. Key-coverage test across `en`, `hi`, `kn`.
     - _Requirements: 2.11, 6.1, 6.2, 6.3, 6.6, 6.7_
-  - [ ] 6.2 Add font-scaling, reduced-motion and contrast checks
-    - Status: partly done: `ui/a11y/useReduceMotion.ts` exists (unused, no animation today). Search found no `allowFontScaling`, `maxFontSizeMultiplier`, `fontFamily` or Animated use in `src/`. `contrast.ts` and `colors.ts` not written. Device DT-A11Y-02 to 04: device validation pending.
+  - [x] 6.2 Add font-scaling, reduced-motion and contrast checks
+    - Status: done: `ui/a11y/{useReduceMotion,contrast}.ts` (`COLOR_PAIRS`, bars over white). Ran once, all pairs >= 4.5:1 (lowest 4.57 privacy accept on blue, then 5.75 primary blue). Search found no `allowFontScaling`, `maxFontSizeMultiplier`, `fontFamily` or Animated use in `src/`. Tests: deferred by owner: tests. Device DT-A11Y-02 to 04: device validation pending.
     - Files: `src/modules/ui/a11y/{useReduceMotion.ts,contrast.ts,colors.ts}`, tests.
     - Search test: no `allowFontScaling={false}`, no low `maxFontSizeMultiplier`, no `fontFamily` or `expo-font` in `src/` or `app.json`. `useReduceMotion` starts static and animates only after the first read returns false, and reacts to changes without restart. `contrastRatio` test over `COLOR_PAIRS` at 4.5:1 or more, including translucent bars on a white worst case. Step_Card scrolls its body, with Speak, Done and Back pinned outside.
     - Test that every label state renders a text child, not colour alone.
