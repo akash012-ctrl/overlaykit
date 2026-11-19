@@ -41,6 +41,7 @@ const VENDOR_OWNERS = [
   { module: 'capture', file: 'src/modules/capture/camera-adapter.ts', packages: ['expo-camera'] },
   { module: 'capture', file: 'src/modules/capture/CameraPreview.tsx', packages: ['expo-camera'] },
   { module: 'capture', file: 'src/modules/capture/file-system-port.ts', packages: ['expo-file-system'] },
+  { module: 'locale', file: 'src/modules/locale/settings-file-adapter.ts', packages: ['expo-file-system'] },
 ];
 
 /**

@@ -1,17 +1,18 @@
 import type { LocaleCode } from '../shared';
+import { getSettingsSnapshot } from './current-settings';
 import type { StringKey } from './strings/en';
 import { EN_STRINGS } from './strings/en';
 import { HI_STRINGS } from './strings/hi';
 import { KN_STRINGS } from './strings/kn';
 
-/** 'en' until spec B adds the language setting (R20.4). */
+/** The saved target language ('en' until settings load), also the UI language (OQ-1). */
 export function getUiLocale(): LocaleCode {
-  return 'en';
+  return getSettingsSnapshot().settings.targetLocale;
 }
 
-/** 'en' until spec B adds the target-language setting. The not-configured adapter ignores it. */
+/** The saved target language ('en' until settings load). */
 export function getTargetLocale(): LocaleCode {
-  return 'en';
+  return getSettingsSnapshot().settings.targetLocale;
 }
 
 /** The raw template for a key in one locale. */

@@ -15,3 +15,9 @@ export { planTranslation } from './plan';
 export type { SendPlan } from './plan';
 export { DEFAULT_ROUTE_TABLE, pairKey } from './route-table';
 export type { PairKey, Route, RouteTable } from './route-table';
+
+export { createOnDeviceProvider, subscribeOnDeviceStatus } from './adapters/on-device';
+export type { OnDeviceEngine, OnDeviceStatus } from './adapters/on-device';
+export { getTranslationService } from './wiring';
+export type { LocaleSettings, SettingsStore } from './settings-store';
+export { useLocaleSettings } from './use-locale-settings';
