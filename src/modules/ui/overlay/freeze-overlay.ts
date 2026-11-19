@@ -7,9 +7,15 @@ import type { FrameId, FrameRef, OcrLine, OcrResult, TrErrorCode } from '../../s
 
 /** Exactly one per label (R17.7, QE-3). */
 export type LabelState =
-  | { readonly kind: 'pending' }
+  | { readonly kind: 'pending'; readonly reason?: 'translating' | 'downloading-language-data' }
   /** Only from an ok TranslationProvider outcome (R17.8). Unreachable in spec A. */
-  | { readonly kind: 'translated'; readonly text: string; readonly providerId: string }
+  | {
+      readonly kind: 'translated';
+      readonly text: string;
+      readonly providerId: string;
+      /** Same language or not sent: the recognized text is shown as written, marked as not translated. */
+      readonly unchanged?: true;
+    }
   | { readonly kind: 'failed'; readonly code: TrErrorCode }
   | { readonly kind: 'unsupported'; readonly code: 'OCR_UNSUPPORTED_SCRIPT' };
 

@@ -1,12 +1,15 @@
+import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CameraPreview, StillView } from '../../capture';
 import { t } from '../../locale';
+import { ExplorePanel } from '../explore/ExplorePanel';
 import { OverlayLayer } from '../overlay/OverlayLayer';
 import { MIN_TOUCH_TARGET_DP } from '../overlay/styles';
 import type { CameraServices } from '../services';
 import { CameraServicesProvider, useCameraServices } from '../services';
+import { PrivacyNote } from '../settings/PrivacyNote';
 import { ModeSwitcher } from './ModeSwitcher';
 import { useCameraScreen } from './useCameraScreen';
 
@@ -20,7 +23,8 @@ function Screen() {
   const services = useCameraServices();
   const insets = useSafeAreaInsets();
   const { state, previewRef, actions } = useCameraScreen(services, insets);
-  const { view, shownFrame } = state;
+  const { view, shownFrame, explore } = state;
+  const router = useRouter();
   const stillShown =
     shownFrame !== null &&
     (view.kind === 'reading' || view.kind === 'still' || view.kind === 'no-text' || view.kind === 'recognition-failed');
@@ -31,7 +35,12 @@ function Screen() {
       {stillShown && shownFrame ? (
         <>
           <StillView frame={shownFrame} onLayout={actions.onStillLayout} />
-          <OverlayLayer items={state.items} region={state.region} />
+          <OverlayLayer
+            items={state.items}
+            region={state.region}
+            explore={state.mode === 'explore' ? explore : undefined}
+            onRetry={actions.retryLabel}
+          />
         </>
       ) : null}
 
@@ -42,6 +51,14 @@ function Screen() {
         <Text accessibilityLiveRegion="polite" style={styles.message}>
           {t(view.messageKey)}
         </Text>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('settings.open')}
+          onPress={() => router.push('/settings')}
+          style={styles.actionButton}
+        >
+          <Text style={styles.buttonText}>{t('settings.open')}</Text>
+        </Pressable>
         {view.action ? (
           <Pressable
             accessibilityRole="button"
@@ -61,7 +78,16 @@ function Screen() {
         {DebugTools && stillShown && shownFrame ? (
           <DebugTools.SnapshotExportButton frame={shownFrame} result={state.lastResult} layout={state.layout} ocr={services.ocr} />
         ) : null}
-        <ModeSwitcher enabled={view.translateEnabled} />
+        {stillShown && state.mode === 'explore' ? (
+          <ExplorePanel
+            view={explore.view}
+            list={explore.list}
+            prompt={explore.prompt}
+            onRequest={explore.request}
+            onClose={explore.close}
+          />
+        ) : null}
+        <ModeSwitcher enabled={view.translateEnabled} mode={state.mode} onChange={actions.setMode} />
         {stillShown ? (
           <Pressable
             accessibilityRole="button"
@@ -84,6 +110,11 @@ function Screen() {
           </Pressable>
         )}
       </View>
+      {state.privacy.loaded && !state.privacy.acknowledged ? (
+        <View style={styles.privacy}>
+          <PrivacyNote onDone={() => void actions.acknowledgePrivacy()} />
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -101,6 +132,7 @@ export function CameraScreen({ services }: { services?: CameraServices }) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#0B0F14' },
+  privacy: { ...StyleSheet.absoluteFill, backgroundColor: '#0B0F14', justifyContent: 'center', padding: 16 },
   topBar: { position: 'absolute', top: 0, left: 0, right: 0, backgroundColor: BAR_BACKGROUND, paddingBottom: 10, gap: 8 },
   bottomBar: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: BAR_BACKGROUND, paddingTop: 10, gap: 10 },
   message: { color: '#FFFFFF', fontSize: 16, lineHeight: 24 },

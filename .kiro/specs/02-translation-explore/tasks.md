@@ -163,13 +163,13 @@ Device tasks end with a PASSED, FAILED or NOT TESTED record in `docs/DEVICE-TEST
     - `checkAndSave` calls `GET https://openrouter.ai/api/v1/key` first. Rejected, offline (OQ-8) and failed checks save nothing. A successful save and a removal call `clearCache`. `maskKey` shows at most the last four characters, and nothing of a key of four characters or fewer. If secure storage is unavailable, save nothing and report it (DP-6).
     - Search the sources for the key in any logging call and record the result.
     - _Requirements: 8.3, 8.4, 8.5, 8.6, 8.7, 8.8, 8.9, 8.10, 8.11, 8.16, 10.9_
-  - [ ] 8.3 Add the Settings screen and route
+  - [x] 8.3 Add the Settings screen and route
     - Files: `src/modules/ui/settings/SettingsScreen.tsx`, `LanguageSection.tsx`, `OpenRouterKeySection.tsx`, `useSettings.ts`, `src/modules/ui/index.ts`, `src/app/settings.tsx` (renders `<SettingsScreen />` only), a Settings control on the Camera_Screen, tests.
     - Language choice of English, Hindi and Kannada, each in its own script. Key section with paste field, Save, masked display and Remove, plus the plain note about OpenRouter. A link to the privacy note. The honest-limits text describes TM-01 as a first-party simulated machine when it is a printed panel or simulator. No voice settings.
     - Every touch target at least 48 × 48 dp, with accessibilityRole and accessibilityLabel in the UI language. Target language changes save through the store.
     - _Requirements: 8.1, 8.2, 8.8, 8.9, 13.1, 13.2, 13.7, 16.1, 16.2, 16.3, 16.4, 16.5, 16.6, 16.7, 17.10_
 
-- [ ] 9. Add the first-run privacy note
+- [x] 9. Add the first-run privacy note
   - Files: `src/modules/ui/settings/PrivacyNote.tsx`, `src/modules/ui/translate/gate.ts`, tests.
   - Shown before any text is sent on first launch. It says images stay on the phone and recognized text may be sent. It names OpenRouter and the model provider when a cloud route is configured, and says text stays on the phone when every pair is on-device. Acknowledgement saves through the settings store. Until then, no `translate` call is made and every readable label is `failed` with "Translation not available". Settings can reopen the note.
   - Tests: no `translate` call before acknowledgement (fake service call count is 0), the call happens after, and the note text follows the route table.
@@ -246,30 +246,30 @@ Device tasks end with a PASSED, FAILED or NOT TESTED record in `docs/DEVICE-TEST
     - A random subset of fewer than `minAnchors` anchors never gives `verified`. For the service: output count and order equal input count and order for random texts and random adapter outcomes, and no call is made for a random cached text.
     - _Requirements: 1.3, 12.3, 18.2, 18.3, 27.4_
 
-- [ ] 17. Build the Translate label states in ui
-  - [ ] 17.1 Add the label model, reducer and error map
+- [x] 17. Build the Translate label states in ui
+  - [x] 17.1 Add the label model, reducer and error map
     - Files: `src/modules/ui/translate/label-model.ts`, `translation-reducer.ts`, `error-map.ts`, `thresholds.ts` (`OFFLINE_RETRY_INTERVAL_MS`, value from task 4.3), tests.
     - `LabelContent` and `translationReducer` as in the design. Actions with another `frameId`, or a `translation-settled` for another target, are ignored. A `translated` label with origin `provider` comes only from an `ok` outcome. `ok: false` sets every listed id to `failed` with that code. `TR_UI` is a total `Record`, so a missing code fails the type check.
     - Tests: every action type, a late result for a replaced frame, a settled result after a target change, retry, and one marker and one state per code.
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.8, 9.10, 13.5, 26.10_
-  - [ ] 17.2 Add `useTranslation`
+  - [x] 17.2 Add `useTranslation`
     - Files: `src/modules/ui/translate/useTranslation.ts`, `src/modules/ui/services.tsx` (adds `translation`, `settings`, `machines`), test with fake services.
     - On a new shown still: read settings, `planTranslation`, dispatch `result-applied`, one `translate` call per language pair, dispatch `translation-settled`. Re-plan on target change. Retry `TR_OFFLINE` labels every `OFFLINE_RETRY_INTERVAL_MS` and on foreground, using the request as the connectivity probe and adding no package. Enable retry after `retryAfterMs()`. Show "Downloading language data" while the on-device status is `downloading`.
     - Tests: one call per pair, no call when gated, no call for same-language or unsupported lines, auto-retry after offline.
     - _Requirements: 2.2, 4.2, 9.3, 9.5, 9.9, 10.1, 10.2, 12.1, 13.5, 15.6_
-  - [ ] 17.3 Render the label states
+  - [x] 17.3 Render the label states
     - Files: `src/modules/ui/overlay/LabelView.tsx` (extended), `src/modules/ui/overlay/styles.ts`, tests.
     - Each state as text, or an icon with text. A failed label keeps the recognized text and shows its marker, with a retry control when the code calls for one. Translated text is plain text at 14 sp or larger with a contrast ratio of at least 4.5:1. Ellipsis on overflow, with a tap to show the full text. Roles and labels in the UI language, 48 dp targets. Never a link or a command.
     - Tests: render tests for each state, contrast of the colour pairs through `contrastRatio`, and accessibility props.
     - _Requirements: 2.7, 6.4, 6.5, 9.4, 9.6, 9.7, 14.6, 14.7, 25.1, 25.2, 25.3, 25.4, 25.5, 25.6_
 
-- [ ] 18. Build Explore in ui
-  - [ ] 18.1 Add the explore model
+- [x] 18. Build Explore in ui
+  - [x] 18.1 Add the explore model
     - Files: `src/modules/ui/explore/explore-model.ts`, tests.
     - `toExploreView`: `verified` plus a component under the tap gives the authored explanation, `EXPLANATION_MISSING` gives the failed state with no other text. Everything else gives the label view with the note "Not a verified machine". No component name, function or guess on `ambiguous` or `none`. A label on a `verified` machine that is not inside a located component gives the label view and no component claim. A pending or failed label keeps its state with the note. `ambiguous` may add the hint.
     - Tests use negative-set snapshots once they exist (task 24.1). Until then, hand-built `MachineMatch` values.
     - _Requirements: 22.1, 22.3, 22.4, 22.7, 23.1, 23.2, 23.3, 23.4, 23.5, 23.6, 23.7_
-  - [ ] 18.2 Add `useExplore`, the panel and the component prompt
+  - [x] 18.2 Add `useExplore`, the panel and the component prompt
     - Files: `src/modules/ui/explore/useExplore.ts`, `ExplorePanel.tsx`, `ComponentPrompt.tsx`, `src/modules/ui/camera-screen/ModeSwitcher.tsx` (adds Explore), tests.
     - `identifyMachine` then `locateComponents` for the shown `OcrResult`. Items are mapped to View space through geometry on every render, with no coordinate math in `ui`. Taps go through `hitTest` against the shown frame's items only. The explanation shows within one tap, labelled as an authored explanation of TM-01. A newer still discards the match and the open explanation. `CMP_NOT_VISIBLE` shows "Point the camera at the [component]", and no highlight is drawn for a component that is not located. The reducer and screen hold no rule that decides verification.
     - Tests with fake services: verified tap, unverified tap, ambiguous tap, replaced frame, prompt text.

@@ -50,9 +50,9 @@ export type OverlayItem = {
 function markerKeyFor(state: LabelState): StringKey {
   switch (state.kind) {
     case 'pending':
-      return 'label.pending';
+      return state.reason === 'downloading-language-data' ? 'tr.downloading' : 'label.pending';
     case 'translated':
-      return 'label.translated';
+      return state.unchanged ? 'label.unchanged' : 'label.translated';
     case 'failed':
       return ERROR_UI[state.code].messageKey;
     case 'unsupported':

@@ -1,28 +1,51 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { t } from '../../locale';
+import type { StringKey } from '../../locale';
 import { MIN_TOUCH_TARGET_DP } from '../overlay/styles';
 
-/** Spec A has only Translate (R18.3, CM-4). It is disabled when the OCR engine is unavailable (R8.8). */
-export function ModeSwitcher({ enabled }: { enabled: boolean }) {
+export type Mode = 'translate' | 'explore';
+
+const TABS: readonly { readonly mode: Mode; readonly labelKey: StringKey }[] = [
+  { mode: 'translate', labelKey: 'mode.translate' },
+  { mode: 'explore', labelKey: 'mode.explore' },
+];
+
+/** Translate and Explore. Guide is added by spec 03. Both are disabled when the OCR engine is unavailable (R8.8). */
+export function ModeSwitcher({ enabled, mode, onChange }: { enabled: boolean; mode: Mode; onChange: (mode: Mode) => void }) {
   return (
     <View style={styles.row} accessibilityRole="tablist">
-      <Pressable
-        accessibilityRole="tab"
-        accessibilityLabel={t('mode.translate')}
-        accessibilityState={{ selected: true, disabled: !enabled }}
-        disabled={!enabled}
-        style={[styles.tab, !enabled && styles.disabled]}
-      >
-        <Text style={styles.text}>● {t('mode.translate')}</Text>
-      </Pressable>
+      {TABS.map((tab) => {
+        const selected = tab.mode === mode;
+        return (
+          <Pressable
+            key={tab.mode}
+            accessibilityRole="tab"
+            accessibilityLabel={t(tab.labelKey)}
+            accessibilityState={{ selected, disabled: !enabled }}
+            disabled={!enabled}
+            onPress={() => {
+              if (selected) return;
+              onChange(tab.mode);
+              AccessibilityInfo.announceForAccessibility(t(tab.labelKey));
+            }}
+            style={[styles.tab, selected && styles.selected, !enabled && styles.disabled]}
+          >
+            <Text style={styles.text}>
+              {selected ? '\u2713 ' : ''}
+              {t(tab.labelKey)}
+            </Text>
+          </Pressable>
+        );
+      })}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', justifyContent: 'center' },
+  row: { flexDirection: 'row', justifyContent: 'center', gap: 8 },
   tab: { minHeight: MIN_TOUCH_TARGET_DP, paddingHorizontal: 20, justifyContent: 'center', borderRadius: 24, backgroundColor: '#1C2530' },
+  selected: { backgroundColor: '#1565C0' },
   disabled: { opacity: 0.6 },
   text: { color: '#FFFFFF', fontSize: 15, fontWeight: '600', lineHeight: 22 },
 });

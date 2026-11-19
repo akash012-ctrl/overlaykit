@@ -3,12 +3,16 @@ import { AppState, PixelRatio } from 'react-native';
 
 import type { CameraState, PreviewHandle } from '../../capture';
 import type { ControlBars, Insets } from '../../geometry';
-import { getTargetLocale } from '../../locale';
+import { useLocaleSettings } from '../../locale';
 import type { OcrResult, Size } from '../../shared';
 import type { OverlayLayout } from '../overlay/build-items';
 import { buildOverlayItems } from '../overlay/build-items';
-import { EMPTY_FREEZE_OVERLAY, freezeOverlayReducer, translationRequestFor } from '../overlay/freeze-overlay';
+import { useExplore } from '../explore/useExplore';
+import { EMPTY_FREEZE_OVERLAY, freezeOverlayReducer } from '../overlay/freeze-overlay';
 import type { CameraServices } from '../services';
+import { withLabels } from '../translate/to-label-state';
+import { useTranslation } from '../translate/useTranslation';
+import type { Mode } from './ModeSwitcher';
 import { INITIAL_SCREEN_MODEL, previewActive, screenReducer, toScreenView } from './screen-model';
 
 const NO_SIZE: Size = { width: 0, height: 0 };
@@ -27,6 +31,7 @@ export function useCameraScreen(services: CameraServices, insets: Insets) {
   const [bars, setBars] = useState<ControlBars>(NO_BARS);
   const [fontScale, setFontScale] = useState(() => PixelRatio.getFontScale());
   const [lastResult, setLastResult] = useState<OcrResult | null>(null);
+  const [mode, setMode] = useState<Mode>('translate');
   const previewRef = useRef<PreviewHandle | null>(null);
   // Latest state for async handlers. Synced after each commit, never during render.
   const modelRef = useRef(model);
@@ -36,7 +41,9 @@ export function useCameraScreen(services: CameraServices, insets: Insets) {
     overlayRef.current = overlay;
   }, [model, overlay]);
 
-  const { capture, ocr, translation } = services;
+  const { capture, ocr, translation, machines } = services;
+  const settings = useLocaleSettings();
+  const { labels, retry } = useTranslation(lastResult, translation);
 
   const refreshPermission = useCallback(async () => {
     let state = await capture.readPermission();
@@ -102,16 +109,7 @@ export function useCameraScreen(services: CameraServices, insets: Insets) {
     if (!ocrResult.ok) return;
     setLastResult(ocrResult.value);
     dispatchOverlay({ type: 'result-applied', result: ocrResult.value });
-
-    const request = translationRequestFor(ocrResult.value);
-    if (request.texts.length === 0) return;
-    const outcomes = await translation.translate({ texts: request.texts, source: 'auto', target: getTargetLocale() });
-    dispatchOverlay({
-      type: 'translation-settled',
-      frameId: frame.frameId,
-      outcomes: request.ids.map((id, i) => ({ id, outcome: outcomes[i] ?? { ok: false, error: 'TR_NOT_CONFIGURED' } })),
-    });
-  }, [capture, ocr, translation]);
+  }, [capture, ocr]);
 
   const runAction = useCallback(
     (kind: string) => {
@@ -137,7 +135,19 @@ export function useCameraScreen(services: CameraServices, insets: Insets) {
   );
 
   const layout: OverlayLayout = useMemo(() => ({ view: viewSize, insets, bars, fontScale }), [viewSize, insets, bars, fontScale]);
-  const built = useMemo(() => buildOverlayItems(overlay, layout), [overlay, layout]);
+  const shownOverlay = useMemo(() => withLabels(overlay, labels), [overlay, labels]);
+  const built = useMemo(() => buildOverlayItems(shownOverlay, layout), [shownOverlay, layout]);
+  const items = useMemo(() => (built.ok ? built.value.items : []), [built]);
+  const explore = useExplore({
+    active: mode === 'explore',
+    machines,
+    result: lastResult,
+    shown: overlay.shown,
+    viewSize,
+    items,
+    labels,
+    uiLocale: settings.uiLocale,
+  });
 
   const onTopBarHeight = useCallback((top: number) => setBars((b) => (b.top === top ? b : { ...b, top })), []);
   const onBottomBarHeight = useCallback((bottom: number) => setBars((b) => (b.bottom === bottom ? b : { ...b, bottom })), []);
@@ -149,8 +159,11 @@ export function useCameraScreen(services: CameraServices, insets: Insets) {
       shownFrame: overlay.shown,
       lastResult,
       layout,
-      items: built.ok ? built.value.items : [],
+      items,
       region: built.ok ? built.value.region : null,
+      mode,
+      explore,
+      privacy: { loaded: settings.loaded, acknowledged: settings.privacyAcknowledged },
     },
     previewRef,
     actions: {
@@ -161,6 +174,9 @@ export function useCameraScreen(services: CameraServices, insets: Insets) {
       takePhoto,
       dismissStill,
       runAction,
+      setMode,
+      retryLabel: (id: string) => retry([id]),
+      acknowledgePrivacy: settings.acknowledgePrivacy,
     },
   };
 }
