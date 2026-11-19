@@ -37,7 +37,11 @@ const ALLOWED = {
  * (task 10.2), in the same commit as each package. Example entry:
  * { module: 'capture', file: 'src/modules/capture/camera-adapter.ts', packages: ['<camera package>'] }
  */
-const VENDOR_OWNERS = [];
+const VENDOR_OWNERS = [
+  { module: 'capture', file: 'src/modules/capture/camera-adapter.ts', packages: ['expo-camera'] },
+  { module: 'capture', file: 'src/modules/capture/CameraPreview.tsx', packages: ['expo-camera'] },
+  { module: 'capture', file: 'src/modules/capture/file-system-port.ts', packages: ['expo-file-system'] },
+];
 
 /**
  * Modules that make no network calls (R17.9, R22.1, visual-computer-vision

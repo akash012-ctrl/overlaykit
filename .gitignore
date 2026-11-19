@@ -45,3 +45,7 @@ example
 # test output: e2e runs (reports, traces, screenshots, replay cache) and coverage
 /.e2e/
 /coverage/
+
+# native build output of local Expo modules
+modules/*/android/build/
+modules/*/android/.cxx/

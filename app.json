@@ -29,6 +29,13 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 120
         }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "OverlayKit uses the camera to read text on signs and machines.",
+          "recordAudioAndroid": false
+        }
       ]
     ],
     "experiments": {

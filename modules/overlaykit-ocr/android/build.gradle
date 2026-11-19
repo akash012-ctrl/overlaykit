@@ -1,0 +1,21 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'com.overlaykit.ocr'
+version = '0.1.0'
+
+android {
+  namespace "com.overlaykit.ocr"
+  defaultConfig {
+    versionCode 1
+    versionName "0.1.0"
+  }
+}
+
+dependencies {
+  // Bundled models: they ship inside the APK, so no download at runtime (R22.4).
+  implementation 'com.google.mlkit:text-recognition:16.0.1'
+  implementation 'com.google.mlkit:text-recognition-devanagari:16.0.1'
+}

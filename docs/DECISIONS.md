@@ -386,3 +386,42 @@ Sarvam limits input to 1,000 characters per request for `mayura:v1` and 2,000 fo
 - https://github.com/dubzzz/fast-check README: lists Jest integration. The 4.x line needs Node 12.17 or later and ES2020; this host runs Node 26.13.1.
 **Decision:** `npm install -D --save-exact fast-check@4.10.3`. It is dev-only and never bundled into the app, so `npx expo install` doesn't cover it. `npx expo install --check` → "Dependencies are up to date" afterwards.
 **Consequences:** Property tests start with `// Feature: camera-ocr-geometry, Property <n>: <title>` and run at least 100 iterations each. Shared generators live in `test-support/arbitraries.ts`, which app code may not import (lint rule).
+
+## D-036 G1a choice: expo-camera, expo-file-system, and a local Kotlin OCR module around bundled ML Kit v2
+
+**Status:** Accepted (agent, under the owner's 2026-11-19 approval "run ocr and all if needed"). Device criteria C1, C2, C5, C6, C9 and C11 are pending until measured on the reference phone.
+**Context:** Spec 01 task 10.1 (G1a spike plan, criteria C1 to C11). Sources checked on 2026-11-19:
+- **`expo-camera` 58.0.14** (MIT, SDK package):
+  - https://docs.expo.dev/versions/latest/sdk/camera/ says `takePictureAsync` photos are "rotated to match device's orientation (if `options.skipProcessing` flag is not enabled)", which covers C5.
+  - The Android preview uses `FILL` unless `ratio` is set, which covers C6.
+  - It has no frame processors, so no Live mode.
+- **`react-native-vision-camera` 5.2.4** (MIT): needs `react-native-nitro-modules` and `react-native-nitro-image`. It is only worth it for the optional Live mode (G1c).
+- **`@infinitered/react-native-mlkit-text-recognition` 5.0.1** (MIT, Expo module), inspected with `npm pack`:
+  - Uses `TextRecognizerOptions.DEFAULT_OPTIONS`, so Latin only.
+  - Returns frames but no corner points and no confidence, which fails C3 and C4.
+- **`@react-native-ml-kit/text-recognition` 2.0.0** (MIT, last published September 2025):
+  - A bridge module (`@ReactMethod`), which runs through the New Architecture interop layer.
+  - Returns corner points and the recognized language, and takes a script option.
+  - Returns no confidence, which fails part of C3.
+  - Bundles the Latin, Chinese, Devanagari, Japanese and Korean models.
+- **ML Kit itself:**
+  - https://developers.google.com/ml-kit/release-notes lists bundled `com.google.mlkit:text-recognition` and `text-recognition-devanagari` 16.0.1.
+  - https://developers.google.com/android/reference/com/google/mlkit/vision/text/Text.Line documents `getCornerPoints()` (clockwise from top-left), `getConfidence()` (0 to 1), `getAngle()` and `getRecognizedLanguage()`.
+  - The bundled models ship inside the APK, so no model download is needed (R22.4, C2).
+**Decision:**
+- **Camera:** `expo-camera`, installed with `npx expo install`. The config plugin sets `recordAudioAndroid: false`, so no microphone permission is added (Q9).
+- **Temporary stills:** `expo-file-system`, installed with `npx expo install`.
+- **OCR:** a local Expo Module in Kotlin at `modules/overlaykit-ocr`, Android only (D-003). It runs the bundled Latin and Devanagari recognizers and returns per line: text, the four corner points, confidence, angle and recognized language. It maps the corner order to the Quad order in TypeScript.
+- **No `expo-dev-client`:** `npx expo run:android` already builds a debug app with every native module compiled in, which loads JS from Metro (B1 passed that way). D-004 is met without the dev launcher. It can be added later if a need appears.
+- **No image-manipulation package:** expo-camera already rotates the pixels. C5 is checked on the phone with an asymmetric card.
+**Consequences:**
+- Live mode (G1c) needs a later decision on a frame-processor camera.
+- If the two-recognizer merge costs too much against AT-G1-05, the module can run Devanagari only when Latin finds few lines; any such change gets a new entry.
+- The lint `VENDOR_OWNERS` list gets `expo-camera` (in `capture/camera-adapter.ts`) and `expo-file-system` (in `capture/file-system-port.ts`). The OCR module's JS wrapper is imported only by `ocr/adapters/mlkit.ts`.
+
+## D-037 Provisional OCR thresholds so the camera screen can run (OQ-5 still open)
+
+**Status:** Accepted (agent), provisional. Task 15.1 replaces the values with measured ones.
+**Context:** `src/modules/ocr/thresholds.ts` needs values for the low-quality and unsupported-script rules before any snapshot exists. Design OQ-5 says they must be tuned on recorded TM-01 L3 and CARD-KN snapshots.
+**Decision:** Starting values: minimum 3 characters, mean confidence 0.5, median line height 12 px, garble check below confidence 0.6, symbol fraction 0.5, minority-script fraction 0.3. They are marked PROVISIONAL in code.
+**Consequences:** No G1 measurement may use them. Task 15.1 must record the measured values in a new entry and update the pinned tests. No gate threshold changes.
