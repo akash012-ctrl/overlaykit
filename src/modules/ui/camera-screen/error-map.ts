@@ -75,4 +75,14 @@ export const ERROR_UI: { readonly [C in MappedErrorCode]: ErrorUi } = {
     messageKey: 'label.notAvailable',
     action: null,
   },
+  // Label failures from spec 02 (design.md, Error Handling). Each shows the recognized
+  // text with a failed marker. Retry and Settings actions belong to the spec 02 label UI;
+  // this table only names the marker text. shortcut: uses the tr.* strings until spec 02 adds label.*.
+  TR_OFFLINE: { surface: { kind: 'label', labelState: 'failed' }, messageKey: 'tr.offline', action: null },
+  TR_TIMEOUT: { surface: { kind: 'label', labelState: 'failed' }, messageKey: 'tr.timeout', action: null },
+  TR_RATE_LIMITED: { surface: { kind: 'label', labelState: 'failed' }, messageKey: 'tr.rateLimited', action: null },
+  TR_PROVIDER_ERROR: { surface: { kind: 'label', labelState: 'failed' }, messageKey: 'tr.providerError', action: null },
+  TR_UNSUPPORTED_PAIR: { surface: { kind: 'label', labelState: 'failed' }, messageKey: 'tr.unsupportedPair', action: null },
+  TR_KEY_INVALID: { surface: { kind: 'label', labelState: 'failed' }, messageKey: 'tr.keyInvalid', action: null },
+  TR_NO_CREDITS: { surface: { kind: 'label', labelState: 'failed' }, messageKey: 'tr.noCredits', action: null },
 };
