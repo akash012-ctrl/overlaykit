@@ -6,7 +6,8 @@ import type { Point } from '../../shared';
 import type { ViewComponent } from '../explore/component-items';
 import { TR_UI } from '../translate/error-map';
 import { t } from '../../locale';
-import { colors } from '../theme';
+import { GlideView } from '../motion/motion';
+import { colors, fontSize, lineHeight as lineHeights, radius, spacing } from '../theme';
 import { TwoToneRing } from './TwoToneRing';
 import type { OverlayItem } from './build-items';
 import { isSingleRow } from './build-items';
@@ -48,15 +49,55 @@ export function OverlayLayer({
   region,
   explore,
   onRetry,
+  live = false,
 }: {
   items: readonly OverlayItem[];
   region: Rect | null;
+  /** Live frames show lens chips only (D-054); a held still shows every label with its state. */
+  live?: boolean;
   explore?: ExploreLayer;
   onRetry?: (id: string) => void;
 }) {
   const [open, setOpen] = useState<OverlayItem | null>(null);
   if (!region) return null;
   const lineHeight = LABEL_FONT_SIZE_SP * LABEL_LINE_HEIGHT_FACTOR;
+
+  if (live) {
+    return (
+      <View pointerEvents="box-none" style={[styles.clip, { left: region.x, top: region.y, width: region.width, height: region.height }]}>
+        {explore ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('mode.explore')}
+            onPress={(e) => explore.onTap({ x: e.nativeEvent.locationX + region.x, y: e.nativeEvent.locationY + region.y })}
+            style={StyleSheet.absoluteFill}
+          />
+        ) : null}
+        <View pointerEvents={explore ? 'none' : 'box-none'} style={StyleSheet.absoluteFill}>
+          {lensChips(items, region).map((chip) => (
+            <GlideView
+              key={chip.key}
+              pointerEvents="box-none"
+              style={[styles.lensHost, { left: chip.left, top: chip.top, width: chip.width, height: chip.height, transform: [{ rotate: `${chip.angleRad}rad` }] }]}
+            >
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={labelTexts(chip.item).a11y}
+                hitSlop={{ top: chip.slop, bottom: chip.slop }}
+                onPress={() => setOpen(chip.item)}
+                style={styles.lens}
+              >
+                <Text numberOfLines={1} ellipsizeMode="tail" style={styles.lensText}>
+                  {chip.text}
+                </Text>
+              </Pressable>
+            </GlideView>
+          ))}
+        </View>
+        <LabelDetailSheet item={open} onClose={() => setOpen(null)} onRetry={onRetry} />
+      </View>
+    );
+  }
 
   return (
     <View
@@ -216,6 +257,38 @@ export function OverlayLayer({
   );
 }
 
+/** Chip height on the live image: one text row, never smaller than the line it covers. */
+const LENS_FONT_SP = 15;
+const LENS_ROW = Math.round(LENS_FONT_SP * 1.4);
+
+/**
+ * Lens chips for a live frame: one per translated line, drawn over that line and sized to the translation.
+ * Keyed by the translated text (and its repeat count), so a chip glides to the line's new place on the next frame.
+ */
+export function lensChips(items: readonly OverlayItem[], region: Rect) {
+  const seen = new Map<string, number>();
+  return items.flatMap((item) => {
+    if (!isSingleRow(item.state)) return [];
+    const text = item.state.text;
+    const n = (seen.get(text) ?? 0) + 1;
+    seen.set(text, n);
+    const { centre, width, height, angleRad } = item.outline;
+    const w = Math.min(region.width, Math.max(width, text.length * LENS_FONT_SP * 0.56 + 2 * spacing.md));
+    const h = Math.max(height, LENS_ROW + 2 * spacing.xs);
+    return [{
+      key: `${text}#${n}`,
+      item,
+      text,
+      left: centre.x - region.x - w / 2,
+      top: centre.y - region.y - h / 2,
+      width: w,
+      height: h,
+      angleRad,
+      slop: Math.max(0, (MIN_TOUCH_TARGET_DP - h) / 2),
+    }];
+  });
+}
+
 /** Full text and state of one label, with wrapping and no fixed height (R19.4). */
 export function LabelDetailSheet({ item, onClose, onRetry }: { item: OverlayItem | null; onClose: () => void; onRetry?: (id: string) => void }) {
   if (!item) return null;
@@ -224,6 +297,7 @@ export function LabelDetailSheet({ item, onClose, onRetry }: { item: OverlayItem
     <Modal transparent animationType="none" visible onRequestClose={onClose}>
       <View style={styles.sheetBackdrop}>
         <View style={styles.sheet}>
+          <View style={styles.handle} importantForAccessibility="no" />
           <Text style={styles.sheetText}>{text}</Text>
           <Text style={styles.sheetMarker}>{marker}</Text>
           {item.content.lowQuality ? <Text style={styles.sheetMarker}>{t('ocr.lowQuality.marker')}</Text> : null}
@@ -262,10 +336,22 @@ const styles = StyleSheet.create({
   labelText: { fontSize: LABEL_FONT_SIZE_SP, fontWeight: '600' },
   translation: { fontWeight: '700' },
   inPlace: { paddingVertical: 0, borderWidth: 1, borderColor: colors.ringLight },
+  lensHost: { position: 'absolute' },
+  lens: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.sm,
+    backgroundColor: colors.lens,
+    borderWidth: 1,
+    borderColor: colors.outlineStrong,
+  },
+  lensText: { color: colors.text, fontSize: LENS_FONT_SP, lineHeight: LENS_ROW, fontWeight: '600', textAlign: 'center' },
   sheetBackdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.6)' },
-  sheet: { backgroundColor: colors.surface, padding: 20, gap: 12 },
-  sheetText: { color: colors.text, fontSize: 20, lineHeight: 32 },
-  sheetMarker: { color: colors.textSoft, fontSize: 16, lineHeight: 26 },
-  sheetButton: { minHeight: MIN_TOUCH_TARGET_DP, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.neutral, borderRadius: 8 },
-  sheetButtonText: { color: colors.text, fontSize: 16, fontWeight: '600' },
+  sheet: { backgroundColor: colors.surface, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: spacing.xl, gap: spacing.md },
+  handle: { alignSelf: 'center', width: 32, height: 4, borderRadius: 2, backgroundColor: colors.outlineStrong },
+  sheetText: { color: colors.text, fontSize: fontSize.title + 2, lineHeight: 32, fontWeight: '600' },
+  sheetMarker: { color: colors.textMuted, fontSize: fontSize.body, lineHeight: lineHeights.body },
+  sheetButton: { minHeight: MIN_TOUCH_TARGET_DP, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surfaceRaised, borderRadius: radius.pill, borderWidth: 1, borderColor: colors.outline },
+  sheetButtonText: { color: colors.text, fontSize: fontSize.body, fontWeight: '600' },
 });

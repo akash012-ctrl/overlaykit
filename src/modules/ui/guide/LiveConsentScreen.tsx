@@ -1,7 +1,8 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { t } from '../../locale';
-import { GuideButton, Message, Note, Panel, guideStyles } from './parts';
+import { Button, Card, Message, Note, Title, rowStyles } from '../parts';
+import { spacing } from '../theme';
 
 /**
  * The Gemini Live notice (R16.3). Plain words, in the UI language. Nothing is sent from here.
@@ -9,12 +10,10 @@ import { GuideButton, Message, Note, Panel, guideStyles } from './parts';
  */
 export function LiveConsentScreen({ onAccept, onDecline }: { onAccept: () => void; onDecline: () => void }) {
   return (
-    <Panel>
+    <Card>
       <ScrollView style={styles.scroll}>
         <View style={styles.body}>
-          <Text accessibilityRole="header" style={styles.title}>
-            {t('live.consent.title')}
-          </Text>
+          <Title>{t('live.consent.title')}</Title>
           <Message>{t('live.consent.who')}</Message>
           <Message>{t('live.consent.sent')}</Message>
           <Message>{t('live.consent.back')}</Message>
@@ -24,16 +23,15 @@ export function LiveConsentScreen({ onAccept, onDecline }: { onAccept: () => voi
           <Note>{t('live.consent.off')}</Note>
         </View>
       </ScrollView>
-      <View style={guideStyles.row}>
-        <GuideButton primary label={t('live.consent.accept')} onPress={onAccept} />
-        <GuideButton label={t('live.consent.decline')} onPress={onDecline} />
+      <View style={rowStyles.row}>
+        <Button variant="primary" label={t('live.consent.accept')} onPress={onAccept} />
+        <Button label={t('live.consent.decline')} onPress={onDecline} />
       </View>
-    </Panel>
+    </Card>
   );
 }
 
 const styles = StyleSheet.create({
   scroll: { maxHeight: 420 },
-  body: { gap: 10 },
-  title: { color: '#FFFFFF', fontSize: 20, fontWeight: '700', lineHeight: 30 },
+  body: { gap: spacing.md },
 });

@@ -1,3 +1,5 @@
+import { colors } from '../theme';
+
 /** WCAG 2.x relative luminance and contrast ratio. Pure. Colours are [r, g, b] 0..255. */
 export type Rgb = readonly [number, number, number];
 
@@ -22,20 +24,35 @@ export function over(fg: Rgb, alpha: number, backdrop: Rgb): Rgb {
 
 const WHITE: Rgb = [255, 255, 255];
 
-/** Text/background pairs used by the camera UI. Bars are checked over a white worst case (bright light, L1). */
+/** A token as RGB. Hex as is; rgba() composited over `backdrop` (white by default: bright light, L1). */
+export function parseColor(color: string, backdrop: Rgb = WHITE): Rgb {
+  const hex = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(color);
+  if (hex) return [parseInt(hex[1] as string, 16), parseInt(hex[2] as string, 16), parseInt(hex[3] as string, 16)];
+  const rgba = /^rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)$/.exec(color);
+  if (!rgba) throw new Error(`Unsupported colour ${color}`);
+  return over([Number(rgba[1]), Number(rgba[2]), Number(rgba[3])], Number(rgba[4]), backdrop);
+}
+
+const c = (token: keyof typeof colors): Rgb => parseColor(colors[token]);
+
+/** Text and background pairs the UI uses, read from the tokens. Translucent backings are checked over white. */
 export const COLOR_PAIRS: readonly { readonly name: string; readonly text: Rgb; readonly background: Rgb }[] = [
-  { name: 'bar text on top and bottom bar over white', text: WHITE, background: over([11, 15, 20], 0.88, WHITE) },
-  { name: 'guide panel text over white', text: WHITE, background: over([11, 15, 20], 0.92, WHITE) },
-  { name: 'guide note on panel over white', text: [207, 216, 220], background: over([11, 15, 20], 0.92, WHITE) },
-  { name: 'button text on primary blue', text: WHITE, background: [21, 101, 192] },
-  { name: 'button text on secondary grey', text: WHITE, background: [55, 71, 79] },
-  { name: 'selected mode tab', text: WHITE, background: [21, 101, 192] },
-  { name: 'mode tab', text: WHITE, background: [28, 37, 48] },
-  { name: 'settings button text', text: WHITE, background: [28, 37, 48] },
-  { name: 'privacy accept text on blue', text: WHITE, background: [47, 111, 235] },
-  { name: 'destructive Stop text on guide panel over white', text: [255, 180, 171], background: over([11, 15, 20], 0.92, WHITE) },
-  { name: 'Live banner text on red', text: WHITE, background: [127, 29, 29] },
-  { name: 'settings hint on dark', text: [184, 194, 207], background: [11, 15, 20] },
+  { name: 'text on primary', text: c('text'), background: c('primary') },
+  { name: 'text on surfaceRaised', text: c('text'), background: c('surfaceRaised') },
+  { name: 'text on surfaceHigh', text: c('text'), background: c('surfaceHigh') },
+  { name: 'text on primaryContainer', text: c('text'), background: c('primaryContainer') },
+  { name: 'text on dangerContainer', text: c('text'), background: c('dangerContainer') },
+  { name: 'text on surface', text: c('text'), background: c('surface') },
+  { name: 'text on scrim over white', text: c('text'), background: c('scrim') },
+  { name: 'text on panel over white', text: c('text'), background: c('panel') },
+  { name: 'translation on lens chip over white', text: c('text'), background: c('lens') },
+  { name: 'textMuted on surface', text: c('textMuted'), background: c('surface') },
+  { name: 'textMuted on panel over white', text: c('textMuted'), background: c('panel') },
+  { name: 'accentText on surface', text: c('accentText'), background: c('surface') },
+  { name: 'accentText on surfaceRaised', text: c('accentText'), background: c('surfaceRaised') },
+  { name: 'dangerText on panel over white', text: c('dangerText'), background: c('panel') },
+  { name: 'dangerText on dangerContainer', text: c('dangerText'), background: c('dangerContainer') },
+  { name: 'target label text on ringDark', text: c('target'), background: c('ringDark') },
 ];
 
 export const MIN_TEXT_CONTRAST = 4.5;

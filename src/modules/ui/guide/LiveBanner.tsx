@@ -1,9 +1,10 @@
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { t } from '../../locale';
+import { Icon } from '../icons/Icon';
+import { Button } from '../parts';
+import { colors, fontSize, lineHeight, radius, spacing } from '../theme';
 import type { LiveBannerState } from './live-view-model';
-import { colors } from '../theme';
-import { GuideButton } from './parts';
 
 /**
  * Shown for as long as a Live session is connecting or open, and not otherwise (R16.5).
@@ -13,9 +14,13 @@ export function LiveBanner({ session, onStop }: { session: LiveBannerState; onSt
   if (session === 'off') return null;
   return (
     <View style={styles.bar} accessibilityLiveRegion="polite">
-      {session === 'connecting' ? <ActivityIndicator color={colors.text} importantForAccessibility="no-hide-descendants" /> : null}
+      {session === 'connecting' ? (
+        <ActivityIndicator color={colors.text} importantForAccessibility="no-hide-descendants" />
+      ) : (
+        <Icon name="live" color={colors.text} />
+      )}
       <Text style={styles.text}>{t(session === 'connecting' ? 'live.banner.connecting' : 'live.banner')}</Text>
-      <GuideButton primary label={t('live.stop')} onPress={onStop} />
+      <Button icon="stop" label={t('live.stop')} onPress={onStop} />
     </View>
   );
 }
@@ -25,11 +30,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: colors.danger,
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.outline,
+    backgroundColor: colors.dangerContainer,
   },
-  text: { flexShrink: 1, color: colors.text, fontSize: 16, fontWeight: '700', lineHeight: 26 },
+  text: { flex: 1, color: colors.text, fontSize: fontSize.body, fontWeight: '700', lineHeight: lineHeight.body },
 });

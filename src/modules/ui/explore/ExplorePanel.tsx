@@ -1,9 +1,10 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { t } from '../../locale';
 import { A11yButton } from '../a11y/A11yButton';
-import { MIN_TOUCH_TARGET_DP } from '../overlay/styles';
-import { colors } from '../theme';
+import { FadeInView } from '../motion/motion';
+import { Button, Message, Note, Title } from '../parts';
+import { colors, radius, size, spacing } from '../theme';
 import { TR_UI } from '../translate/error-map';
 import type { LabelContent } from '../translate/label-model';
 import { ComponentPrompt } from './ComponentPrompt';
@@ -31,70 +32,70 @@ function labelLines(content: LabelContent | null): readonly string[] {
 }
 
 /**
- * Explore answers in a bottom panel, within one tap and with no navigation (R22.5). An authored
- * explanation is labelled as written by the OverlayKit team. Anything else shows the label's own
- * translation and state, and says the app does not explain what a part does (R23).
+ * Explore answers in a card above the mode switcher, within one tap and with no navigation (R22.5). An authored
+ * explanation is labelled as written by the OverlayKit team. Anything else shows the label's own translation and
+ * state, and says the app does not explain what a part does (R23).
  */
 export function ExplorePanel({ view, list, prompt, onRequest, onClose }: Props) {
   const showsSomething = view.kind !== 'nothing' || prompt !== null || list.length > 0;
   if (!showsSomething) return null;
+  const lines = view.kind === 'label-translation' ? labelLines(view.content) : [];
+  const heading = view.kind === 'explanation' ? view.name : (lines[0] ?? null);
   return (
-    <View style={styles.panel}>
+    <FadeInView style={styles.card}>
+      {heading !== null ? (
+        <View style={styles.header}>
+          <View style={styles.flex}>
+            <Title>{heading}</Title>
+          </View>
+          {view.kind !== 'nothing' || prompt ? (
+            <A11yButton label={t('action.closeSheet')} onPress={onClose} icon="close" iconOnly style={styles.close} />
+          ) : null}
+        </View>
+      ) : null}
       <ScrollView contentContainerStyle={styles.content}>
         {view.kind === 'explanation' ? (
           <>
-            <Text accessibilityRole="header" style={styles.title}>
-              {view.name}
-            </Text>
-            <Text style={styles.body}>{view.text}</Text>
-            <Text style={styles.note}>{t('explore.authored')}</Text>
+            <Message>{view.text}</Message>
+            <Note>{t('explore.authored')}</Note>
           </>
         ) : null}
-        {view.kind === 'explanation-failed' ? <Text style={styles.body}>{t('explore.explanationMissing')}</Text> : null}
+        {view.kind === 'explanation-failed' ? <Message>{t('explore.explanationMissing')}</Message> : null}
         {view.kind === 'label-translation' ? (
           <>
-            {labelLines(view.content).map((line, i) => (
-              <Text key={i} style={i === 0 ? styles.body : styles.note}>
-                {line}
-              </Text>
+            {lines.slice(1).map((line, i) => (
+              <Note key={i}>{line}</Note>
             ))}
-            {view.note ? <Text style={styles.note}>{t('explore.translationOnly')}</Text> : null}
-            {view.hint ? <Text style={styles.note}>{t('explore.moveToShow')}</Text> : null}
+            {view.note ? <Note>{t('explore.translationOnly')}</Note> : null}
+            {view.hint ? <Note>{t('explore.moveToShow')}</Note> : null}
           </>
         ) : null}
         {prompt ? <ComponentPrompt name={prompt.name} /> : null}
         {list.length > 0 ? (
           <View style={styles.list}>
-            <Text accessibilityRole="header" style={styles.note}>
-              {t('explore.components')}
-            </Text>
+            <Note>{t('explore.components')}</Note>
             {list.map((c) => (
-              <A11yButton key={c.id} label={c.name} onPress={() => onRequest(c.id)} style={styles.button} textStyle={styles.buttonText} />
+              <Button key={c.id} icon="chevron" label={c.name} onPress={() => onRequest(c.id)} stretch />
             ))}
           </View>
         ) : null}
-        {view.kind !== 'nothing' || prompt ? (
-          <A11yButton label={t('action.closeSheet')} onPress={onClose} style={styles.button} textStyle={styles.buttonText} />
-        ) : null}
       </ScrollView>
-    </View>
+    </FadeInView>
   );
 }
 
 const styles = StyleSheet.create({
-  panel: { backgroundColor: colors.surface, borderRadius: 12, maxHeight: 280 },
-  content: { padding: 16, gap: 8 },
-  title: { color: colors.text, fontSize: 18, fontWeight: '700', lineHeight: 26 },
-  body: { color: colors.text, fontSize: 16, lineHeight: 24 },
-  note: { color: colors.textSoft, fontSize: 14, lineHeight: 22 },
-  list: { gap: 8 },
-  button: {
-    minHeight: MIN_TOUCH_TARGET_DP,
-    minWidth: MIN_TOUCH_TARGET_DP,
-    paddingHorizontal: 16,
-    justifyContent: 'center',
-    borderRadius: 8,
-    backgroundColor: colors.neutral,
+  card: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.outline,
+    maxHeight: 280,
+    paddingTop: spacing.sm,
   },
-  buttonText: { color: colors.text, fontSize: 16, fontWeight: '600', lineHeight: 22 },
+  header: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingLeft: spacing.lg, paddingRight: spacing.xs },
+  flex: { flex: 1 },
+  close: { width: size.touch, height: size.touch, borderRadius: size.touch / 2 },
+  content: { paddingHorizontal: spacing.lg, paddingBottom: spacing.lg, gap: spacing.sm },
+  list: { gap: spacing.sm },
 });

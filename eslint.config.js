@@ -45,6 +45,8 @@ const VENDOR_OWNERS = [
   { module: 'speech', file: 'src/modules/speech/adapters/expo-speech-engine.ts', packages: ['expo-speech'] },
   { module: 'speech', file: 'src/modules/speech/adapters/android-recognizer.ts', packages: ['expo-speech-recognition'] },
   { module: 'planner', file: 'src/modules/planner/live-key-store.ts', packages: ['expo-secure-store'] },
+  { module: 'ui', file: 'src/modules/ui/icons/Icon.tsx', packages: ['expo-symbols'] },
+  { module: 'ui', file: 'src/modules/ui/motion/motion.tsx', packages: ['react-native-reanimated'] },
 ];
 
 /**

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { t } from '../../locale';
 import { CannotPlanView } from './CannotPlanView';
@@ -10,7 +10,10 @@ import { HighlightLayer } from './HighlightLayer';
 import { LiveBanner } from './LiveBanner';
 import { LiveStartButton } from './LiveStartButton';
 import { ModelGate } from './ModelGate';
-import { GuideButton, Message, Note, Panel } from './parts';
+import { Icon } from '../icons/Icon';
+import { FadeInView } from '../motion/motion';
+import { Button, Message, Panel } from '../parts';
+import { colors, fontSize, lineHeight, radius, spacing } from '../theme';
 import { PlanningView } from './PlanningView';
 import { SpeakControl } from './SpeakControl';
 import { CompletionView, PausedView } from './StatusViews';
@@ -57,7 +60,8 @@ export function GuideScreen({
         <LiveBanner session={liveInfo.banner} onStop={actions.stop} />
         {liveInfo.banner === 'open' ? (
           <Panel>
-            <GuideButton
+            <Button
+              icon="mic"
               label={liveInfo.micOn ? t('live.mic.off') : t('live.mic.toggle')}
               onPress={() => liveInfo.setMic(!liveInfo.micOn)}
             />
@@ -65,10 +69,12 @@ export function GuideScreen({
           </Panel>
         ) : null}
         {showsPlannerLine ? (
-          <Panel>
-            <Note>{t('guide.planner.line', { name: t(g.plannerNameKey) })}</Note>
-          </Panel>
+          <View style={styles.plannerPill}>
+            <Icon name="ai" size={16} color={colors.accentText} />
+            <Text style={styles.plannerText}>{t('guide.planner.line', { name: t(g.plannerNameKey) })}</Text>
+          </View>
         ) : null}
+        <FadeInView key={view.kind} style={styles.state}>
         {view.kind === 'model-gate' ? (
           <ModelGate planner={view.planner} models={g.models} onTranslate={toTranslate} onExplore={toExplore} />
         ) : null}
@@ -89,8 +95,6 @@ export function GuideScreen({
         {view.kind === 'goal' && goalReady ? (
           <GoalPicker
             lines={g.goalLines.list}
-            reading={g.reading}
-            onRead={actions.readNow}
             onPick={(text, source) => actions.setGoal(text, source)}
             onVoiceGoal={(goal) => actions.setGoal(goal, voiceGoalSource())}
           />
@@ -111,6 +115,7 @@ export function GuideScreen({
               stepSpeakable ? (
                 <SpeakControl
                   key={view.stepId}
+                  autoPlay
                   text={g.stepText.kind === 'translated' ? g.stepText.text : view.instruction}
                 />
               ) : undefined
@@ -132,11 +137,26 @@ export function GuideScreen({
           />
         ) : null}
         {view.kind === 'completed' ? <CompletionView onAgain={actions.reset} /> : null}
+        </FadeInView>
       </View>
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  dock: { position: 'absolute', left: 0, right: 0, bottom: 0, maxHeight: '60%' },
+  dock: { position: 'absolute', left: spacing.lg, right: spacing.lg, bottom: spacing.sm, maxHeight: '62%', gap: spacing.sm },
+  state: { flexShrink: 1, gap: spacing.sm },
+  plannerPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 6,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.outline,
+    backgroundColor: colors.scrim,
+  },
+  plannerText: { color: colors.textMuted, fontSize: fontSize.note, lineHeight: lineHeight.note },
 });

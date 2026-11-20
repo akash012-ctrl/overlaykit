@@ -612,3 +612,21 @@ px expo-doctor.
 **Decision:** While the preview is up (Translate or Explore, after the privacy note) the app reads on a loop: silent still, OCR, translate, release the previous still, wait `LIVE_READ_PAUSE_MS` (300 ms). A new frame replaces the labels only once its translations settle, so labels do not flicker. The shutter becomes "Hold this view": it turns the frame already on screen into the still, with its labels, without a new capture. Captures are serialised so the loop and the shutter never use the camera at once. OCR reads stills at most 2048 px on the long side and scales coordinates back.
 **Labels:** a translated label shows only its translation, on one row sized to the text. When no free spot beside the line exists, the translation is drawn over the line itself, like a lens, with a white edge. Translate hides lines already in the target language and, while live, lines in a script the camera cannot read (mostly noise); a held view shows every line.
 **Honest limits:** labels refresh about once a second and lag a moving phone; they are 2D marks on the latest frame, not tracking.
+
+## D-052 Icons and motion use installed expo-symbols and react-native-reanimated
+
+**Status:** Accepted (owner, 2026-11-20).
+**Decision:** Every glyph is a Material Symbol through `expo-symbols` (already installed; it adds the MaterialSymbols 400 font, about 1 MB), imported only by `src/modules/ui/icons/Icon.tsx`. Enter and exit fades, the gliding live labels, the Guide target pulse and the listening mic use Reanimated (already installed), imported only by `src/modules/ui/motion/motion.tsx`. Every animation has a static path under reduced motion. Press feedback is the Android ripple.
+**Consequences:** Lint owns both packages (VENDOR_OWNERS). `docs/build-log.md` no longer lists them as unused template packages. Tokens live in `src/modules/ui/theme.ts`; text pairs are tested in `ui/a11y/__tests__/contrast.test.ts`.
+
+## D-055 Hands-free Guide: the camera reads on its own, voice goals start at once, steps are spoken
+
+**Status:** Accepted (owner, 2026-11-20). Amends R2 (edit-before-confirm) and the unset `GUIDE_CAPTURE_INTERVAL_MS`.
+**Decision:**
+- `GUIDE_CAPTURE_INTERVAL_MS` is 1200 ms. In Guide the camera reads on a loop, so the goal lines appear as tappable chips and boxes with no "Read the screen" tap, and a step advances when two consecutive reads see its expected change (D-019 unchanged). Nothing advances on a timer; Done stays for steps the camera cannot check.
+- The mic is a large orb. What the recognizer heard becomes the goal at once; the planning card shows it and Stop undoes it. The audio disclosure before the first use (D-046) stays. Voice still never advances a step (D-042).
+- Each new step is read aloud once (`SpeakControl autoPlay`) when the phone has a voice for the UI language; the Speak button replays or stops it.
+- The next-step mark is a two-tone ring (target amber outside, near-black inside) that glides to the target's new place on each read and breathes unless reduced motion is on, with a dark label naming the target. It is still a 2D mark on the latest frame (R18.8).
+- When the phone's recognition service cannot list its languages (Google's TTS recognizer on many phones), the app listens with `en-US`, `hi-IN` or `kn-IN` instead of hiding the mic; an unsupported language is reported by the recognizer.
+- A model file of the right size is usable at once; the SHA-256 check runs once per app run in the background and can still mark it invalid. The size check no longer waits behind the hash on the download thread.
+**Consequences:** Fewer taps for the demo flow (open Guide, say or tap the goal, follow spoken steps). The planner's first step still waits for Gemma to load on the phone; that time is unmeasured.

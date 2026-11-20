@@ -3,6 +3,8 @@ import { AppState, StyleSheet, Text, View } from 'react-native';
 
 import { getUiLocale, t } from '../../locale';
 import { getSpeechOutput } from '../../speech';
+import { Card, IconRow, SectionLabel } from '../parts';
+import { colors, fontSize, lineHeight, spacing } from '../theme';
 
 /** Says whether Speak is on. Re-checked when the section appears and on return to the foreground. */
 export function VoiceSection() {
@@ -27,18 +29,19 @@ export function VoiceSection() {
 
   return (
     <View style={styles.section}>
-      <Text accessibilityRole="header" style={styles.title}>
-        {t('settings.voice.title')}
-      </Text>
+      <SectionLabel>{t('settings.voice.title')}</SectionLabel>
       {available === null ? null : (
-        <Text style={styles.body}>{t(available ? 'settings.voice.available' : 'settings.voice.missing')}</Text>
+        <Card>
+          <IconRow icon="voice">
+            <Text style={styles.body}>{t(available ? 'settings.voice.available' : 'settings.voice.missing')}</Text>
+          </IconRow>
+        </Card>
       )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  section: { gap: 8 },
-  title: { color: '#FFFFFF', fontSize: 18, fontWeight: '700', lineHeight: 26 },
-  body: { color: '#E6EAF0', fontSize: 16, lineHeight: 24 },
+  section: { gap: spacing.sm },
+  body: { color: colors.textBody, fontSize: fontSize.body, lineHeight: lineHeight.body },
 });

@@ -4,7 +4,19 @@ import { t } from '../../locale';
 import type { PlErrorCode } from '../../shared';
 import { PLAN_ERROR_UI } from './error-map';
 import { ModelSteps } from './ModelGate';
-import { GuideButton, Message, Note, Panel, guideStyles } from './parts';
+import type { ButtonVariant } from '../parts';
+import { Button, IconRow, Message, Note, Panel, rowStyles } from '../parts';
+import type { IconName } from '../icons/Icon';
+import { colors } from '../theme';
+
+type Action = 'retry' | 'translate' | 'explore' | 'stop' | 'key';
+const ICON: Readonly<Record<Action, IconName>> = { retry: 'retry', translate: 'translate', explore: 'explore', stop: 'stop', key: 'key' };
+/** First action is the main one; Stop is destructive; Translate and Explore are a quiet way out (the switcher offers them too). */
+function variantFor(a: Action, index: number): ButtonVariant {
+  if (a === 'stop') return 'destructive';
+  if (a === 'translate' || a === 'explore') return 'ghost';
+  return index === 0 ? 'primary' : 'secondary';
+}
 
 /** One state per PL_* code, with the buttons the error table lists. `reason` is the model's own words, shown as AI text. */
 export function CannotPlanView({
@@ -36,14 +48,16 @@ export function CannotPlanView({
         <ModelSteps />
       ) : (
         <>
-          <Message live={ui.liveRegion}>{t(key, { reason: reason ?? '' })}</Message>
+          <IconRow icon="error" color={colors.dangerText}>
+            <Message live={ui.liveRegion}>{t(key, { reason: reason ?? '' })}</Message>
+          </IconRow>
           {hasReason ? <Note>{t('guide.plan.aiLabel')}</Note> : null}
         </>
       )}
-      <View style={guideStyles.row}>
+      <View style={rowStyles.row}>
         {ui.actions.map((a, i) =>
           a === 'setup' || (a === 'key' && onOpenKey === undefined) ? null : (
-            <GuideButton key={a} primary={i === 0} destructive={a === 'stop'} label={t(label[a])} onPress={run[a] ?? onStop} />
+            <Button key={a} variant={variantFor(a, i)} icon={ICON[a]} label={t(label[a])} onPress={run[a] ?? onStop} />
           ),
         )}
       </View>

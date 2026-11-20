@@ -32,7 +32,7 @@ acdecdf (create-expo-app template commit); 238b208 (scaffold commit, this log am
 - Java not on PATH. Set JAVA_HOME to the Android Studio JBR before `expo run:android`.
 - Gradle/native build (`expo run:android`) not yet attempted.
 - `npm install` reported 3 moderate audit vulnerabilities (not addressed).
-- Template dependencies retained but unused: react-native-web, react-dom, @expo/ui, expo-glass-effect, expo-symbols, expo-image, expo-device, expo-web-browser, reanimated/worklets/gesture-handler. Pruning deferred.
+- Template dependencies retained but unused: react-native-web, react-dom, @expo/ui, expo-glass-effect, expo-image, expo-device, expo-web-browser, gesture-handler. Pruning deferred. expo-symbols and reanimated/worklets are used since D-052.
 - Template's pre-existing commit acdecdf was created by create-expo-app, not by us.
 
 

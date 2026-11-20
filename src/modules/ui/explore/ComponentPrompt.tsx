@@ -1,6 +1,7 @@
 import { StyleSheet, Text } from 'react-native';
 
 import { t } from '../../locale';
+import { colors, fontSize, lineHeight } from '../theme';
 
 /** "Point the camera at the [component]" for CMP_NOT_VISIBLE. Spec C reuses it for Guide steps. */
 export function ComponentPrompt({ name }: { name: string }) {
@@ -12,5 +13,5 @@ export function ComponentPrompt({ name }: { name: string }) {
 }
 
 const styles = StyleSheet.create({
-  text: { color: '#FFFFFF', fontSize: 16, lineHeight: 24, fontWeight: '600' },
+  text: { color: colors.text, fontSize: fontSize.body, lineHeight: lineHeight.body, fontWeight: '600' },
 });

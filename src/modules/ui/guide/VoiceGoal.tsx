@@ -1,28 +1,28 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AppState, Linking, StyleSheet, TextInput, View } from 'react-native';
+import { AppState, Linking, StyleSheet, Text, View } from 'react-native';
 
 import { getUiLocale, t } from '../../locale';
 import type { SpErrorCode } from '../../shared';
 import { createSpeechInput } from '../../speech';
-import { StatusChip } from '../status/StatusChip';
-import { colors } from '../theme';
+import { A11yButton } from '../a11y/A11yButton';
+import { PulseView } from '../motion/motion';
+import { Button, Message, Note, rowStyles } from '../parts';
+import { colors, fontSize, lineHeight, radius, size, spacing } from '../theme';
 import { VOICE_ERROR_UI } from './error-map';
-import { GuideButton, Message, Note, guideStyles } from './parts';
 
-type Phase = 'idle' | 'disclosure' | 'listening' | 'edit';
+type Phase = 'idle' | 'disclosure' | 'listening';
 
 /**
  * Voice goal (R2). The mic shows only when SpeechInput reports the UI language available. The audio
- * disclosure comes before the first microphone use (D-046). The text is editable and only Confirm
- * sets the goal. Voice sets the goal and nothing else: it never advances a step (D-042).
- * Listening stops on Stop, on leaving the foreground and on unmount.
+ * disclosure comes before the first microphone use (D-046). What the recognizer heard becomes the goal at once
+ * (D-055); the planning card shows it and its Stop undoes it. Voice sets the goal and nothing else: it never
+ * advances a step (D-042). Listening stops on Stop, on leaving the foreground and on unmount.
  */
 export function VoiceGoal({ onConfirm }: { onConfirm: (goal: string) => void }) {
   const input = useRef(createSpeechInput());
   const [available, setAvailable] = useState(false);
   const [phase, setPhase] = useState<Phase>('idle');
   const [disclosed, setDisclosed] = useState(false);
-  const [text, setText] = useState('');
   const [error, setError] = useState<SpErrorCode | null>(null);
   const ctrl = useRef<AbortController | null>(null);
   const locale = getUiLocale();
@@ -56,17 +56,16 @@ export function VoiceGoal({ onConfirm }: { onConfirm: (goal: string) => void }) 
     setPhase('listening');
     const res = await input.current.listen(locale, c.signal);
     if (c.signal.aborted) return; // the user stopped, or the app left the foreground
-    if (res.ok) {
-      setText(res.value);
-      setPhase('edit');
-    } else {
-      setError(res.error);
-      setPhase('idle');
-    }
-  }, [locale]);
+    setPhase('idle');
+    if (res.ok && res.value.trim() !== '') onConfirm(res.value.trim());
+    else if (!res.ok) setError(res.error);
+  }, [locale, onConfirm]);
 
   const onMic = () => {
-    if (disclosed) void listen();
+    if (phase === 'listening') {
+      ctrl.current?.abort();
+      setPhase('idle');
+    } else if (disclosed) void listen();
     else setPhase('disclosure');
   };
 
@@ -75,73 +74,66 @@ export function VoiceGoal({ onConfirm }: { onConfirm: (goal: string) => void }) 
 
   if (phase === 'disclosure') {
     return (
-      <View style={styles.box}>
+      <View style={styles.inset}>
         <Note>{t('guide.voice.disclosure')}</Note>
-        <View style={guideStyles.row}>
-          <GuideButton
-            primary
+        <View style={rowStyles.row}>
+          <Button
+            variant="primary"
+            icon="mic"
             label={t('guide.voice.disclosureOk')}
             onPress={() => {
               setDisclosed(true);
               void listen();
             }}
           />
-          <GuideButton label={t('guide.plan.stop')} onPress={() => setPhase('idle')} />
+          <Button icon="close" label={t('guide.plan.stop')} onPress={() => setPhase('idle')} />
         </View>
       </View>
     );
   }
-  if (phase === 'listening') {
-    return (
-      <View style={styles.box}>
-        <StatusChip busy text={t('guide.voice.listening')} />
-        <GuideButton
-          label={t('guide.voice.stopListening')}
-          onPress={() => {
-            ctrl.current?.abort();
-            setPhase('idle');
-          }}
-        />
-      </View>
-    );
-  }
-  if (phase === 'edit') {
-    return (
-      <View style={styles.box}>
-        <Note>{t('guide.voice.edit')}</Note>
-        <TextInput
-          accessibilityLabel={t('guide.voice.edit')}
-          value={text}
-          onChangeText={setText}
-          multiline
-          style={styles.input}
-        />
-        <View style={guideStyles.row}>
-          <GuideButton primary label={t('guide.voice.confirm')} onPress={() => text.trim() !== '' && onConfirm(text.trim())} />
-          <GuideButton label={t('guide.plan.stop')} onPress={() => setPhase('idle')} />
-        </View>
-      </View>
-    );
-  }
+
+  const listening = phase === 'listening';
   return (
     <View style={styles.box}>
-      {errorUi !== null ? (
-        <Message>
-          {t(errorUi.messageKey, { language: t(`guide.voice.lang.${locale}`) })}
-        </Message>
-      ) : null}
+      {errorUi !== null ? <Message>{t(errorUi.messageKey, { language: t(`guide.voice.lang.${locale}`) })}</Message> : null}
       {!available && errorUi === null ? <Note>{t('guide.voice.err.SP_NOT_AVAILABLE')}</Note> : null}
-      <View style={guideStyles.row}>
-        {micHidden ? null : <GuideButton label={t('guide.voice.mic')} onPress={onMic} />}
-        {errorUi?.actions.includes('openSettings') ? (
-          <GuideButton label={t('guide.voice.openSettings')} onPress={() => void Linking.openSettings()} />
-        ) : null}
-      </View>
+      {micHidden ? null : (
+        <View style={styles.orbRow}>
+          <PulseView kind="scale" active={listening}>
+            <A11yButton
+              label={listening ? t('guide.voice.stopListening') : t('guide.voice.mic')}
+              onPress={onMic}
+              icon={listening ? 'stopListening' : 'mic'}
+              iconSize={size.iconXl}
+              iconOnly
+              pressScale
+              style={[styles.orb, listening && styles.orbListening]}
+            />
+          </PulseView>
+          <Text accessibilityLiveRegion="polite" style={styles.orbLabel}>
+            {listening ? t('guide.voice.listening') : t('guide.voice.mic')}
+          </Text>
+        </View>
+      )}
+      {errorUi?.actions.includes('openSettings') ? (
+        <Button icon="settings" label={t('guide.voice.openSettings')} onPress={() => void Linking.openSettings()} />
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  box: { gap: 8 },
-  input: { backgroundColor: colors.inputBackground, color: colors.inputText, fontSize: 16, lineHeight: 26, padding: 8, borderRadius: 8, minHeight: 48 },
+  box: { gap: spacing.sm },
+  inset: { gap: spacing.sm, padding: spacing.md, borderRadius: radius.md, backgroundColor: colors.surfaceRaised },
+  orbRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  orb: {
+    width: size.orb,
+    height: size.orb,
+    borderRadius: size.orb / 2,
+    backgroundColor: colors.primary,
+    borderWidth: 1,
+    borderColor: colors.outlineStrong,
+  },
+  orbListening: { backgroundColor: colors.dangerContainer },
+  orbLabel: { flex: 1, color: colors.text, fontSize: fontSize.title, lineHeight: lineHeight.title, fontWeight: '600' },
 });

@@ -5,9 +5,9 @@ import type { StringKey } from '../../locale';
 import { t } from '../../locale';
 import type { DownloadFailure, ModelStatus, PlannerState } from '../../planner';
 import { StatusChip } from '../status/StatusChip';
-import { colors } from '../theme';
+import { colors, radius, spacing } from '../theme';
 import { PLAN_ERROR_UI } from './error-map';
-import { GuideButton, Message, Note, Panel, guideStyles } from './parts';
+import { Button, IconRow, Message, Note, Panel, Title, rowStyles } from '../parts';
 import type { Models } from './useModels';
 
 /** The by-hand steps for the small model. Shown inside the gate and when the planner file is missing. */
@@ -71,8 +71,10 @@ export function ModelGate({
           <Message>{t('guide.model.noNative')}</Message>
         ) : (
           <>
-            <Message>{t('guide.model.title')}</Message>
-            <Note>{t('guide.model.size')}</Note>
+            <Title>{t('guide.model.title')}</Title>
+            <IconRow icon="info" color={colors.textMuted}>
+              <Note>{t('guide.model.size')}</Note>
+            </IconRow>
             {downloading !== null ? (
               <>
                 <StatusChip
@@ -86,31 +88,31 @@ export function ModelGate({
                 <View style={styles.track}>
                   <View style={[styles.fill, { width: `${percent}%` }]} />
                 </View>
-                <GuideButton label={t('guide.model.cancel')} onPress={models.cancel} />
+                <Button icon="close" label={t('guide.model.cancel')} onPress={models.cancel} />
               </>
             ) : (
               <>
                 <Note>{t('guide.model.wifi')}</Note>
                 {bigInvalid !== null ? <Message>{t(bigInvalid)}</Message> : null}
                 {models.failure !== null ? <Message>{t(FAILURE_KEY[models.failure])}</Message> : null}
-                <GuideButton primary label={t('guide.model.download')} onPress={models.download} />
+                <Button variant="primary" size="lg" stretch icon="download" label={t('guide.model.download')} onPress={models.download} />
               </>
             )}
             {planner.kind === 'failed' ? <Message>{t(PLAN_ERROR_UI[planner.code].messageKey, { reason: '' })}</Message> : null}
             {smallInvalid !== null ? <Message>{t(smallInvalid)}</Message> : null}
             {showSmall ? (
-              <>
+              <View style={styles.inset}>
                 <ModelSteps />
-                <GuideButton label={t('guide.model.check')} onPress={models.recheck} />
-              </>
+                <Button icon="retry" label={t('guide.model.check')} onPress={models.recheck} />
+              </View>
             ) : (
-              <GuideButton label={t('guide.model.sideload.title')} onPress={() => setShowSmall(true)} />
+              <Button variant="ghost" label={t('guide.model.sideload.title')} onPress={() => setShowSmall(true)} />
             )}
           </>
         )}
-        <View style={guideStyles.row}>
-          <GuideButton label={t('guide.translate')} onPress={onTranslate} />
-          <GuideButton label={t('guide.explore')} onPress={onExplore} />
+        <View style={rowStyles.row}>
+          <Button variant="ghost" icon="translate" label={t('guide.translate')} onPress={onTranslate} />
+          <Button variant="ghost" icon="explore" label={t('guide.explore')} onPress={onExplore} />
         </View>
       </Panel>
     </ScrollView>
@@ -118,6 +120,7 @@ export function ModelGate({
 }
 
 const styles = StyleSheet.create({
-  track: { height: 8, borderRadius: 4, backgroundColor: colors.surfaceRaised, overflow: 'hidden' },
-  fill: { height: 8, backgroundColor: colors.primary },
+  track: { height: 6, borderRadius: radius.pill, backgroundColor: colors.surfaceRaised, overflow: 'hidden' },
+  fill: { height: 6, borderRadius: radius.pill, backgroundColor: colors.primary },
+  inset: { gap: spacing.sm, padding: spacing.md, borderRadius: radius.md, backgroundColor: colors.surfaceRaised },
 });

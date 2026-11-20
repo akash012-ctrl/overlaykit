@@ -2,20 +2,25 @@ import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { announce } from '../a11y/announcer';
-import { colors, fontSize, radius, spacing } from '../theme';
+import type { IconName } from '../icons/Icon';
+import { Icon } from '../icons/Icon';
+import { FadeInView } from '../motion/motion';
+import { colors, fontSize, lineHeight, radius, spacing } from '../theme';
 
 /**
  * One line that says what the app is doing: reading, listening, thinking, streaming, waiting.
- * The text carries the state. The spinner (`busy`) is extra and is hidden from TalkBack.
- * The text is announced once when it changes. Text sits on a near-opaque backing, never on the video.
+ * The text carries the state. The spinner and icon are extra and hidden from TalkBack.
+ * The text is announced once when it changes and cross-fades. It sits on a near-opaque backing, never on the video.
  */
 export function StatusChip({
   text,
   busy = false,
+  icon,
   announceChange = true,
 }: {
   text: string;
   busy?: boolean;
+  icon?: IconName;
   /** False where another announcement already covers the change (the step card announces the step itself). */
   announceChange?: boolean;
 }) {
@@ -24,8 +29,11 @@ export function StatusChip({
   }, [text, announceChange]);
   return (
     <View accessible accessibilityRole="text" accessibilityLabel={text} style={styles.chip}>
-      {busy ? <ActivityIndicator color={colors.text} importantForAccessibility="no-hide-descendants" /> : null}
-      <Text style={styles.text}>{text}</Text>
+      {busy ? <ActivityIndicator size="small" color={colors.accentText} importantForAccessibility="no-hide-descendants" /> : null}
+      {!busy && icon ? <Icon name={icon} size={18} color={colors.accentText} /> : null}
+      <FadeInView key={text} style={styles.textWrap}>
+        <Text style={styles.text}>{text}</Text>
+      </FadeInView>
     </View>
   );
 }
@@ -39,9 +47,12 @@ const styles = StyleSheet.create({
     minHeight: 40,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
-    borderRadius: radius.lg,
-    backgroundColor: colors.surfaceRaised,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.outline,
+    backgroundColor: colors.surfaceHigh,
     flexShrink: 1,
   },
-  text: { flexShrink: 1, color: colors.text, fontSize: fontSize.body, fontWeight: '600', lineHeight: 24 },
+  textWrap: { flexShrink: 1 },
+  text: { color: colors.text, fontSize: fontSize.body, lineHeight: lineHeight.body, fontWeight: '600' },
 });

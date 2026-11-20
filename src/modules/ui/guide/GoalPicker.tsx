@@ -6,10 +6,10 @@ import { getUiLocale, t } from '../../locale';
 import type { SourceLocale } from '../../shared';
 import { A11yButton } from '../a11y/A11yButton';
 import { MIN_TOUCH_TARGET_DP } from '../overlay/styles';
-import { TwoToneRing } from '../overlay/TwoToneRing';
+import { colors } from '../theme';
 import { StatusChip } from '../status/StatusChip';
 import type { GoalLine } from './plan-view-model';
-import { GuideButton, Message, Note, Panel } from './parts';
+import { Button, Note, Panel, Title, rowStyles } from '../parts';
 import { VoiceGoal } from './VoiceGoal';
 
 type Lines = readonly { readonly index: number; readonly text: string; readonly source: SourceLocale }[];
@@ -39,13 +39,13 @@ export function GoalBoxes({
             key={b.index}
             label={b.text}
             onPress={() => onPick(b.text, b.source)}
-            textStyle={styles.hiddenText}
+            iconOnly
             style={[
               styles.box,
               { left: centre.x - region.x - w / 2, top: centre.y - region.y - h / 2, width: w, height: h, transform: [{ rotate: `${angleRad}rad` }] },
             ]}
           >
-            <TwoToneRing width={2} />
+            <CornerMarks />
           </A11yButton>
         );
       })}
@@ -53,38 +53,58 @@ export function GoalBoxes({
   );
 }
 
-/** Goal choice: read the screen, tap a line, or say it. Nothing here plans or advances. */
+/** Corner length and stroke, in dp. Two tones (white over near-black) keep 3:1 on any image. */
+const CORNER = 12;
+const STROKE = 3;
+const EDGES = [
+  { pos: { top: 0, left: 0 }, border: { borderTopWidth: STROKE, borderLeftWidth: STROKE } },
+  { pos: { top: 0, right: 0 }, border: { borderTopWidth: STROKE, borderRightWidth: STROKE } },
+  { pos: { bottom: 0, left: 0 }, border: { borderBottomWidth: STROKE, borderLeftWidth: STROKE } },
+  { pos: { bottom: 0, right: 0 }, border: { borderBottomWidth: STROKE, borderRightWidth: STROKE } },
+] as const;
+
+/** Four corner brackets: marks a tappable line with far less ink than a full box. Takes no touches. */
+function CornerMarks() {
+  return (
+    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+      {EDGES.map((edge, i) => (
+        <View key={i} style={[styles.cornerShadow, edge.pos, edge.border]}>
+          <View style={[styles.corner, edge.border]} />
+        </View>
+      ))}
+    </View>
+  );
+}
+
+/**
+ * Goal choice: the camera reads on its own (D-055), so the lines appear as chips to tap; or say the goal.
+ * Nothing here plans or advances.
+ */
 export function GoalPicker({
   lines,
-  reading,
-  onRead,
   onPick,
   onVoiceGoal,
 }: {
   lines: Lines;
-  reading: boolean;
-  onRead: () => void;
   onPick: (text: string, source: SourceLocale) => void;
   onVoiceGoal: (goal: string) => void;
 }) {
   return (
     <Panel>
-      <Message>{t('guide.plan.pickGoal')}</Message>
-      {reading ? <StatusChip busy text={t('guide.plan.reading')} /> : null}
-      <GuideButton primary label={reading ? t('guide.plan.reading') : t('guide.plan.readScreen')} onPress={onRead} />
+      <Title>{t('guide.plan.pickGoal')}</Title>
+      <VoiceGoal onConfirm={onVoiceGoal} />
       {lines.length === 0 ? (
-        <Note>{t('guide.plan.noLines')}</Note>
+        <StatusChip busy icon="readScreen" text={t('guide.plan.reading')} announceChange={false} />
       ) : (
         <>
           <Note>{t('guide.plan.tapHint')}</Note>
-          <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
+          <ScrollView style={styles.list} contentContainerStyle={[rowStyles.row, styles.listContent]}>
             {lines.map((l) => (
-              <GuideButton key={l.index} label={l.text} onPress={() => onPick(l.text, l.source)} />
+              <Button key={l.index} label={l.text} onPress={() => onPick(l.text, l.source)} />
             ))}
           </ScrollView>
         </>
       )}
-      <VoiceGoal onConfirm={onVoiceGoal} />
     </Panel>
   );
 }
@@ -97,9 +117,9 @@ export function voiceGoalSource(): SourceLocale | null {
 
 const styles = StyleSheet.create({
   clip: { position: 'absolute', overflow: 'hidden' },
-  box: { position: 'absolute', backgroundColor: 'rgba(11,15,20,0.15)' },
-  // The box shows only an outline. The line text is the accessibility label, so it is drawn invisible.
-  hiddenText: { color: 'transparent', fontSize: 14 },
-  list: { maxHeight: 140 },
-  listContent: { gap: 8 },
+  box: { position: 'absolute', backgroundColor: 'transparent' },
+  cornerShadow: { position: 'absolute', width: CORNER + 2, height: CORNER + 2, borderColor: colors.ringDark, margin: -1 },
+  corner: { flex: 1, borderColor: colors.ringLight, margin: 1 },
+  list: { maxHeight: 148 },
+  listContent: { paddingBottom: 2 },
 });

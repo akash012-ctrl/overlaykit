@@ -31,11 +31,10 @@ import { useMachineLostTimer } from './useMachineLostTimer';
 import { getDeviceModelStore, onDeviceState, useModels } from './useModels';
 
 /**
- * Pause between automatic still captures. UNSET until G4 (NaN), then set with a DECISIONS.md entry.
- * While unset the loop does not start. A step then advances only on Done, or on two "Check now" taps
- * that each see the expected change. Nothing advances by itself or by a timer.
+ * Pause between automatic reads in Guide (D-055). The camera reads on its own: goal lines appear without a tap, and
+ * a step advances when two consecutive reads see its expected change (D-019). Nothing advances on a timer.
  */
-export const GUIDE_CAPTURE_INTERVAL_MS = Number.NaN;
+export const GUIDE_CAPTURE_INTERVAL_MS = 1200;
 
 export type GuideDeps = {
   readonly capture: Pick<CaptureService, 'captureStill' | 'releaseStill' | 'clock'>;

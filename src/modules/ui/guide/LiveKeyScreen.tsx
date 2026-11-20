@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { TextInput, View } from 'react-native';
 
 import { t } from '../../locale';
 import { cleanKeyInput } from './live-view-model';
 import type { LiveKeyPort } from './live-view-model';
-import { GuideButton, Message, Note, Panel, guideStyles } from './parts';
+import { Button, Card, Message, Note, Title, inputStyle, rowStyles } from '../parts';
 
 type Saved = { readonly kind: 'unknown' } | { readonly kind: 'none' } | { readonly kind: 'saved'; readonly masked: string };
 
@@ -71,10 +71,8 @@ export function LiveKeyScreen({
   };
 
   return (
-    <Panel>
-      <Text accessibilityRole="header" style={styles.title}>
-        {t('live.key.title')}
-      </Text>
+    <Card>
+      <Title>{t('live.key.title')}</Title>
       <Note>{t('live.key.explain')}</Note>
       {saved.kind === 'saved' ? <Message>{t('live.key.saved', { last4: saved.masked })}</Message> : null}
       {saved.kind === 'none' ? <Message>{t('live.key.none')}</Message> : null}
@@ -91,31 +89,20 @@ export function LiveKeyScreen({
         importantForAutofill="no"
         contextMenuHidden
         spellCheck={false}
-        style={styles.input}
+        style={inputStyle}
       />
-      <View style={guideStyles.row}>
-        <GuideButton
-          primary
+      <View style={rowStyles.row}>
+        <Button variant="primary"
+          icon="key"
           label={t(saved.kind === 'saved' ? 'live.key.replace' : 'live.key.save')}
           onPress={() => {
             if (cleaned !== '') void save();
           }}
         />
-        {saved.kind === 'saved' ? <GuideButton label={t('live.key.delete')} onPress={() => void remove()} /> : null}
-        <GuideButton label={t('live.key.done')} onPress={onDone} />
+        {saved.kind === 'saved' ? <Button variant="destructive" icon="delete" label={t('live.key.delete')} onPress={() => void remove()} /> : null}
+        <Button label={t('live.key.done')} onPress={onDone} />
       </View>
-    </Panel>
+    </Card>
   );
 }
 
-const styles = StyleSheet.create({
-  title: { color: '#FFFFFF', fontSize: 20, fontWeight: '700', lineHeight: 30 },
-  input: {
-    minHeight: 48,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    color: '#FFFFFF',
-    backgroundColor: '#1C2530',
-    fontSize: 16,
-  },
-});

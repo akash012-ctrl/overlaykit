@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { t, useLocaleSettings } from '../../locale';
 import { LIVE_CONSENT_VERSION, hasValidConsent, resolvePlannerSelection } from './live-view-model';
 import type { LiveKeyPort } from './live-view-model';
 import { LiveConsentScreen } from './LiveConsentScreen';
 import { LiveKeyScreen } from './LiveKeyScreen';
-import { GuideButton, Note, guideStyles } from './parts';
+import { Button, Card, Note, RadioRow, SectionLabel, rowStyles } from '../parts';
+import { spacing } from '../theme';
 
 type Sub = 'none' | 'key' | 'consent';
 
@@ -97,22 +98,31 @@ export function PlannerSettings({ keys, onKeyDeleted }: { keys: LiveKeyPort; onK
   const liveName = t('settings.planner.live');
   return (
     <View style={styles.section}>
-      <Text accessibilityRole="header" style={styles.title}>
-        {t('settings.planner.title')}
-      </Text>
-      <View style={guideStyles.row}>
-        <GuideButton primary={!live} label={live ? onDevice : t('settings.planner.selected', { name: onDevice })} onPress={() => choose('on-device')} />
-        <GuideButton primary={live} label={live ? t('settings.planner.selected', { name: liveName }) : liveName} onPress={() => choose('gemini-live')} />
-      </View>
+      <SectionLabel>{t('settings.planner.title')}</SectionLabel>
+      <Card style={styles.list}>
+        <RadioRow
+          first
+          label={onDevice}
+          a11yLabel={live ? onDevice : t('settings.planner.selected', { name: onDevice })}
+          selected={!live}
+          onPress={() => choose('on-device')}
+        />
+        <RadioRow
+          label={liveName}
+          a11yLabel={live ? t('settings.planner.selected', { name: liveName }) : liveName}
+          selected={live}
+          onPress={() => choose('gemini-live')}
+        />
+      </Card>
       <Note>{t('settings.planner.liveNote')}</Note>
-      <View style={guideStyles.row}>
-        <GuideButton label={t('live.key.title')} onPress={() => setSub('key')} />
+      <View style={rowStyles.row}>
+        <Button icon="key" label={t('live.key.title')} onPress={() => setSub('key')} />
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  section: { gap: 8 },
-  title: { color: '#FFFFFF', fontSize: 18, fontWeight: '700', lineHeight: 26 },
+  section: { gap: spacing.sm },
+  list: { padding: 0, gap: 0 },
 });
