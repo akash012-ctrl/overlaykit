@@ -2,7 +2,8 @@ import { ExpoSpeechRecognitionModule, type ExpoSpeechRecognitionErrorCode } from
 import { AppState } from 'react-native';
 
 import type { LocaleCode, Result, SpErrorCode } from '../../shared';
-import { pickVoice } from '../locale-match';
+import type { Locales } from '../locale-match';
+import { listenTag } from '../locale-match';
 import type { SpeechInput } from '../types';
 
 // The only file that imports expo-speech-recognition. API per
@@ -26,31 +27,34 @@ function mapError(code: ExpoSpeechRecognitionErrorCode): SpErrorCode {
   }
 }
 
-type Locales = { readonly all: readonly string[]; readonly installed: readonly string[] };
-
+/** null when there is no recognizer at all. An empty list means the service could not say which languages it has. */
 async function supportedLocales(): Promise<Locales | null> {
   try {
     if (!ExpoSpeechRecognitionModule.isRecognitionAvailable()) return null;
+  } catch {
+    return null;
+  }
+  try {
     const { locales, installedLocales } = await ExpoSpeechRecognitionModule.getSupportedLocales({});
     return { all: locales, installed: installedLocales };
   } catch {
-    return null;
+    return { all: [], installed: [] };
   }
 }
 
 export const androidRecognizer: SpeechInput = {
   async isAvailable(language) {
     const locales = await supportedLocales();
-    return locales !== null && pickVoice(locales.all, language) !== null;
+    return locales !== null && listenTag(locales, language) !== null;
   },
 
   async listen(language: LocaleCode, signal: AbortSignal): Promise<Result<string, SpErrorCode>> {
     if (signal.aborted) return { ok: false, error: 'SP_FAILED' };
     const locales = await supportedLocales();
     if (locales === null) return { ok: false, error: 'SP_NOT_AVAILABLE' };
-    const installedTag = pickVoice(locales.installed, language);
-    const tag = installedTag ?? pickVoice(locales.all, language);
-    if (tag === null) return { ok: false, error: 'SP_LANGUAGE_UNSUPPORTED' };
+    const pick = listenTag(locales, language);
+    if (pick === null) return { ok: false, error: 'SP_LANGUAGE_UNSUPPORTED' };
+    const { tag } = pick;
 
     try {
       const permission = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
@@ -115,7 +119,7 @@ export const androidRecognizer: SpeechInput = {
           interimResults: false,
           continuous: false,
           // On-device only when the pack is installed; otherwise the phone's recognizer may use its service.
-          requiresOnDeviceRecognition: installedTag !== null && ExpoSpeechRecognitionModule.supportsOnDeviceRecognition(),
+          requiresOnDeviceRecognition: pick.installed && ExpoSpeechRecognitionModule.supportsOnDeviceRecognition(),
           recordingOptions: { persist: false },
         });
       } catch {

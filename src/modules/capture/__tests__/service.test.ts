@@ -128,3 +128,31 @@ describe('permission', () => {
     expect(await service.readPermission()).toEqual({ kind: 'blocked', code: 'CAM_PERMISSION_BLOCKED' });
   });
 });
+
+describe('captureStill timeout', () => {
+  it('fails a capture that never finishes instead of waiting forever, and deletes a photo that lands late', async () => {
+    const fs = createFakeFs();
+    const camera = createFakeCamera(fs);
+    let land: () => void = () => undefined;
+    const slowCamera = {
+      ...camera,
+      takeUprightPhoto: (preview: Parameters<typeof camera.takeUprightPhoto>[0]) =>
+        new Promise<Awaited<ReturnType<typeof camera.takeUprightPhoto>>>((resolve) => {
+          land = () => void camera.takeUprightPhoto(preview).then(resolve);
+        }),
+    };
+    const service = createCaptureServiceFrom({
+      camera: slowCamera,
+      store: createTempStillStore(fs),
+      fs,
+      clock: () => 0,
+      openSettings: async () => undefined,
+      timeoutMs: 10,
+    });
+    const result = await service.captureStill(camera.handle);
+    expect(result).toEqual({ ok: false, error: 'CAM_CAPTURE_FAILED' });
+    land();
+    for (let i = 0; i < 5; i += 1) await new Promise((r) => setTimeout(r, 0));
+    expect([...fs.files]).toEqual([]);
+  });
+});

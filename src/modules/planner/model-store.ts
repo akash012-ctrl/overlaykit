@@ -78,12 +78,14 @@ export function createModelStore(
     listeners.forEach((cb) => cb());
   };
 
-  async function verify(id: ModelId): Promise<ModelStatus> {
+  /** `onSized` runs once the size matches, before the slow hash, so a present file is usable at once. */
+  async function verify(id: ModelId, onSized?: () => void): Promise<ModelStatus> {
     const m = manifest[id];
     const uri = path(id);
     const size = await port.fileSize(uri);
     if (size === null) return { kind: 'missing' };
     if (size !== m.sizeBytes) return { kind: 'invalid', reason: 'size' };
+    onSized?.();
     const hash = await port.sha256(uri);
     if (hash === null) return { kind: 'ready', checksum: 'unchecked' }; // hashing failed: size matched only
     if (hash.toLowerCase() !== m.sha256) return { kind: 'invalid', reason: 'checksum' };
@@ -93,7 +95,9 @@ export function createModelStore(
   // The file being downloaded is not re-hashed by a concurrent check: its state is 'downloading'.
   async function recheck(id: ModelId): Promise<ModelStatus> {
     if (downloading === id) return status(id);
-    const s = await verify(id);
+    const s = await verify(id, () => {
+      if (downloading !== id && status(id).kind !== 'ready') set(id, { kind: 'ready', checksum: 'unchecked' });
+    });
     if (downloading !== id) set(id, s);
     return status(id);
   }
@@ -108,7 +112,9 @@ export function createModelStore(
       let invalid: ModelCheck | null = null;
       for (const id of MODEL_ORDER) {
         if (skip.includes(id)) continue;
-        const s = await recheck(id);
+        // A file already verified in this run is not hashed again before loading.
+        const known = status(id);
+        const s = known.kind === 'ready' && known.checksum === 'verified' ? known : await recheck(id);
         if (s.kind === 'ready') return { kind: 'ready', modelId: id, path: path(id), checksum: s.checksum };
         // A wrong-size or wrong-hash file cannot be loaded: PL_NO_MODEL, like a missing one.
         if (s.kind === 'invalid') invalid ??= { kind: 'invalid', code: 'PL_NO_MODEL', reason: s.reason };

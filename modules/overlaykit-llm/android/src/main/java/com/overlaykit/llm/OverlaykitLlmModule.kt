@@ -77,11 +77,10 @@ class OverlaykitLlmModule : Module() {
       if (dir.endsWith("/")) dir else "$dir/"
     }
 
-    AsyncFunction("fileSize") { path: String, promise: Promise ->
-      downloadWorker.execute {
-        val f = File(stripScheme(path))
-        promise.resolve(if (f.isFile) f.length().toDouble() else null)
-      }
+    // A stat is cheap: it runs here, not on the download worker, so it never waits behind a 2.6 GB hash.
+    AsyncFunction("fileSize") { path: String ->
+      val f = File(stripScheme(path))
+      if (f.isFile) f.length().toDouble() else null
     }
 
     AsyncFunction("sha256File") { path: String, promise: Promise ->

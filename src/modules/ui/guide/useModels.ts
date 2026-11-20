@@ -4,6 +4,7 @@ import type { DownloadFailure, ModelStatus, ModelStore, PlannerState } from '../
 import { createDeviceModelStore } from '../../planner';
 
 let store: ModelStore | null | undefined;
+let checkedThisRun = false;
 /** The one on-device model store (a native adapter instance), or null when this build has no llm module. */
 export function getDeviceModelStore(): ModelStore | null {
   if (store === undefined) store = createDeviceModelStore();
@@ -36,7 +37,11 @@ export function useModels(): Models {
   useEffect(() => {
     if (s === null) return undefined;
     const off = s.subscribe(bump);
-    void s.refresh();
+    // Hashing 2.6 GB takes a while: once per app run. The model-gate Check button re-checks on demand.
+    if (!checkedThisRun) {
+      checkedThisRun = true;
+      void s.refresh();
+    }
     return off;
   }, [s]);
 

@@ -22,12 +22,19 @@ export interface CaptureService {
 
 const BLOCKED_OR_UNKNOWN: PermissionState = { kind: 'blocked', code: 'CAM_PERMISSION_BLOCKED' };
 
+/**
+ * A capture that has not finished by then fails (CAM_CAPTURE_FAILED). A photo request can hang when the camera is
+ * released mid-capture (the app went to the background); without this, every read queued behind it waited forever.
+ */
+export const CAPTURE_TIMEOUT_MS = 8000;
+
 export function createCaptureServiceFrom(deps: {
   readonly camera: CameraAdapter;
   readonly store: TempStillStore;
   readonly fs: FileSystemPort;
   readonly clock: MonotonicClock;
   readonly openSettings: () => Promise<void>;
+  readonly timeoutMs?: number;
 }): CaptureService {
   const ids = createFrameIdSource('still');
   const { camera, store, fs, clock } = deps;
@@ -59,7 +66,18 @@ export function createCaptureServiceFrom(deps: {
       try {
         const frameId = ids.next();
         if (!preview) return { ok: false, error: 'CAM_CAPTURE_FAILED' };
-        const photo = await camera.takeUprightPhoto(preview);
+        const pending = camera.takeUprightPhoto(preview);
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        const timedOut = new Promise<'timeout'>((resolve) => {
+          timer = setTimeout(() => resolve('timeout'), deps.timeoutMs ?? CAPTURE_TIMEOUT_MS);
+        });
+        const photo = await Promise.race([pending, timedOut]);
+        clearTimeout(timer);
+        if (photo === 'timeout') {
+          // A photo that lands after the timeout is deleted, never left in the cache (R4.6).
+          void pending.then((late) => (late.ok ? fs.delete(late.value.uri) : undefined)).catch(() => undefined);
+          return { ok: false, error: 'CAM_CAPTURE_FAILED' };
+        }
         if (!photo.ok) return photo;
         // Read when the photo is reported taken; the library's own timestamp isn't used.
         const capturedAtMs = clock();
