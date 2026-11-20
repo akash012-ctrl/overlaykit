@@ -5,7 +5,7 @@ fileMatchPattern: ["src/app/**/*.tsx", "src/modules/ui/**/*.tsx", "src/modules/c
 
 # Native UX rules
 
-This file applies to Expo Router routes, `ui` views, and the camera preview view in `capture`. Product journeys: `docs/PRODUCT.md`. Error states the UI must cover: `docs/ARCHITECTURE.md` §8.
+This file applies to Expo Router routes, `ui` views, and the camera preview view in `capture`. Visual design (tokens, parts, overlays, motion, the screenshot loop): `.kiro/skills/ui-design-system/SKILL.md`. Product journeys: `docs/PRODUCT.md`. Error states the UI must cover: `docs/ARCHITECTURE.md` §8.
 
 ## Screens and navigation
 
