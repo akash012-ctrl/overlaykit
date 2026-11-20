@@ -598,3 +598,17 @@ px expo-doctor.
 - The owner supplies the Google API key later by typing it in Settings. It is never given to a worker, a file, a command or git.
 **Not decided here:** the mic toggle default (off) and no spoken reply in v1 stay as the design defaults (OQ-9, OQ-10) until the owner says otherwise.
 **Consequences:** Tasks 2.2, 3.4, 19, 20 and 21 are unblocked. Task 19.1's real call and task 22 still wait for the key (task 1.6).
+## D-053 Translation runs on the phone with ML Kit
+
+**Status:** Accepted (owner, 2026-11-20).
+**Context:** Every pair in the route table was `not-configured` (task 4.1 parked, OpenRouter deferred by D-030), so the app read text but never translated it.
+**Decision:** A local Expo module `modules/overlaykit-translate` wraps ML Kit Translate (`com.google.mlkit:translate:17.0.3`). `en>hi`, `en>kn`, `hi>en` and `hi>kn` route `on-device`. Language models (about 30 MB each) download once, from Google, the first time a pair is needed; the app starts those downloads in the background after the privacy note. Text never leaves the phone. `src/modules/locale/adapters/mlkit-translate.ts` is the only importer. The on-device timeout is 30 s so a first call can wait for its model.
+**Not measured:** G2 quality and latency for these pairs. ML Kit quality on short sign text is uneven (for example a mis-read word gives an odd translation); labels keep their state markers and Hindi and Kannada stay "unreviewed".
+**Consequences:** The privacy note switches to the on-device text (it follows the route table). One new local module, no new npm package.
+
+## D-054 Live reading in Translate and Explore; the shutter holds the view
+
+**Status:** Accepted (owner, 2026-11-20). Supersedes the freeze-frame-first plan of D-011 for Translate and Explore.
+**Decision:** While the preview is up (Translate or Explore, after the privacy note) the app reads on a loop: silent still, OCR, translate, release the previous still, wait `LIVE_READ_PAUSE_MS` (300 ms). A new frame replaces the labels only once its translations settle, so labels do not flicker. The shutter becomes "Hold this view": it turns the frame already on screen into the still, with its labels, without a new capture. Captures are serialised so the loop and the shutter never use the camera at once. OCR reads stills at most 2048 px on the long side and scales coordinates back.
+**Labels:** a translated label shows only its translation, on one row sized to the text. When no free spot beside the line exists, the translation is drawn over the line itself, like a lens, with a white edge. Translate hides lines already in the target language and, while live, lines in a script the camera cannot read (mostly noise); a held view shows every line.
+**Honest limits:** labels refresh about once a second and lag a moving phone; they are 2D marks on the latest frame, not tracking.

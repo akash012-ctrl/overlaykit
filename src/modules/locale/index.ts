@@ -18,6 +18,6 @@ export type { PairKey, Route, RouteTable } from './route-table';
 
 export { createOnDeviceProvider, subscribeOnDeviceStatus } from './adapters/on-device';
 export type { OnDeviceEngine, OnDeviceStatus } from './adapters/on-device';
-export { getTranslationService } from './wiring';
+export { getTranslationService, prepareTranslation } from './wiring';
 export type { LiveConsent, LocaleSettings, SettingsStore } from './settings-store';
 export { useLocaleSettings } from './use-locale-settings';

@@ -21,6 +21,9 @@ export const KN_STRINGS: LocalizedTable = {
   'status.capturing': { text: 'ಫೋಟೋ ತೆಗೆಯಲಾಗುತ್ತಿದೆ…', review: 'unreviewed' },
   'status.reading': { text: 'ಪಠ್ಯವನ್ನು ಓದಲಾಗುತ್ತಿದೆ…', review: 'unreviewed' },
   'still.status.shown': { text: 'ಪೂರ್ಣ ಪಠ್ಯವನ್ನು ನೋಡಲು ಲೇಬಲ್ ಅನ್ನು ಟ್ಯಾಪ್ ಮಾಡಿ.', review: 'unreviewed' },
+  'live.looking': { text: 'ಕ್ಯಾಮೆರಾವನ್ನು ಪಠ್ಯದ ಕಡೆಗೆ ತೋರಿಸಿ. ಅನುವಾದ ಅದರ ಮೇಲೆಯೇ ಕಾಣುತ್ತದೆ.', review: 'unreviewed' },
+  'live.reading': { text: 'ಲೈವ್ ಅನುವಾದ ನಡೆಯುತ್ತಿದೆ. ಈ ನೋಟವನ್ನು ನಿಲ್ಲಿಸಲು ಶಟರ್ ಒತ್ತಿ.', review: 'unreviewed' },
+  'action.hold': { text: 'ಈ ನೋಟವನ್ನು ನಿಲ್ಲಿಸಿ', review: 'unreviewed' },
   'ocr.noText': {
     text: 'ಯಾವುದೇ ಪಠ್ಯ ಸಿಗಲಿಲ್ಲ. ಹತ್ತಿರ ಹೋಗಿ ಅಥವಾ ಹೆಚ್ಚು ಬೆಳಕು ಬರುವಂತೆ ಮಾಡಿ.',
     review: 'unreviewed',

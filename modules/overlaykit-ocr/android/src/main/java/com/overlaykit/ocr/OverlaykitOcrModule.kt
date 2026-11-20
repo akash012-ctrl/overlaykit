@@ -23,6 +23,8 @@ import expo.modules.kotlin.modules.ModuleDefinition
  * It returns raw lines. All interpretation (corner order, script rules, quality
  * rules) happens in TypeScript, in src/modules/ocr.
  */
+private const val MAX_LONG_EDGE = 2048
+
 class OverlaykitOcrModule : Module() {
   private val latin: TextRecognizer by lazy { TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS) }
   private val devanagari: TextRecognizer by lazy {
@@ -53,8 +55,14 @@ class OverlaykitOcrModule : Module() {
         promise.reject(CodedException("INVALID_URI", "Not a file uri", null))
         return@AsyncFunction
       }
-      val bitmap = BitmapFactory.decodeFile(path)
-      if (bitmap == null) {
+      // Read at most MAX_LONG_EDGE px on the long side: about 4x fewer pixels for a 12 MP still, so the live loop
+      // keeps up. Line coordinates are scaled back, and the full size is reported, so callers see no difference.
+      val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+      BitmapFactory.decodeFile(path, bounds)
+      var sample = 1
+      while (maxOf(bounds.outWidth, bounds.outHeight) / sample > MAX_LONG_EDGE) sample *= 2
+      val bitmap = BitmapFactory.decodeFile(path, BitmapFactory.Options().apply { inSampleSize = sample })
+      if (bitmap == null || bounds.outWidth <= 0) {
         promise.reject(CodedException("DECODE_FAILED", "Could not decode the still", null))
         return@AsyncFunction
       }
@@ -63,6 +71,7 @@ class OverlaykitOcrModule : Module() {
       } catch (e: Exception) {
         ExifInterface.ORIENTATION_NORMAL
       }
+      val scale = bounds.outWidth.toDouble() / bitmap.width
       val image = InputImage.fromBitmap(bitmap, 0)
       latin.process(image)
         .addOnSuccessListener { latinText ->
@@ -70,10 +79,10 @@ class OverlaykitOcrModule : Module() {
             .addOnSuccessListener { devanagariText ->
               promise.resolve(
                 mapOf(
-                  "imageWidth" to bitmap.width,
-                  "imageHeight" to bitmap.height,
+                  "imageWidth" to bounds.outWidth,
+                  "imageHeight" to bounds.outHeight,
                   "exifOrientation" to exif,
-                  "lines" to lines(latinText, "latin") + lines(devanagariText, "devanagari"),
+                  "lines" to lines(latinText, "latin", scale) + lines(devanagariText, "devanagari", scale),
                 )
               )
               bitmap.recycle()
@@ -90,14 +99,14 @@ class OverlaykitOcrModule : Module() {
     }
   }
 
-  private fun lines(text: Text, recognizer: String): List<Map<String, Any?>> =
+  private fun lines(text: Text, recognizer: String, k: Double): List<Map<String, Any?>> =
     text.textBlocks.flatMap { block ->
       block.lines.map { line ->
         mapOf(
           "text" to line.text,
-          "corners" to line.cornerPoints?.map { mapOf("x" to it.x.toDouble(), "y" to it.y.toDouble()) },
+          "corners" to line.cornerPoints?.map { mapOf("x" to it.x * k, "y" to it.y * k) },
           "box" to line.boundingBox?.let {
-            mapOf("left" to it.left.toDouble(), "top" to it.top.toDouble(), "right" to it.right.toDouble(), "bottom" to it.bottom.toDouble())
+            mapOf("left" to it.left * k, "top" to it.top * k, "right" to it.right * k, "bottom" to it.bottom * k)
           },
           "confidence" to line.confidence.toDouble(),
           "angle" to line.angle.toDouble(),

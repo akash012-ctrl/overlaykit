@@ -2,7 +2,7 @@ import { useCallback, useEffect, useReducer, useRef } from 'react';
 import { AppState } from 'react-native';
 
 import type { TranslationService } from '../../locale';
-import { planTranslation, subscribeOnDeviceStatus, useLocaleSettings } from '../../locale';
+import { planTranslation, prepareTranslation, subscribeOnDeviceStatus, useLocaleSettings } from '../../locale';
 import type { LocaleCode, OcrResult, SourceLocale } from '../../shared';
 import type { LabelContent, PlanEntry } from './label-model';
 import { EMPTY_TRANSLATION, translationReducer } from './label-model';
@@ -31,6 +31,11 @@ export function useTranslation(result: OcrResult | null, service: TranslationSer
   }, [state]);
 
   const { loaded, targetLocale, privacyAcknowledged } = settings;
+
+  // Fetch the language models in the background once the user has seen the privacy note (D-053).
+  useEffect(() => {
+    if (loaded && privacyAcknowledged) prepareTranslation(targetLocale);
+  }, [loaded, privacyAcknowledged, targetLocale]);
 
   /** One call per source language. Late replies are dropped by the reducer (R2.8). */
   const send = useCallback(

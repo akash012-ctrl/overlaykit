@@ -9,6 +9,7 @@ import { t } from '../../locale';
 import { colors } from '../theme';
 import { TwoToneRing } from './TwoToneRing';
 import type { OverlayItem } from './build-items';
+import { isSingleRow } from './build-items';
 import {
   LABEL_COLOURS,
   LABEL_FONT_SIZE_SP,
@@ -91,6 +92,39 @@ export function OverlayLayer({
             <TwoToneRing width={OUTLINE_WIDTH_DP} />
           </View>
         );
+        if (item.label.kind === 'unplaced' && isSingleRow(item.state) && !item.content.lowQuality) {
+          // No free spot beside the line: the translation is drawn over the line itself, like a lens (D-054).
+          const { marker, a11y } = labelTexts(item);
+          const pair = colours(item);
+          const w = Math.min(region.width, Math.max(width, marker.length * LABEL_FONT_SIZE_SP * 0.56 + 4 * LABEL_PADDING_DP));
+          const h = Math.max(height, lineHeight + LABEL_PADDING_DP);
+          const slopY = Math.max(0, (MIN_TOUCH_TARGET_DP - h) / 2);
+          return (
+            <Pressable
+              key={item.id}
+              accessibilityRole="button"
+              accessibilityLabel={a11y}
+              hitSlop={{ top: slopY, bottom: slopY }}
+              onPress={() => setOpen(item)}
+              style={[
+                styles.label,
+                styles.inPlace,
+                {
+                  left: centre.x - region.x - w / 2,
+                  top: centre.y - region.y - h / 2,
+                  width: w,
+                  height: h,
+                  backgroundColor: pair.backing,
+                  transform: [{ rotate: `${angleRad}rad` }],
+                },
+              ]}
+            >
+              <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.labelText, styles.translation, { color: pair.text, lineHeight }]}>
+                {marker}
+              </Text>
+            </Pressable>
+          );
+        }
         if (item.label.kind === 'unplaced') {
           const { a11y } = labelTexts(item);
           const slopX = Math.max(0, (MIN_TOUCH_TARGET_DP - width) / 2);
@@ -138,12 +172,21 @@ export function OverlayLayer({
               },
             ]}
           >
-            <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.labelText, { color: pair.text, lineHeight }]}>
-              {text}
-            </Text>
-            <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.labelText, { color: pair.text, lineHeight }]}>
-              {item.content.lowQuality ? `⚠ ${marker}` : `● ${marker}`}
-            </Text>
+            {isSingleRow(item.state) && !item.content.lowQuality ? (
+              // The translation is the label: the source text is right beside it in the picture (D-054).
+              <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.labelText, styles.translation, { color: pair.text, lineHeight }]}>
+                {marker}
+              </Text>
+            ) : (
+              <>
+                <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.labelText, { color: pair.text, lineHeight }]}>
+                  {text}
+                </Text>
+                <Text numberOfLines={1} ellipsizeMode="tail" style={[styles.labelText, { color: pair.text, lineHeight }]}>
+                  {item.content.lowQuality ? `⚠ ${marker}` : `● ${marker}`}
+                </Text>
+              </>
+            )}
           </Pressable>,
         ];
       })}
@@ -215,8 +258,10 @@ const styles = StyleSheet.create({
   clip: { position: 'absolute', overflow: 'hidden' },
   outline: { position: 'absolute' },
   componentOutline: { position: 'absolute' },
-  label: { position: 'absolute', paddingHorizontal: LABEL_PADDING_DP, paddingVertical: LABEL_PADDING_DP, borderRadius: 4 },
+  label: { position: 'absolute', paddingHorizontal: LABEL_PADDING_DP + 2, paddingVertical: LABEL_PADDING_DP, borderRadius: 8, justifyContent: 'center' },
   labelText: { fontSize: LABEL_FONT_SIZE_SP, fontWeight: '600' },
+  translation: { fontWeight: '700' },
+  inPlace: { paddingVertical: 0, borderWidth: 1, borderColor: colors.ringLight },
   sheetBackdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.6)' },
   sheet: { backgroundColor: colors.surface, padding: 20, gap: 12 },
   sheetText: { color: colors.text, fontSize: 20, lineHeight: 32 },

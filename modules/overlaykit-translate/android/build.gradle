@@ -1,0 +1,20 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'com.overlaykit.translate'
+version = '0.1.0'
+
+android {
+  namespace "com.overlaykit.translate"
+  defaultConfig {
+    versionCode 1
+    versionName "0.1.0"
+  }
+}
+
+dependencies {
+  // Language models (about 30 MB each) download once on first use; the text itself never leaves the phone (D-053).
+  implementation 'com.google.mlkit:translate:17.0.3'
+}

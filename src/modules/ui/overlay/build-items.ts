@@ -10,7 +10,7 @@ import {
 import type { StringKey } from '../../locale';
 import type { FrameId, Quad, Result, Size } from '../../shared';
 import { ERROR_UI } from '../camera-screen/error-map';
-import type { FreezeOverlayState, LabelState } from './freeze-overlay';
+import type { FreezeOverlayState, LabelState, OverlaySource } from './freeze-overlay';
 import { LABEL_FONT_SIZE_SP, LABEL_LINE_HEIGHT_FACTOR, LABEL_PADDING_DP, MIN_TOUCH_TARGET_DP } from './styles';
 
 /** Everything on screen that overlay positions depend on (R14). */
@@ -66,13 +66,27 @@ function markerKeyFor(state: LabelState): StringKey {
  * then state marker) at the scaled font size and line height, plus padding,
  * and at least one touch target (R19.2, R19.6).
  */
-export function labelBoxSize(outlineWidth: number, regionWidth: number, fontScale: number): Size {
+export function labelBoxSize(outlineWidth: number, regionWidth: number, fontScale: number, rows: 1 | 2 = 2, textWidth = 0): Size {
   // An unusable font scale (never expected from PixelRatio) falls back to 1 so a label still has a size.
   const scale = Number.isFinite(fontScale) && fontScale > 0 ? fontScale : 1;
   const rowHeight = LABEL_FONT_SIZE_SP * scale * LABEL_LINE_HEIGHT_FACTOR;
-  const width = Math.min(Math.max(outlineWidth, MIN_TOUCH_TARGET_DP), regionWidth);
-  const height = Math.max(2 * rowHeight + 2 * LABEL_PADDING_DP, MIN_TOUCH_TARGET_DP);
+  const width = Math.min(Math.max(outlineWidth, textWidth * scale, MIN_TOUCH_TARGET_DP), regionWidth);
+  const height = Math.max(rows * rowHeight + 2 * LABEL_PADDING_DP, MIN_TOUCH_TARGET_DP);
   return { width, height };
+}
+
+/** Rough average glyph width as a fraction of the font size, for sizing a label to its translation. */
+const GLYPH_WIDTH_FACTOR = 0.56;
+
+/** A translated label shows only its translation, on one row, as wide as that text needs (D-054). */
+export function isSingleRow(state: LabelState): state is Extract<LabelState, { kind: 'translated' }> {
+  return state.kind === 'translated' && !state.unchanged;
+}
+
+function sizeFor(source: OverlaySource, outlineWidth: number, regionWidth: number, fontScale: number): Size {
+  if (!isSingleRow(source.label)) return labelBoxSize(outlineWidth, regionWidth, fontScale);
+  const textWidth = source.label.text.length * LABEL_FONT_SIZE_SP * GLYPH_WIDTH_FACTOR + 2 * LABEL_PADDING_DP;
+  return labelBoxSize(outlineWidth, regionWidth, fontScale, 1, textWidth);
 }
 
 /**
@@ -108,7 +122,7 @@ export function buildOverlayItems(
     mapped.map(({ source, quad, outline }) => ({
       id: source.id,
       quad,
-      size: labelBoxSize(outline.width, region.width, layout.fontScale),
+      size: sizeFor(source, outline.width, region.width, layout.fontScale),
     })),
     region,
   );

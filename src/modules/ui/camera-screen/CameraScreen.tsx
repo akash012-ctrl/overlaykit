@@ -41,13 +41,18 @@ function Screen() {
     [actions],
   );
   useBackHandler(resolve, runBack);
+  // Live reading replaces the 'take a photo' prompt while the preview is up (D-054).
+  const statusText =
+    view.kind === 'preview' && state.mode !== 'guide' && !stillShown
+      ? t(state.live && state.items.length > 0 ? 'live.reading' : 'live.looking')
+      : t(view.messageKey);
 
   return (
     <View style={styles.root} onLayout={(e) => actions.onStillLayout(e.nativeEvent.layout)}>
       <CameraPreview ref={previewRef} active={state.previewActive} onStateChange={actions.onCameraState} />
-      {stillShown && shownFrame ? (
+      {stillShown && shownFrame ? <StillView frame={shownFrame} onLayout={actions.onStillLayout} /> : null}
+      {(stillShown && shownFrame) || state.live ? (
         <>
-          <StillView frame={shownFrame} onLayout={actions.onStillLayout} />
           <OverlayLayer
             items={state.items}
             region={state.region}
@@ -79,7 +84,7 @@ function Screen() {
       >
         <View style={styles.topRow} pointerEvents="box-none">
           <Text accessibilityLiveRegion="polite" style={styles.message}>
-            {t(view.messageKey)}
+            {statusText}
           </Text>
           <A11yButton
             label={t('settings.open')}
@@ -105,7 +110,7 @@ function Screen() {
         {DebugTools && stillShown && shownFrame ? (
           <DebugTools.SnapshotExportButton frame={shownFrame} result={state.lastResult} layout={state.layout} ocr={services.ocr} />
         ) : null}
-        {stillShown && state.mode === 'explore' ? (
+        {(stillShown || state.live) && state.mode === 'explore' ? (
           <ExplorePanel
             view={explore.view}
             list={explore.list}
@@ -127,7 +132,7 @@ function Screen() {
           />
         ) : (
           <A11yButton
-            label={t('action.capture')}
+            label={t(state.live ? 'action.hold' : 'action.capture')}
             disabled={!view.captureEnabled}
             onPress={() => void actions.takePhoto()}
             style={[styles.primaryButton, !view.captureEnabled && styles.disabled]}
