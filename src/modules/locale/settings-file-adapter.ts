@@ -28,7 +28,8 @@ export function createExpoSettingsFilePort(): SettingsFilePort {
         const temp = tempFile();
         if (temp.exists) temp.delete();
         temp.create();
-        temp.write(text);
+        // write() and move() are async in expo-file-system 58: the move must wait for the bytes.
+        await temp.write(text);
         await temp.move(finalFile(), { overwrite: true });
         return true;
       } catch {

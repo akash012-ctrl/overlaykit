@@ -31,7 +31,9 @@ export function createExpoFileSystemPort(): FileSystemPort {
     },
     async move(from, to) {
       try {
-        new File(from).move(new File(to));
+        // move(), copy() and write() return Promises in expo-file-system 58. Not awaiting them let OCR
+        // open a still before it had landed (ENOENT), so every capture failed.
+        await new File(from).move(new File(to), { overwrite: true });
         return true;
       } catch {
         return false;
@@ -39,7 +41,7 @@ export function createExpoFileSystemPort(): FileSystemPort {
     },
     async copy(from, to) {
       try {
-        new File(from).copy(new File(to));
+        await new File(from).copy(new File(to), { overwrite: true });
         return true;
       } catch {
         return false;
@@ -47,7 +49,7 @@ export function createExpoFileSystemPort(): FileSystemPort {
     },
     async writeText(uri, text) {
       try {
-        new File(uri).write(text);
+        await new File(uri).write(text);
         return true;
       } catch {
         return false;
