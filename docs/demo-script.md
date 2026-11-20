@@ -7,8 +7,8 @@ Status: **template, nothing recorded** (2026-11-19, spec 04 task 12.2, updated f
 | # | Show | Needs PASSED | Claim IDs | Shot only if |
 | --- | --- | --- | --- | --- |
 | 1 | App opens to the camera | DT-G0-01 (passed, debug build) and a release-build record when it exists | CL-03 | The build in the shot is the one in the record |
-| 2 | Translate: a real sign or machine, translations over the text | DT-G1-02, DT-G2-01 | CL-13, CL-14 | Both PASSED. If a language pair fails, show `TR_NOT_CONFIGURED` as it appears, no fake output |
-| 3 | Guide: pick a goal by tap, first AI-suggested step, highlight on the text | DT-G5-01 | CL-04, CL-05 | PASSED on the machine filmed |
+| 2 | Translate live: point at a real sign or machine; translation chips appear on the lines with no tap and slide with the text; then Hold | DT-G1-02, DT-G2-01, PD-11 | CL-13, CL-14 | All PASSED. If a pair fails, show the failure as it appears, no fake output |
+| 3 | Guide: goal lines appear on their own; pick one by tap; first AI-suggested step is read aloud with the target ring on the text | DT-G5-01, PD-12 | CL-04, CL-05 | PASSED on the machine filmed |
 | 4 | A step advances after the screen changes, and Done | DT-G5-02 | CL-06 | PASSED |
 | 5 | A plan with no matching text: "Not in view", no highlight | DT-G5-03 | CL-05 | PASSED |
 | 6 | Voice goal | DT-G5-05 | CL-16 | PASSED, in the language shown |
@@ -20,7 +20,7 @@ Status: **template, nothing recorded** (2026-11-19, spec 04 task 12.2, updated f
 Keep it short. Use only the first-person facts below.
 
 1. "OverlayKit is an Android camera app. Point it at a machine or sign you can't read." (rows 1, 2)
-2. "Pick what you want to do. The app suggests one step and highlights the text to use." (row 3)
+2. "Translations sit on the text as you point. Say or tap what you want to do, and the app reads out one step and rings the text to use." (rows 2, 3)
 3. "These steps are AI suggestions. They can be wrong, so the app says so on every step." (row 3, on screen)
 4. "It moves on when the camera sees the screen change, or when you tap Done. Never on a timer." (row 4)
 5. "If it can't find the text, it shows no highlight." (row 5)

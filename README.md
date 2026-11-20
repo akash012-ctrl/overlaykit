@@ -8,9 +8,9 @@ Status: **hackathon build, device validation pending.** Nothing has been measure
 
 | Mode | What you do | What you see |
 | --- | --- | --- |
-| Translate | Point the camera at text. | A translation drawn over each source line. Each label shows one state: translated, pending, failed or unsupported. |
-| Explore | Tap a label. | That label's translation. The app does not say what a control does. |
-| Guide | Pick a goal by tapping recognized text, or by voice. | One suggested step at a time, with a 2D highlight on the recognized text to use. The next step shows after the camera sees the expected change twice in a row, or after you tap Done. |
+| Translate | Point the camera at text. No button: the app reads about once a second. | A dark translation chip on each line, sliding with the text as the picture updates. Tap the shutter to hold the view and see every label with its state (translated, pending, failed or unsupported). |
+| Explore | Tap a chip. | That line's translation and state. The app does not say what a control does. |
+| Guide | Say what you want (one tap on the mic) or tap a line. The camera reads on its own. | One suggested step at a time, read aloud, with a target ring on the text to use. The next step shows after the camera sees the expected change twice in a row, or after you tap Done. |
 
 Guide works on any machine. There is no list of known machines.
 
@@ -56,7 +56,8 @@ Hindi and Kannada app text and step text have not been reviewed by a fluent spea
 - The only recorded device result is a debug build that launched on that phone (DT-G0-01 in [docs/DEVICE-TESTS.md](docs/DEVICE-TESTS.md)). **Every other device test is NOT TESTED**, including all twelve for the any-machine Guide (DT-G5-01 to DT-G5-12).
 - Not measured yet: how long the model takes to load, time per step, memory, battery, round trip with Gemini Live, OCR recall, translation quality, and Hindi and Kannada planning quality. No numbers are claimed.
 - The Gemma 4 E2B model (2.6 GB) may not run on a phone with about 5.7 GB of RAM. This is unmeasured. If the phone cannot load it, the app shows "This phone can't run the planner" and offers Translate and Explore.
-- Translation is coded to use Google ML Kit on-device translation (a language pair needs a network the first time, to download its model of about 30 MB). It has not been run on the phone, and its quality is not rated.
+- Translation uses Google ML Kit on-device translation (a language pair needs a network the first time, to download its model of about 30 MB). Seen on the reference phone in a debug build (agent screenshots, 2026-11-20, a mock Hindi and English machine page on a laptop screen): Hindi lines got English chips that refreshed on their own. Quality is not rated; a mis-read word gives an odd translation.
+- Also seen in those screenshots: Guide goal lines appearing without a tap, and the downloaded model reading as ready when Guide opens. Not seen yet: a planned step from Gemma on the phone, a voice goal, spoken steps, and the release build. Labels refresh about once a second; they are 2D marks on the latest frame, not tracking.
 - The release APK is debug-signed, so it is for testing on your own phone. There is no store release.
 
 ## Install and build
@@ -86,4 +87,4 @@ Checks the project uses: `npm run typecheck`, `npm run lint`, `npx expo-doctor`,
 
 ## Repository layout
 
-`src/app` holds thin routes. `src/modules/*` holds the modules, each with a public `index.ts`: `capture`, `ocr`, `geometry`, `locale`, `planner`, `guide`, `speech`, `shared` and `ui`. Native Kotlin modules are in `modules/` (`overlaykit-ocr`, `overlaykit-llm`, `overlaykit-live`). Design: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Contract: [docs/PRODUCT.md](docs/PRODUCT.md). Decisions: [docs/DECISIONS.md](docs/DECISIONS.md). Gates: [docs/QUALITY-GATES.md](docs/QUALITY-GATES.md). Device tests: [docs/DEVICE-TESTS.md](docs/DEVICE-TESTS.md).
+`src/app` holds thin routes. `src/modules/*` holds the modules, each with a public `index.ts`: `capture`, `ocr`, `geometry`, `locale`, `planner`, `guide`, `speech`, `shared` and `ui`. Native Kotlin modules are in `modules/` (`overlaykit-ocr`, `overlaykit-translate`, `overlaykit-llm`, `overlaykit-live`). Visual design rules: [.kiro/skills/ui-design-system/SKILL.md](.kiro/skills/ui-design-system/SKILL.md). Design: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Contract: [docs/PRODUCT.md](docs/PRODUCT.md). Decisions: [docs/DECISIONS.md](docs/DECISIONS.md). Gates: [docs/QUALITY-GATES.md](docs/QUALITY-GATES.md). Device tests: [docs/DEVICE-TESTS.md](docs/DEVICE-TESTS.md).
